@@ -8,7 +8,7 @@ import {
   ResearchConference, OrganizerAccount, SuperAdminAccount, EventRegistrationItem, 
   QRCheckInRecord, EventProjectSubmission, EvaluationCriterion, JudgeAccount, 
   JudgeAssignment, EvaluationScore, EventWinnerRecord, CertificateTemplate, 
-  EventAnnouncement, AuditLogEntry, EventStatus 
+  EventAnnouncement, AuditLogEntry, EventStatus, EventHostingDocument 
 } from '../types';
 import { 
   INITIAL_CURRENT_USER, MOCK_STUDENTS, MOCK_MENTORS, 
@@ -92,6 +92,11 @@ interface AppContextType {
   directMessages: DirectMessage[];
   connectionRequests: ConnectionRequest[];
   
+  // Public Profile Management
+  updateStudentProfile: (data: Partial<User>) => void;
+  updateMentorProfile: (mentorId: string, data: Partial<Mentor>) => void;
+  updateResearcherProfile: (scholarId: string, data: Partial<Researcher>) => void;
+
   // Organizer Portal State & Methods
   currentOrganizer: OrganizerAccount | null;
   organizers: OrganizerAccount[];
@@ -113,6 +118,17 @@ interface AppContextType {
   publishEvent: (eventId: string) => void;
   updateEventStatus: (eventId: string, status: EventStatus) => void;
   duplicateEvent: (eventId: string) => EventItem;
+  requestEventChanges: (eventId: string, notes: string) => void;
+  resubmitEventWithChanges: (eventId: string, updatedData: Partial<EventItem>) => void;
+  rejectEventWithReason: (eventId: string, reason: string) => void;
+  approveAndPublishEvent: (eventId: string, comments?: string) => void;
+  uploadEventDocument: (eventId: string, doc: Omit<EventHostingDocument, 'id' | 'uploadedAt'>) => void;
+
+  // Institution Master Management
+  addInstitution: (inst: Omit<InstitutionInfo, 'id'>) => InstitutionInfo;
+  updateInstitution: (instId: string, data: Partial<InstitutionInfo>) => void;
+  deleteInstitution: (instId: string) => void;
+  importInstitutionsBatch: (batch: InstitutionInfo[]) => void;
   
   // Participant & Registration Management
   eventRegistrations: EventRegistrationItem[];
@@ -227,8 +243,13 @@ interface AppContextType {
   removeToast: (id: string) => void;
   isAIModalOpen: boolean;
   setIsAIModalOpen: (open: boolean) => void;
-  authModalType: 'none' | 'login' | 'student_register' | 'mentor_onboarding' | 'scholar_register';
-  setAuthModalType: (type: 'none' | 'login' | 'student_register' | 'mentor_onboarding' | 'scholar_register') => void;
+  authModalType: 'none' | 'login' | 'student_register' | 'mentor_onboarding' | 'scholar_register' | 'organizer_login' | 'organizer_register';
+  setAuthModalType: (type: 'none' | 'login' | 'student_register' | 'mentor_onboarding' | 'scholar_register' | 'organizer_login' | 'organizer_register') => void;
+  authTargetRole: 'student' | 'mentor' | 'scholar' | 'organizer';
+  setAuthTargetRole: (role: 'student' | 'mentor' | 'scholar' | 'organizer') => void;
+  authTargetMode: 'login' | 'register';
+  setAuthTargetMode: (mode: 'login' | 'register') => void;
+  openAuthModal: (role?: 'student' | 'mentor' | 'scholar' | 'organizer', mode?: 'login' | 'register') => void;
   
   // Universal Search
   searchQuery: string;
@@ -254,26 +275,47 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>('proj-001');
   const [selectedMentorId, setSelectedMentorId] = useState<string | null>(null);
   
-  // Core Entities
-  const [students, setStudents] = useState<User[]>(MOCK_STUDENTS);
-  const [mentors, setMentors] = useState<Mentor[]>(MOCK_MENTORS);
-  const [researchers, setResearchers] = useState<Researcher[]>(MOCK_RESEARCHERS);
+  // Core Entities with LocalStorage Persistence
+  const [students, setStudents] = useState<User[]>(() => {
+    const saved = localStorage.getItem('campusnet_students');
+    return saved ? JSON.parse(saved) : MOCK_STUDENTS;
+  });
+  const [mentors, setMentors] = useState<Mentor[]>(() => {
+    const saved = localStorage.getItem('campusnet_mentors');
+    return saved ? JSON.parse(saved) : MOCK_MENTORS;
+  });
+  const [researchers, setResearchers] = useState<Researcher[]>(() => {
+    const saved = localStorage.getItem('campusnet_researchers');
+    return saved ? JSON.parse(saved) : MOCK_RESEARCHERS;
+  });
   const [teams, setTeams] = useState<Team[]>(MOCK_TEAMS);
   const [projects, setProjects] = useState<Project[]>(MOCK_PROJECTS);
-  const [events, setEvents] = useState<EventItem[]>(MOCK_EVENTS);
+  const [events, setEvents] = useState<EventItem[]>(() => {
+    const saved = localStorage.getItem('campusnet_events');
+    return saved ? JSON.parse(saved) : MOCK_EVENTS;
+  });
   const [certificates, setCertificates] = useState<Certificate[]>(MOCK_CERTIFICATES);
   const [mentorshipCertificates, setMentorshipCertificates] = useState<MentorshipCertificate[]>(MOCK_MENTORSHIP_CERTIFICATES);
   const [publications] = useState<ResearchPublication[]>(MOCK_PUBLICATIONS);
   const [conferences] = useState<ResearchConference[]>(MOCK_RESEARCH_CONFERENCES);
-  const [institutions, setInstitutions] = useState<InstitutionInfo[]>(MOCK_INSTITUTIONS_DATA);
+  const [institutions, setInstitutions] = useState<InstitutionInfo[]>(() => {
+    const saved = localStorage.getItem('campusnet_institutions');
+    return saved ? JSON.parse(saved) : MOCK_INSTITUTIONS_DATA;
+  });
   const [stories, setStories] = useState<CampusStory[]>(MOCK_STORIES);
   const [askQuestions, setAskQuestions] = useState<AskQuestion[]>(MOCK_QUESTIONS);
-  const [notifications, setNotifications] = useState<NotificationItem[]>(MOCK_NOTIFICATIONS);
+  const [notifications, setNotifications] = useState<NotificationItem[]>(() => {
+    const saved = localStorage.getItem('campusnet_notifications');
+    return saved ? JSON.parse(saved) : MOCK_NOTIFICATIONS;
+  });
   const [directMessages, setDirectMessages] = useState<DirectMessage[]>(MOCK_DIRECT_MESSAGES);
   const [mentorshipRequests, setMentorshipRequests] = useState<MentorshipRequest[]>([]);
   
   // Organizer Portal State
-  const [organizers, setOrganizers] = useState<OrganizerAccount[]>(MOCK_ORGANIZER_ACCOUNTS);
+  const [organizers, setOrganizers] = useState<OrganizerAccount[]>(() => {
+    const saved = localStorage.getItem('campusnet_organizers');
+    return saved ? JSON.parse(saved) : MOCK_ORGANIZER_ACCOUNTS;
+  });
   const [currentOrganizer, setCurrentOrganizer] = useState<OrganizerAccount | null>(() => {
     const saved = localStorage.getItem('campusnet_organizer_session');
     return saved ? JSON.parse(saved) : MOCK_ORGANIZER_ACCOUNTS[0]; // Seeded default KEC
@@ -295,7 +337,43 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [eventWinners, setEventWinners] = useState<EventWinnerRecord[]>(MOCK_EVENT_WINNERS);
   const [certificateTemplates, setCertificateTemplates] = useState<CertificateTemplate[]>(MOCK_CERTIFICATE_TEMPLATES);
   const [eventAnnouncements, setEventAnnouncements] = useState<EventAnnouncement[]>(MOCK_EVENT_ANNOUNCEMENTS);
-  const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>(MOCK_AUDIT_LOGS);
+  const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>(() => {
+    const saved = localStorage.getItem('campusnet_audit_logs');
+    return saved ? JSON.parse(saved) : MOCK_AUDIT_LOGS;
+  });
+
+  // Automated LocalStorage Sync Effects
+  useEffect(() => {
+    localStorage.setItem('campusnet_students', JSON.stringify(students));
+  }, [students]);
+
+  useEffect(() => {
+    localStorage.setItem('campusnet_mentors', JSON.stringify(mentors));
+  }, [mentors]);
+
+  useEffect(() => {
+    localStorage.setItem('campusnet_researchers', JSON.stringify(researchers));
+  }, [researchers]);
+
+  useEffect(() => {
+    localStorage.setItem('campusnet_events', JSON.stringify(events));
+  }, [events]);
+
+  useEffect(() => {
+    localStorage.setItem('campusnet_institutions', JSON.stringify(institutions));
+  }, [institutions]);
+
+  useEffect(() => {
+    localStorage.setItem('campusnet_organizers', JSON.stringify(organizers));
+  }, [organizers]);
+
+  useEffect(() => {
+    localStorage.setItem('campusnet_audit_logs', JSON.stringify(auditLogs));
+  }, [auditLogs]);
+
+  useEffect(() => {
+    localStorage.setItem('campusnet_notifications', JSON.stringify(notifications));
+  }, [notifications]);
 
   const [connectionRequests, setConnectionRequests] = useState<ConnectionRequest[]>([
     {
@@ -358,7 +436,35 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // UI state
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [isAIModalOpen, setIsAIModalOpen] = useState(false);
-  const [authModalType, setAuthModalType] = useState<'none' | 'login' | 'student_register' | 'mentor_onboarding' | 'scholar_register'>('none');
+  const [authModalType, setAuthModalType] = useState<'none' | 'login' | 'student_register' | 'mentor_onboarding' | 'scholar_register' | 'organizer_login' | 'organizer_register'>('none');
+  const [authTargetRole, setAuthTargetRole] = useState<'student' | 'mentor' | 'scholar' | 'organizer'>('student');
+  const [authTargetMode, setAuthTargetMode] = useState<'login' | 'register'>('login');
+
+  const openAuthModal = (
+    role: 'student' | 'mentor' | 'scholar' | 'organizer' = 'student', 
+    mode: 'login' | 'register' = 'login'
+  ) => {
+    setAuthTargetRole(role);
+    setAuthTargetMode(mode);
+    if (role === 'organizer') {
+      const url = new URL(window.location.href);
+      url.searchParams.set('portal', 'organizer');
+      if (mode === 'register') {
+        url.searchParams.set('action', 'register');
+      }
+      window.location.href = url.toString();
+      return;
+    }
+
+    if (mode === 'login') {
+      setAuthModalType('login');
+    } else {
+      if (role === 'student') setAuthModalType('student_register');
+      else if (role === 'mentor') setAuthModalType('mentor_onboarding');
+      else if (role === 'scholar') setAuthModalType('scholar_register');
+    }
+  };
+
   const [searchQuery, setSearchQuery] = useState('');
 
   // Video Meeting
@@ -613,46 +719,222 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
   };
 
-  const approveEvent = (eventId: string, comments?: string) => {
+  const updateStudentProfile = (data: Partial<User>) => {
+    setCurrentUser(prev => {
+      const updated = { ...prev, ...data };
+      localStorage.setItem('campusnet_user', JSON.stringify(updated));
+      return updated;
+    });
+    setStudents(prev => prev.map(s => s.id === currentUser.id ? { ...s, ...data } : s));
+    addToast({
+      type: 'success',
+      title: 'Profile Updated',
+      message: 'Student profile details and social links saved.'
+    });
+  };
+
+  const updateMentorProfile = (mentorId: string, data: Partial<Mentor>) => {
+    setMentors(prev => prev.map(m => m.id === mentorId ? { ...m, ...data } : m));
+    if (currentUser.id === mentorId || currentUser.email === data.email) {
+      setCurrentUser(prev => {
+        const updated = { ...prev, ...data };
+        localStorage.setItem('campusnet_user', JSON.stringify(updated));
+        return updated;
+      });
+    }
+    logAuditAction('UPDATE_MENTOR_PROFILE', 'user', mentorId, data.name || 'Mentor', 'Mentor expertise, social links, and Vidwan profile synced');
+    addToast({
+      type: 'success',
+      title: 'Mentor Profile Saved',
+      message: 'Academic expertise, social links, and Vidwan profile synced.'
+    });
+  };
+
+  const updateResearcherProfile = (scholarId: string, data: Partial<Researcher>) => {
+    setResearchers(prev => prev.map(r => r.id === scholarId ? { ...r, ...data } : r));
+    if (currentUser.id === scholarId || currentUser.email === data.email) {
+      setCurrentUser(prev => {
+        const updated = { ...prev, ...data };
+        localStorage.setItem('campusnet_user', JSON.stringify(updated));
+        return updated;
+      });
+    }
+    logAuditAction('UPDATE_SCHOLAR_PROFILE', 'user', scholarId, data.name || 'PhD Scholar', 'PhD scholar academic profile, research topics, and Vidwan link synced');
+    addToast({
+      type: 'success',
+      title: 'PhD Scholar Profile Saved',
+      message: 'Doctoral research area, Vidwan profile, and social links synced.'
+    });
+  };
+
+  const uploadEventDocument = (eventId: string, doc: Omit<EventHostingDocument, 'id' | 'uploadedAt'>) => {
+    const newDoc: EventHostingDocument = {
+      ...doc,
+      id: `doc-${Date.now()}-${Math.random().toString(36).substring(2, 5)}`,
+      eventId,
+      uploadedAt: new Date().toISOString(),
+      verifiedByAdmin: false
+    };
+
+    setEvents(prev => prev.map(e => {
+      if (e.id === eventId) {
+        const existingDocs = e.documents || [];
+        return {
+          ...e,
+          documents: [...existingDocs.filter(d => d.type !== doc.type), newDoc],
+          updatedAt: new Date().toISOString()
+        };
+      }
+      return e;
+    }));
+
+    addToast({
+      type: 'success',
+      title: 'Document Uploaded',
+      message: `"${doc.title}" attached securely for Super Admin verification.`
+    });
+  };
+
+  const requestEventChanges = (eventId: string, notes: string) => {
+    setEvents(prev => prev.map(e => {
+      if (e.id === eventId) {
+        return {
+          ...e,
+          status: 'changes_requested',
+          approvalStatus: 'rejected',
+          adminReviewNotes: notes,
+          approvalComments: notes,
+          updatedAt: new Date().toISOString()
+        };
+      }
+      return e;
+    }));
+
+    // Generate notification for organizer
+    const targetEvent = events.find(e => e.id === eventId);
+    setNotifications(prev => [
+      {
+        id: `notif-${Date.now()}`,
+        title: `Action Required: Changes Requested for "${targetEvent?.title || 'Event'}"`,
+        description: notes,
+        type: 'event',
+        timestamp: 'Just now',
+        read: false,
+        linkAction: 'events'
+      },
+      ...prev
+    ]);
+
+    logAuditAction('REQUEST_EVENT_CHANGES', 'event', eventId, targetEvent?.title || 'Event', `Changes requested: ${notes}`);
+    addToast({
+      type: 'warning',
+      title: 'Changes Requested',
+      message: 'Directive sent to institutional coordinator with feedback.'
+    });
+  };
+
+  const resubmitEventWithChanges = (eventId: string, updatedData: Partial<EventItem>) => {
+    setEvents(prev => prev.map(e => {
+      if (e.id === eventId) {
+        return {
+          ...e,
+          ...updatedData,
+          status: 'pending_admin_approval',
+          approvalStatus: 'pending',
+          resubmissionCount: (e.resubmissionCount || 0) + 1,
+          updatedAt: new Date().toISOString()
+        };
+      }
+      return e;
+    }));
+
+    logAuditAction('RESUBMIT_EVENT', 'event', eventId, updatedData.title || 'Event', 'Event resubmitted with revisions for Super Admin approval');
+    addToast({
+      type: 'success',
+      title: 'Event Resubmitted',
+      message: 'Updated proposal sent to National Super Admin Queue.'
+    });
+  };
+
+  const rejectEventWithReason = (eventId: string, reason: string) => {
+    setEvents(prev => prev.map(e => {
+      if (e.id === eventId) {
+        return {
+          ...e,
+          status: 'rejected',
+          approvalStatus: 'rejected',
+          adminReviewNotes: reason,
+          approvalComments: reason,
+          updatedAt: new Date().toISOString()
+        };
+      }
+      return e;
+    }));
+
+    const targetEvent = events.find(e => e.id === eventId);
+    setNotifications(prev => [
+      {
+        id: `notif-${Date.now()}`,
+        title: `Event Proposal Rejected: "${targetEvent?.title || 'Event'}"`,
+        description: reason,
+        type: 'event',
+        timestamp: 'Just now',
+        read: false
+      },
+      ...prev
+    ]);
+
+    logAuditAction('REJECT_EVENT', 'event', eventId, targetEvent?.title || 'Event', `Event rejected: ${reason}`);
+    addToast({
+      type: 'error',
+      title: 'Event Rejected',
+      message: 'Institutional event proposal declined.'
+    });
+  };
+
+  const approveAndPublishEvent = (eventId: string, comments?: string) => {
     setEvents(prev => prev.map(e => {
       if (e.id === eventId) {
         return {
           ...e,
           status: 'published',
           approvalStatus: 'approved',
-          approvalComments: comments || 'Approved by Super Admin.',
+          adminReviewNotes: comments || 'Approved by National Accreditation Board.',
+          approvalComments: comments || 'Approved by National Accreditation Board.',
           updatedAt: new Date().toISOString()
         };
       }
       return e;
     }));
-    logAuditAction('APPROVE_EVENT', 'event', eventId, 'Event', `Event approved for public CampusNet discovery. Comments: ${comments || 'None'}`);
+
+    const targetEvent = events.find(e => e.id === eventId);
+    setNotifications(prev => [
+      {
+        id: `notif-${Date.now()}`,
+        title: `Event Approved & Published: "${targetEvent?.title || 'Event'}"`,
+        description: comments || 'Your event has received Super Admin accreditation and is now live on CampusNet.',
+        type: 'event',
+        timestamp: 'Just now',
+        read: false,
+        linkAction: 'events'
+      },
+      ...prev
+    ]);
+
+    logAuditAction('APPROVE_AND_PUBLISH_EVENT', 'event', eventId, targetEvent?.title || 'Event', `Accredited and published. Notes: ${comments || 'None'}`);
     addToast({
       type: 'success',
-      title: 'Event Approved & Published! 🚀',
-      message: 'Event is now live and discoverable on the public CampusNet platform across India.'
+      title: 'Event Accredited & Published! 🎉',
+      message: 'Event is now discoverable across all Indian colleges.'
     });
   };
 
+  const approveEvent = (eventId: string, comments?: string) => {
+    approveAndPublishEvent(eventId, comments);
+  };
+
   const rejectEvent = (eventId: string, comments: string) => {
-    setEvents(prev => prev.map(e => {
-      if (e.id === eventId) {
-        return {
-          ...e,
-          status: 'draft',
-          approvalStatus: 'rejected',
-          approvalComments: comments,
-          updatedAt: new Date().toISOString()
-        };
-      }
-      return e;
-    }));
-    logAuditAction('REJECT_EVENT', 'event', eventId, 'Event', `Event rejected. Reason: ${comments}`);
-    addToast({
-      type: 'warning',
-      title: 'Event Review Returned',
-      message: `Changes requested: ${comments}`
-    });
+    rejectEventWithReason(eventId, comments);
   };
 
   const publishEvent = (eventId: string) => {
@@ -661,6 +943,58 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       type: 'success',
       title: 'Event Published',
       message: 'Event is now live on CampusNet.'
+    });
+  };
+
+  // --- INSTITUTION MASTER MANAGEMENT ---
+  const addInstitution = (inst: Omit<InstitutionInfo, 'id'>): InstitutionInfo => {
+    const newInst: InstitutionInfo = {
+      ...inst,
+      id: `inst-${Date.now()}`
+    };
+    setInstitutions(prev => [newInst, ...prev]);
+    logAuditAction('ADD_INSTITUTION', 'institution', newInst.id, newInst.name, `New institution registered in ${newInst.state}`);
+    addToast({
+      type: 'success',
+      title: 'Institution Added',
+      message: `"${newInst.name}" registered in master catalog.`
+    });
+    return newInst;
+  };
+
+  const updateInstitution = (instId: string, data: Partial<InstitutionInfo>) => {
+    setInstitutions(prev => prev.map(i => i.id === instId ? { ...i, ...data } : i));
+    logAuditAction('UPDATE_INSTITUTION', 'institution', instId, data.name || 'Institution', 'Institution master details updated');
+    addToast({
+      type: 'success',
+      title: 'Institution Updated',
+      message: 'Master institution record saved.'
+    });
+  };
+
+  const deleteInstitution = (instId: string) => {
+    const target = institutions.find(i => i.id === instId);
+    setInstitutions(prev => prev.filter(i => i.id !== instId));
+    logAuditAction('DELETE_INSTITUTION', 'institution', instId, target?.name || 'Institution', 'Institution master entry removed');
+    addToast({
+      type: 'info',
+      title: 'Institution Removed',
+      message: 'Master entry deleted from directory.'
+    });
+  };
+
+  const importInstitutionsBatch = (batch: InstitutionInfo[]) => {
+    if (!batch || batch.length === 0) return;
+    setInstitutions(prev => {
+      const existingIds = new Set(prev.map(i => i.id));
+      const newItems = batch.filter(b => !existingIds.has(b.id));
+      return [...prev, ...newItems];
+    });
+    logAuditAction('BULK_IMPORT_INSTITUTIONS', 'institution', 'batch', 'Master Directory', `Imported ${batch.length} institutions via master dataset import`);
+    addToast({
+      type: 'success',
+      title: 'Institutions Imported',
+      message: `Successfully processed ${batch.length} institutional records.`
     });
   };
 
@@ -1704,6 +2038,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         directMessages,
         connectionRequests,
         
+        // Public Profile Management
+        updateStudentProfile,
+        updateMentorProfile,
+        updateResearcherProfile,
+
         // Organizer Portal
         currentOrganizer,
         organizers,
@@ -1725,6 +2064,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         publishEvent,
         updateEventStatus,
         duplicateEvent,
+        requestEventChanges,
+        resubmitEventWithChanges,
+        rejectEventWithReason,
+        approveAndPublishEvent,
+        uploadEventDocument,
+
+        // Institution Master Management
+        addInstitution,
+        updateInstitution,
+        deleteInstitution,
+        importInstitutionsBatch,
         
         // Participant Management
         eventRegistrations,
@@ -1824,6 +2174,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setIsAIModalOpen,
         authModalType,
         setAuthModalType,
+        authTargetRole,
+        setAuthTargetRole,
+        authTargetMode,
+        setAuthTargetMode,
+        openAuthModal,
         searchQuery,
         setSearchQuery,
         verifyStudentManually,

@@ -4,9 +4,14 @@ import {
   ShieldCheck, Award, Users, CheckCircle2, Clock, 
   MessageSquare, Plus, FileText, Sparkles, Check, 
   X, AlertCircle, ArrowRight, Video, Calendar, 
-  Star, ExternalLink, QrCode, Bookmark, ChevronRight 
+  Star, ExternalLink, QrCode, Bookmark, ChevronRight,
+  Code2, BookOpen, Edit3
 } from 'lucide-react';
+import { 
+  LinkedinIcon, GithubIcon, TwitterIcon, LeetCodeIcon, InstagramIcon 
+} from '../common/SocialIcons';
 import { MentorshipRequest, Project, MentorshipCertificate } from '../../types';
+import { MentorProfileEditModal } from './MentorProfileEditModal';
 
 export const MentorDashboardView: React.FC = () => {
   const { 
@@ -18,6 +23,7 @@ export const MentorDashboardView: React.FC = () => {
   } = useApp();
 
   const [activeTab, setActiveTabLocal] = useState<'overview' | 'requests' | 'active_teams' | 'completed_certs'>('overview');
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   
   // Mentorship Completion Modal
   const [completionModalTeamId, setCompletionModalTeamId] = useState<string | null>(null);
@@ -40,14 +46,27 @@ export const MentorDashboardView: React.FC = () => {
   // Active teams guided
   const myGuidedTeams = teams.filter(t => t.mentorId === currentMentorData.id || t.mentorName === currentMentorData.name || t.mentorStatus === 'accepted');
 
-  const handleCompleteMentorship = (e: React.FormEvent) => {
+  const socialLinks = currentMentorData.socialLinks;
+  const vidwanUrl = currentMentorData.vidwan_profile_url;
+
+  const handleRespondRequest = (requestId: string, status: 'accepted' | 'declined') => {
+    respondToMentorshipRequest(requestId, status);
+  };
+
+  const handleOpenCompletionModal = (teamId: string) => {
+    setCompletionModalTeamId(teamId);
+    setMentorContributionText('Guided the team through edge computer vision architecture, ROS 2 integration, and fail-safe drone flight control algorithms.');
+    setProjectOutcomeText('Successfully validated precision crop spraying and live telemetry over nodal edge gateways.');
+  };
+
+  const handleExecuteCompletion = (e: React.FormEvent) => {
     e.preventDefault();
     if (!completionModalTeamId) return;
 
     completeMentorshipAndIssueCertificate(
       completionModalTeamId,
-      mentorContributionText || 'Guided student team through hardware optimization, ROS2 navigation architecture, and safety protocols.',
-      projectOutcomeText || 'Successfully built and validated working edge prototype ready for national demonstration.'
+      mentorContributionText,
+      projectOutcomeText
     );
 
     setCompletionModalTeamId(null);
@@ -88,9 +107,17 @@ export const MentorDashboardView: React.FC = () => {
             <div className="space-y-1">
               <div className="flex items-center gap-2 flex-wrap">
                 <h1 className="text-xl sm:text-2xl font-black">{currentUser.name}</h1>
-                <span className="campus-badge-verified text-[10px] py-0.5 px-2">
-                  ✓ Verified Faculty Guide
-                </span>
+                
+                {currentMentorData.isDemoData ? (
+                  <span className="text-[10px] font-bold bg-amber-400/30 text-amber-200 border border-amber-400/40 px-2 py-0.5 rounded-full">
+                    Demo Data / Seed Profile
+                  </span>
+                ) : (
+                  <span className="campus-badge-verified text-[10px] py-0.5 px-2">
+                    ✓ Verified Faculty Guide
+                  </span>
+                )}
+
                 <span className="text-[11px] font-bold bg-amber-400/20 text-amber-300 border border-amber-400/30 px-2 py-0.5 rounded-full flex items-center gap-1">
                   <Star className="w-3 h-3 fill-amber-300" /> {currentMentorData.rating} ({currentMentorData.reviewsCount} reviews)
                 </span>
@@ -103,6 +130,80 @@ export const MentorDashboardView: React.FC = () => {
               <p className="text-[11.5px] text-slate-300 max-w-xl line-clamp-1">
                 Specialization: {currentMentorData.specialization}
               </p>
+
+              {/* Social links and Vidwan Button row */}
+              <div className="flex items-center gap-2 flex-wrap pt-1.5">
+                {socialLinks?.linkedin && (
+                  <a
+                    href={socialLinks.linkedin}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-[11px] font-semibold bg-white/10 hover:bg-white/20 text-white px-2.5 py-1 rounded-lg border border-white/20 transition-colors"
+                  >
+                    <LinkedinIcon size={13} className="text-blue-300" /> LinkedIn
+                  </a>
+                )}
+                {socialLinks?.github && (
+                  <a
+                    href={socialLinks.github}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-[11px] font-semibold bg-white/10 hover:bg-white/20 text-white px-2.5 py-1 rounded-lg border border-white/20 transition-colors"
+                  >
+                    <GithubIcon size={13} className="text-slate-300" /> GitHub
+                  </a>
+                )}
+                {socialLinks?.twitter && (
+                  <a
+                    href={socialLinks.twitter}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-[11px] font-semibold bg-white/10 hover:bg-white/20 text-white px-2.5 py-1 rounded-lg border border-white/20 transition-colors"
+                  >
+                    <TwitterIcon size={13} className="text-sky-300" /> Twitter / X
+                  </a>
+                )}
+                {(socialLinks?.leetcode || currentMentorData.leetcode) && (
+                  <a
+                    href={socialLinks?.leetcode || currentMentorData.leetcode}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-[11px] font-semibold bg-white/10 hover:bg-white/20 text-white px-2.5 py-1 rounded-lg border border-white/20 transition-colors"
+                  >
+                    <LeetCodeIcon size={13} className="text-amber-300" /> LeetCode
+                  </a>
+                )}
+
+                {(socialLinks?.instagram || currentMentorData.instagram) && (
+                  <a
+                    href={socialLinks?.instagram || currentMentorData.instagram}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-[11px] font-semibold bg-white/10 hover:bg-white/20 text-white px-2.5 py-1 rounded-lg border border-white/20 transition-colors"
+                  >
+                    <InstagramIcon size={13} className="text-pink-300" /> Instagram
+                  </a>
+                )}
+
+                {vidwanUrl && (
+                  <a
+                    href={vidwanUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-[11px] font-bold bg-amber-500 hover:bg-amber-600 text-slate-900 px-2.5 py-1 rounded-lg shadow-sm transition-all"
+                  >
+                    <BookOpen className="w-3 h-3 text-slate-900" /> View Vidwan Profile
+                  </a>
+                )}
+
+                <button
+                  onClick={() => setIsEditModalOpen(true)}
+                  className="inline-flex items-center gap-1 text-[11px] font-bold bg-white/20 hover:bg-white/30 text-white px-2.5 py-1 rounded-lg border border-white/30 transition-all cursor-pointer"
+                >
+                  <Edit3 className="w-3 h-3 text-amber-300" />
+                  Edit Profile & Vidwan
+                </button>
+              </div>
             </div>
           </div>
 
@@ -533,7 +634,7 @@ export const MentorDashboardView: React.FC = () => {
               Finalize this project's mentorship. CampusNet will generate a tamper-proof digital Mentorship Certificate with a verifiable QR code.
             </p>
 
-            <form onSubmit={handleCompleteMentorship} className="space-y-3">
+            <form onSubmit={handleExecuteCompletion} className="space-y-3">
               <div>
                 <label className="block text-[11px] font-bold uppercase text-campus-slate-text mb-1">
                   Mentor Contribution Summary *
@@ -632,6 +733,12 @@ export const MentorDashboardView: React.FC = () => {
           </div>
         </div>
       )}
+
+      <MentorProfileEditModal
+        mentor={currentMentorData}
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+      />
 
     </div>
   );

@@ -2,12 +2,16 @@ import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { 
   BookOpen, Sparkles, FileText, Database, ShieldCheck, 
-  Search, Plus, ArrowRight, ExternalLink, MessageSquare 
+  Search, Plus, ArrowRight, ExternalLink, MessageSquare,
+  Code2 
 } from 'lucide-react';
+import { 
+  LinkedinIcon, GithubIcon, TwitterIcon, LeetCodeIcon, InstagramIcon 
+} from '../common/SocialIcons';
 import { Researcher, ResearchPublication } from '../../types';
 
 export const ResearchHubView: React.FC = () => {
-  const { researchers, publications, currentUser, addToast } = useApp();
+  const { researchers, publications, currentUser, addToast, setSelectedUserProfileModal } = useApp();
 
   const [activeTab, setActiveTab] = useState<'scholars' | 'publications' | 'datasets'>('scholars');
   const [searchQuery, setSearchQuery] = useState('');
@@ -121,69 +125,165 @@ export const ResearchHubView: React.FC = () => {
       {/* Tab 1: PhD Scholars Directory */}
       {activeTab === 'scholars' && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {filteredScholars.map(scholar => (
-            <div 
-              key={scholar.id}
-              className="bg-white rounded-3xl p-6 border border-campus-border shadow-warm-md hover:shadow-warm-lg transition-all space-y-4 flex flex-col justify-between"
-            >
-              <div className="space-y-3">
-                <div className="flex items-start gap-4">
-                  <img
-                    src={scholar.avatar}
-                    alt={scholar.name}
-                    className="w-16 h-16 rounded-2xl object-cover ring-1 ring-campus-border flex-shrink-0"
-                  />
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-bold text-base text-campus-deep-blue">{scholar.name}</h3>
-                      <span className="campus-badge-verified text-[10px] py-0.5 px-1.5">
-                        Verified PhD
-                      </span>
+          {filteredScholars.map(scholar => {
+            const social = {
+              linkedin: scholar.socialLinks?.linkedin || scholar.linkedin,
+              github: scholar.socialLinks?.github || scholar.github,
+              twitter: scholar.socialLinks?.twitter || scholar.twitter,
+              leetcode: scholar.socialLinks?.leetcode || scholar.leetcode,
+              instagram: scholar.socialLinks?.instagram || scholar.instagram
+            };
+            const vidwan = scholar.vidwan_profile_url;
+
+            return (
+              <div 
+                key={scholar.id}
+                className="bg-white rounded-3xl p-6 border border-campus-border shadow-warm-md hover:shadow-warm-lg transition-all space-y-4 flex flex-col justify-between"
+              >
+                <div className="space-y-3">
+                  <div className="flex items-start gap-4">
+                    <img
+                      src={scholar.avatar}
+                      alt={scholar.name}
+                      onClick={() => setSelectedUserProfileModal(scholar)}
+                      className="w-16 h-16 rounded-2xl object-cover ring-1 ring-campus-border flex-shrink-0 cursor-pointer hover:opacity-90 transition-opacity"
+                    />
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <h3 
+                          onClick={() => setSelectedUserProfileModal(scholar)}
+                          className="font-bold text-base text-campus-deep-blue truncate cursor-pointer hover:text-campus-blue transition-colors"
+                        >
+                          {scholar.name}
+                        </h3>
+                        
+                        {scholar.isDemoData ? (
+                          <span className="text-[9px] font-bold bg-amber-100 text-amber-900 border border-amber-300 px-1.5 py-0.2 rounded-full">
+                            Demo Data / Seed Profile
+                          </span>
+                        ) : (
+                          <span className="campus-badge-verified text-[10px] py-0.5 px-1.5">
+                            Verified PhD
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-campus-muted-text mt-0.5 truncate">{scholar.department}</p>
+                      <p className="text-xs font-semibold text-campus-blue mt-0.5 truncate">{scholar.university}</p>
+                      <p className="text-[11px] text-campus-muted-text font-mono mt-1">Scholar ID: {scholar.scholarId}</p>
                     </div>
-                    <p className="text-xs text-campus-muted-text mt-0.5">{scholar.department}</p>
-                    <p className="text-xs font-semibold text-campus-blue mt-0.5">{scholar.university}</p>
-                    <p className="text-[11px] text-campus-muted-text font-mono mt-1">Scholar ID: {scholar.scholarId}</p>
+                  </div>
+
+                  <div className="p-3.5 rounded-2xl bg-campus-warm-white border border-campus-border text-xs space-y-1">
+                    <div><strong>Research Guide:</strong> {scholar.guide}</div>
+                    <div><strong>Focus Area:</strong> {scholar.researchArea}</div>
+                  </div>
+
+                  <p className="text-xs text-campus-slate-text/80 leading-relaxed">
+                    {scholar.bio}
+                  </p>
+
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    {scholar.interests.map((int, i) => (
+                      <span key={i} className="text-[10.5px] font-semibold bg-campus-soft-blue text-campus-blue px-2.5 py-0.5 rounded-md">
+                        {int}
+                      </span>
+                    ))}
+                  </div>
+
+                  {/* Social links & Vidwan URL */}
+                  <div className="flex items-center gap-1.5 flex-wrap pt-2 border-t border-campus-border/60">
+                    {social.linkedin && (
+                      <a
+                        href={social.linkedin}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-1.5 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors"
+                        title="LinkedIn Profile"
+                      >
+                        <LinkedinIcon size={14} className="text-blue-700" />
+                      </a>
+                    )}
+                    {social.github && (
+                      <a
+                        href={social.github}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-1.5 rounded-lg bg-slate-100 text-slate-800 hover:bg-slate-200 transition-colors"
+                        title="GitHub / Code Repository"
+                      >
+                        <GithubIcon size={14} className="text-slate-800" />
+                      </a>
+                    )}
+                    {social.twitter && (
+                      <a
+                        href={social.twitter}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-1.5 rounded-lg bg-sky-50 text-sky-600 hover:bg-sky-100 transition-colors"
+                        title="Twitter / X"
+                      >
+                        <TwitterIcon size={14} className="text-sky-600" />
+                      </a>
+                    )}
+                    {social.leetcode && (
+                      <a
+                        href={social.leetcode}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-1.5 rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 transition-colors"
+                        title="LeetCode"
+                      >
+                        <LeetCodeIcon size={14} className="text-amber-700" />
+                      </a>
+                    )}
+                    {social.instagram && (
+                      <a
+                        href={social.instagram}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-1.5 rounded-lg bg-pink-50 text-pink-700 hover:bg-pink-100 transition-colors"
+                        title="Instagram"
+                      >
+                        <InstagramIcon size={14} className="text-pink-700" />
+                      </a>
+                    )}
+
+                    {vidwan && (
+                      <a
+                        href={vidwan}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-[11px] font-bold bg-purple-100 hover:bg-purple-200 text-purple-900 border border-purple-300 px-2.5 py-1 rounded-lg ml-auto transition-colors"
+                      >
+                        <BookOpen className="w-3 h-3 text-purple-700" />
+                        <span>View Vidwan Profile</span>
+                        <ExternalLink className="w-2.5 h-2.5 opacity-70" />
+                      </a>
+                    )}
                   </div>
                 </div>
 
-                <div className="p-3.5 rounded-2xl bg-campus-warm-white border border-campus-border text-xs space-y-1">
-                  <div><strong>Research Guide:</strong> {scholar.guide}</div>
-                  <div><strong>Focus Area:</strong> {scholar.researchArea}</div>
+                <div className="pt-3 border-t border-campus-border flex items-center justify-between text-xs">
+                  <div className="space-x-3 text-campus-muted-text font-semibold">
+                    <span>{scholar.publicationsCount} Papers</span>
+                    <span>•</span>
+                    <span>{scholar.citationsCount} Citations</span>
+                    <span>•</span>
+                    <span>h-index: {scholar.hIndex}</span>
+                  </div>
+
+                  <button
+                    onClick={() => setCollabModalScholar(scholar)}
+                    className="campus-btn-red text-xs py-2 px-4 rounded-xl flex items-center gap-1.5"
+                  >
+                    <MessageSquare className="w-3.5 h-3.5" />
+                    Request Collaboration
+                  </button>
                 </div>
 
-                <p className="text-xs text-campus-slate-text/80 leading-relaxed">
-                  {scholar.bio}
-                </p>
-
-                <div className="flex flex-wrap gap-1.5 pt-1">
-                  {scholar.interests.map((int, i) => (
-                    <span key={i} className="text-[10.5px] font-semibold bg-campus-soft-blue text-campus-blue px-2.5 py-0.5 rounded-md">
-                      {int}
-                    </span>
-                  ))}
-                </div>
               </div>
-
-              <div className="pt-4 border-t border-campus-border flex items-center justify-between text-xs">
-                <div className="space-x-3 text-campus-muted-text font-semibold">
-                  <span>{scholar.publicationsCount} Papers</span>
-                  <span>•</span>
-                  <span>{scholar.citationsCount} Citations</span>
-                  <span>•</span>
-                  <span>h-index: {scholar.hIndex}</span>
-                </div>
-
-                <button
-                  onClick={() => setCollabModalScholar(scholar)}
-                  className="campus-btn-red text-xs py-2 px-4 rounded-xl flex items-center gap-1.5"
-                >
-                  <MessageSquare className="w-3.5 h-3.5" />
-                  Request Collaboration
-                </button>
-              </div>
-
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 

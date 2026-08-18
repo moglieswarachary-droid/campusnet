@@ -1,11 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { 
   CheckCircle2, Clock, AlertCircle, ArrowRight, Video, 
   GraduationCap, Calendar, Users, Award, ShieldCheck, 
   FolderKanban, Sparkles, ChevronRight, Activity, 
-  Compass, Plus, UserPlus, QrCode, Search 
+  Compass, Plus, UserPlus, QrCode, Search, Edit3 
 } from 'lucide-react';
+import { StudentProfileEditModal } from './StudentProfileEditModal';
 
 export const StudentDashboardView: React.FC = () => {
   const { 
@@ -13,6 +14,8 @@ export const StudentDashboardView: React.FC = () => {
     certificates, setActiveTab, startVideoMeeting, 
     setSelectedProjectId, setSelectedEventModal 
   } = useApp();
+
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   const activeProject = projects[0];
   const activeTeam = teams[0];
@@ -66,6 +69,14 @@ export const StudentDashboardView: React.FC = () => {
             <span className="text-[10px] uppercase font-bold text-campus-blue block">Verified Badges</span>
             <span className="text-lg font-extrabold text-campus-blue">{currentUser.badges.length}</span>
           </div>
+
+          <button
+            onClick={() => setIsEditModalOpen(true)}
+            className="px-3.5 py-3 rounded-xl border border-campus-border hover:bg-slate-50 text-campus-deep-blue text-xs font-bold flex items-center gap-1.5 transition-colors shadow-warm-xs"
+          >
+            <Edit3 className="w-3.5 h-3.5 text-campus-blue" />
+            <span>Edit Profile & Socials</span>
+          </button>
 
           <button
             onClick={() => setActiveTab('portfolio')}
@@ -338,6 +349,11 @@ export const StudentDashboardView: React.FC = () => {
         </div>
 
       </div>
+
+      <StudentProfileEditModal 
+        isOpen={isEditModalOpen} 
+        onClose={() => setIsEditModalOpen(false)} 
+      />
 
     </div>
   );

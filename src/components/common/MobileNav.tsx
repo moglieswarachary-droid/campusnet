@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
 import { useApp, NavigationTab } from '../../context/AppContext';
 import { 
-  Home, Compass, FolderKanban, Calendar, MoreHorizontal, 
+  Home, Compass, FolderKanban, Calendar, CalendarPlus, MoreHorizontal, 
   Sparkles, HelpCircle, Video, Award, Users, BookOpen, 
-  LayoutDashboard, MessageSquare, QrCode 
+  LayoutDashboard, MessageSquare, QrCode, ArrowRight 
 } from 'lucide-react';
 
 export const MobileNav: React.FC = () => {
   const { activeTab, setActiveTab, setIsAIModalOpen, setIsDirectMessagingOpen } = useApp();
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
+  const [isEventsMenuOpen, setIsEventsMenuOpen] = useState(false);
 
   const navItems: { tab: NavigationTab; label: string; icon: any }[] = [
     { tab: 'home', label: 'Home', icon: Home },
@@ -20,6 +21,84 @@ export const MobileNav: React.FC = () => {
 
   return (
     <>
+      {/* Mobile Events Menu Overlay */}
+      {isEventsMenuOpen && (
+        <div 
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 lg:hidden animate-in fade-in"
+          onClick={() => setIsEventsMenuOpen(false)}
+        >
+          <div 
+            className="absolute bottom-20 left-4 right-4 bg-white rounded-3xl p-5 shadow-warm-xl border border-campus-border animate-in slide-in-from-bottom-5"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between pb-3 border-b border-campus-border mb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-campus-soft-blue flex items-center justify-center text-campus-blue">
+                  <Calendar className="w-4 h-4" />
+                </div>
+                <h3 className="font-bold text-sm text-campus-deep-blue">CampusNet Events</h3>
+              </div>
+              <button 
+                onClick={() => setIsEventsMenuOpen(false)}
+                className="text-xs text-campus-muted-text hover:text-campus-slate-text"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="space-y-2.5">
+              <button
+                onClick={() => { 
+                  setActiveTab('events'); 
+                  setIsEventsMenuOpen(false); 
+                }}
+                className="w-full p-3.5 rounded-2xl bg-campus-soft-blue/60 hover:bg-campus-soft-blue flex items-center justify-between text-left transition-colors border border-blue-100"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-campus-blue text-white flex items-center justify-center shadow-warm-xs">
+                    <Calendar className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="text-xs sm:text-sm font-bold text-campus-slate-text flex items-center gap-1.5">
+                      Discover Events
+                      <span className="w-1.5 h-1.5 rounded-full bg-campus-bright-red pulse-live"></span>
+                    </div>
+                    <div className="text-[11px] text-campus-muted-text">Browse national hackathons & fests</div>
+                  </div>
+                </div>
+                <ArrowRight className="w-4 h-4 text-campus-blue" />
+              </button>
+
+              <button
+                onClick={() => {
+                  const url = new URL(window.location.href);
+                  url.searchParams.set('portal', 'organizer');
+                  window.location.href = url.toString();
+                  setIsEventsMenuOpen(false);
+                }}
+                className="w-full p-3.5 rounded-2xl bg-red-50 hover:bg-red-100/80 flex items-center justify-between text-left transition-colors border border-red-200"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-campus-red text-white flex items-center justify-center shadow-warm-xs">
+                    <CalendarPlus className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="text-xs sm:text-sm font-bold text-campus-red flex items-center gap-1.5">
+                      Host Event
+                      <span className="text-[9px] font-extrabold uppercase bg-red-100 text-campus-red px-1.5 py-0.5 rounded border border-red-200">
+                        Organizer
+                      </span>
+                    </div>
+                    <div className="text-[11px] text-red-700">Submit proposal & college verification</div>
+                  </div>
+                </div>
+                <ArrowRight className="w-4 h-4 text-campus-red" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Mobile More Overlay */}
       {isMoreMenuOpen && (
         <div 
@@ -118,6 +197,24 @@ export const MobileNav: React.FC = () => {
                   <div className="text-[10px] text-campus-muted-text">Project demos</div>
                 </div>
               </button>
+
+              <button
+                onClick={() => {
+                  const url = new URL(window.location.href);
+                  url.searchParams.set('portal', 'organizer');
+                  window.location.href = url.toString();
+                  setIsMoreMenuOpen(false);
+                }}
+                className="p-3 rounded-2xl bg-red-50 hover:bg-red-100 flex items-center gap-2.5 text-left transition-colors col-span-2 border border-red-200"
+              >
+                <div className="w-8 h-8 rounded-xl bg-campus-red text-white flex items-center justify-center">
+                  <Award className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="text-xs font-bold text-campus-red">Host Event (Organizer Portal)</div>
+                  <div className="text-[10px] text-red-700">Submit hosting proposal & accreditation</div>
+                </div>
+              </button>
             </div>
 
             <div className="mt-3 pt-3 border-t border-campus-border grid grid-cols-2 gap-2">
@@ -150,8 +247,14 @@ export const MobileNav: React.FC = () => {
               <button
                 key={item.tab}
                 onClick={() => {
-                  setActiveTab(item.tab);
-                  setIsMoreMenuOpen(false);
+                  if (item.tab === 'events') {
+                    setIsEventsMenuOpen(true);
+                    setIsMoreMenuOpen(false);
+                  } else {
+                    setActiveTab(item.tab);
+                    setIsMoreMenuOpen(false);
+                    setIsEventsMenuOpen(false);
+                  }
                 }}
                 className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition-all ${
                   isActive 

@@ -3,9 +3,13 @@ import { useApp } from '../../context/AppContext';
 import { 
   Sparkles, BookOpen, Award, Users, Search, 
   ExternalLink, Calendar, Plus, FileText, Share2, 
-  ArrowRight, CheckCircle2, MessageSquare, UserPlus 
+  ArrowRight, CheckCircle2, MessageSquare, UserPlus, Edit3 
 } from 'lucide-react';
+import { 
+  LinkedinIcon, GithubIcon, TwitterIcon, LeetCodeIcon, InstagramIcon 
+} from '../common/SocialIcons';
 import { ResearchPublication, ResearchConference } from '../../types';
+import { PhDScholarProfileEditModal } from './PhDScholarProfileEditModal';
 
 export const PhDScholarDashboardView: React.FC = () => {
   const { 
@@ -17,8 +21,11 @@ export const PhDScholarDashboardView: React.FC = () => {
 
   const [activeTab, setActiveTabLocal] = useState<'publications' | 'conferences' | 'student_discovery' | 'collab'>('publications');
   const [searchStudentTopic, setSearchStudentTopic] = useState('');
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   const currentScholar = researchers.find(r => r.email === currentUser.email || r.name.includes(currentUser.name.split(' ')[0] || '')) || researchers[0];
+  const socialLinks = currentScholar.socialLinks;
+  const vidwanUrl = currentScholar.vidwan_profile_url;
 
   // Filter students working on AI/ML/Data relevant topics
   const relevantStudents = students.filter(s => {
@@ -31,6 +38,15 @@ export const PhDScholarDashboardView: React.FC = () => {
   return (
     <div className="py-8 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 animate-in fade-in">
       
+      {/* Edit PhD Scholar Profile Modal */}
+      {isEditModalOpen && (
+        <PhDScholarProfileEditModal
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
+          scholar={currentScholar}
+        />
+      )}
+
       {/* Scholar Header Profile Card */}
       <div className="bg-gradient-to-r from-slate-900 via-campus-deep-blue to-indigo-950 rounded-3xl p-6 sm:p-8 text-white relative overflow-hidden shadow-warm-lg">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
@@ -44,9 +60,17 @@ export const PhDScholarDashboardView: React.FC = () => {
             <div className="space-y-1">
               <div className="flex items-center gap-2 flex-wrap">
                 <h1 className="text-xl sm:text-2xl font-black">{currentUser.name}</h1>
-                <span className="text-[10px] font-bold bg-amber-400/20 text-amber-300 border border-amber-400/30 px-2 py-0.5 rounded-full">
-                  PhD Research Scholar
-                </span>
+                
+                {currentScholar.isDemoData ? (
+                  <span className="text-[10px] font-bold bg-amber-400/30 text-amber-200 border border-amber-400/40 px-2 py-0.5 rounded-full">
+                    Demo Data / Seed Profile
+                  </span>
+                ) : (
+                  <span className="text-[10px] font-bold bg-amber-400/20 text-amber-300 border border-amber-400/30 px-2 py-0.5 rounded-full">
+                    PhD Research Scholar
+                  </span>
+                )}
+
                 <span className="text-[10px] font-bold bg-green-500/20 text-green-300 border border-green-500/30 px-2 py-0.5 rounded-full">
                   ✓ Open for Student Collab
                 </span>
@@ -57,8 +81,81 @@ export const PhDScholarDashboardView: React.FC = () => {
               </p>
               
               <p className="text-[11.5px] text-slate-300 max-w-xl">
-                Research Domain: <strong>{currentScholar.researchArea}</strong> (Guide: {currentScholar.guide})
+                Research Domain: <strong>{currentScholar.researchArea}</strong> {currentScholar.guide ? `(Guide: ${currentScholar.guide})` : ''}
               </p>
+
+              {/* Social links and Vidwan Button row */}
+              <div className="flex items-center gap-2 flex-wrap pt-2">
+                {(socialLinks?.linkedin || currentScholar.linkedin) && (
+                  <a
+                    href={socialLinks?.linkedin || currentScholar.linkedin}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-[11px] font-semibold bg-white/10 hover:bg-white/20 text-white px-2.5 py-1 rounded-lg border border-white/20 transition-colors"
+                  >
+                    <LinkedinIcon size={13} className="text-blue-300" /> LinkedIn
+                  </a>
+                )}
+                {(socialLinks?.github || currentScholar.github) && (
+                  <a
+                    href={socialLinks?.github || currentScholar.github}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-[11px] font-semibold bg-white/10 hover:bg-white/20 text-white px-2.5 py-1 rounded-lg border border-white/20 transition-colors"
+                  >
+                    <GithubIcon size={13} className="text-slate-300" /> GitHub
+                  </a>
+                )}
+                {(socialLinks?.twitter || currentScholar.twitter) && (
+                  <a
+                    href={socialLinks?.twitter || currentScholar.twitter}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-[11px] font-semibold bg-white/10 hover:bg-white/20 text-white px-2.5 py-1 rounded-lg border border-white/20 transition-colors"
+                  >
+                    <TwitterIcon size={13} className="text-sky-300" /> Twitter / X
+                  </a>
+                )}
+                {(socialLinks?.leetcode || currentScholar.leetcode) && (
+                  <a
+                    href={socialLinks?.leetcode || currentScholar.leetcode}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-[11px] font-semibold bg-white/10 hover:bg-white/20 text-white px-2.5 py-1 rounded-lg border border-white/20 transition-colors"
+                  >
+                    <LeetCodeIcon size={13} className="text-amber-300" /> LeetCode
+                  </a>
+                )}
+                {(socialLinks?.instagram || currentScholar.instagram) && (
+                  <a
+                    href={socialLinks?.instagram || currentScholar.instagram}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-[11px] font-semibold bg-white/10 hover:bg-white/20 text-white px-2.5 py-1 rounded-lg border border-white/20 transition-colors"
+                  >
+                    <InstagramIcon size={13} className="text-pink-300" /> Instagram
+                  </a>
+                )}
+
+                {vidwanUrl && (
+                  <a
+                    href={vidwanUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-[11px] font-bold bg-amber-500 hover:bg-amber-600 text-slate-900 px-2.5 py-1 rounded-lg shadow-sm transition-all"
+                  >
+                    <BookOpen className="w-3 h-3 text-slate-900" /> View Vidwan Profile
+                  </a>
+                )}
+
+                <button
+                  onClick={() => setIsEditModalOpen(true)}
+                  className="inline-flex items-center gap-1 text-[11px] font-bold bg-white/20 hover:bg-white/30 text-white px-2.5 py-1 rounded-lg border border-white/30 transition-all cursor-pointer"
+                >
+                  <Edit3 className="w-3 h-3 text-amber-300" />
+                  Edit Profile & Vidwan
+                </button>
+              </div>
             </div>
           </div>
 

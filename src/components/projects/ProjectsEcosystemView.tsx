@@ -4,17 +4,21 @@ import {
   FolderKanban, Plus, Search, Filter, ShieldCheck, 
   Users, GitBranch, Globe, Sparkles, CheckCircle2, 
   ArrowRight, Award, Building2, MapPin, Layers, 
-  Bookmark, BookmarkCheck, FileText, UserPlus, HelpCircle 
+  Bookmark, BookmarkCheck, FileText, UserPlus, HelpCircle,
+  BookOpen
 } from 'lucide-react';
 import { Project } from '../../types';
 import { MOCK_INDIAN_STATES } from '../../data/mockData';
+import { ResearchHubView } from '../research/ResearchHubView';
 
 export const ProjectsEcosystemView: React.FC = () => {
   const { 
-    projects, currentUser, createProject, setSelectedProjectId, 
+    projects, researchers, publications, currentUser, createProject, setSelectedProjectId, 
     setActiveTab, savedItemIds, toggleSaveItem, addToast, 
     sendMentorshipRequest, mentors 
   } = useApp();
+
+  const [primaryTab, setPrimaryTab] = useState<'projects' | 'research'>('projects');
 
   const [activeProjectsTab, setActiveProjectsTab] = useState<
     'all' | 'my' | 'joined' | 'mentored' | 'open_roles' | 'categories'
@@ -139,32 +143,75 @@ export const ProjectsEcosystemView: React.FC = () => {
   return (
     <div className="py-8 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 animate-in fade-in">
       
-      {/* Header & Quick Action */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-campus-border">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="campus-badge-verified">
-              <FolderKanban className="w-3.5 h-3.5" />
-              National Project Ecosystem
+      {/* Top Primary Destination Switcher */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-2 bg-slate-100/90 rounded-2xl border border-slate-200/80 shadow-warm-xs">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setPrimaryTab('projects')}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-extrabold transition-all cursor-pointer ${
+              primaryTab === 'projects'
+                ? 'bg-white text-campus-deep-blue shadow-warm-sm border border-slate-200/80'
+                : 'text-campus-muted-text hover:text-campus-deep-blue'
+            }`}
+          >
+            <FolderKanban className="w-4 h-4 text-campus-blue" />
+            <span>Student Projects & Prototypes</span>
+            <span className="text-[10px] bg-campus-soft-blue text-campus-blue font-bold px-2 py-0.5 rounded-full">
+              {projects.length}
             </span>
-            <span className="text-xs text-campus-muted-text">{projects.length} Active Innovation Initiatives</span>
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-campus-deep-blue">
-            Student Innovation & Research Projects
-          </h1>
-          <p className="text-xs sm:text-sm text-campus-muted-text mt-1">
-            Browse verified inter-collegiate projects, invite faculty mentors, manage milestones, and collaborate in private 6-member team workspaces.
-          </p>
+          </button>
+
+          <button
+            onClick={() => setPrimaryTab('research')}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-extrabold transition-all cursor-pointer ${
+              primaryTab === 'research'
+                ? 'bg-white text-campus-deep-blue shadow-warm-sm border border-slate-200/80'
+                : 'text-campus-muted-text hover:text-campus-deep-blue'
+            }`}
+          >
+            <BookOpen className="w-4 h-4 text-purple-600" />
+            <span>PhD Scholars & Research Hub</span>
+            <span className="text-[10px] bg-purple-100 text-purple-700 font-bold px-2 py-0.5 rounded-full">
+              {researchers.length + publications.length}
+            </span>
+          </button>
         </div>
 
-        <button
-          onClick={() => setIsCreateModalOpen(true)}
-          className="campus-btn-red text-xs sm:text-sm py-2.5 px-4 rounded-xl shadow-warm-md flex items-center justify-center gap-1.5"
-        >
-          <Plus className="w-4 h-4" />
-          Create New Project
-        </button>
+        <div className="hidden md:flex items-center gap-2 text-xs text-campus-muted-text pr-2">
+          <span>Unified Innovation Pipeline</span>
+        </div>
       </div>
+
+      {primaryTab === 'research' ? (
+        <ResearchHubView />
+      ) : (
+        <>
+          {/* Header & Quick Action */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-campus-border">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="campus-badge-verified">
+                  <FolderKanban className="w-3.5 h-3.5" />
+                  National Project Ecosystem
+                </span>
+                <span className="text-xs text-campus-muted-text">{projects.length} Active Innovation Initiatives</span>
+              </div>
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-campus-deep-blue">
+                Student Innovation & Research Projects
+              </h1>
+              <p className="text-xs sm:text-sm text-campus-muted-text mt-1">
+                Browse verified inter-collegiate projects, invite faculty mentors, manage milestones, and collaborate in private 6-member team workspaces.
+              </p>
+            </div>
+
+            <button
+              onClick={() => setIsCreateModalOpen(true)}
+              className="campus-btn-red text-xs sm:text-sm py-2.5 px-4 rounded-xl shadow-warm-md flex items-center justify-center gap-1.5"
+            >
+              <Plus className="w-4 h-4" />
+              Create New Project
+            </button>
+          </div>
 
       {/* Navigation Sub-Tabs */}
       <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 border-b border-campus-border">
@@ -529,6 +576,8 @@ export const ProjectsEcosystemView: React.FC = () => {
 
           </div>
         </div>
+      )}
+      </>
       )}
 
     </div>

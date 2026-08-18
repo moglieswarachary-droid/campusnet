@@ -4,7 +4,7 @@ import {
   Sparkles, Search, Bell, ChevronDown, 
   HelpCircle, Video, Award, ShieldCheck, Check, 
   Layers, UserCheck, MessageSquareCode, MessageSquare, 
-  Compass, FolderKanban, GraduationCap 
+  Compass, FolderKanban, GraduationCap, Calendar, CalendarPlus 
 } from 'lucide-react';
 import { RoleType } from '../../types';
 
@@ -17,6 +17,7 @@ export const Navbar: React.FC = () => {
     setIsDirectMessagingOpen, directMessages 
   } = useApp();
 
+  const [isEventsOpen, setIsEventsOpen] = useState(false);
   const [isCommunityOpen, setIsCommunityOpen] = useState(false);
   const [isMoreOpen, setIsMoreOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
@@ -101,17 +102,77 @@ export const Navbar: React.FC = () => {
                 Projects
               </button>
 
-              <button
-                onClick={() => setActiveTab('events')}
-                className={`px-3 py-2 text-xs xl:text-sm font-bold rounded-lg transition-colors flex items-center gap-1.5 ${
-                  activeTab === 'events'
-                    ? 'text-campus-blue bg-campus-soft-blue'
-                    : 'text-campus-slate-text hover:text-campus-blue hover:bg-campus-warm-white'
-                }`}
-              >
-                Events
-                <span className="w-2 h-2 rounded-full bg-campus-bright-red pulse-live"></span>
-              </button>
+              {/* Events Dropdown with Discover Events & Host Event */}
+              <div className="relative">
+                <button
+                  onClick={() => {
+                    setIsEventsOpen(!isEventsOpen);
+                    setIsCommunityOpen(false);
+                    setIsMoreOpen(false);
+                  }}
+                  className={`px-3 py-2 text-xs xl:text-sm font-bold rounded-lg transition-colors flex items-center gap-1.5 ${
+                    activeTab === 'events'
+                      ? 'text-campus-blue bg-campus-soft-blue'
+                      : 'text-campus-slate-text hover:text-campus-blue hover:bg-campus-warm-white'
+                  }`}
+                >
+                  <Calendar className="w-4 h-4 text-campus-red" />
+                  Events
+                  <span className="w-2 h-2 rounded-full bg-campus-bright-red pulse-live"></span>
+                  <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isEventsOpen ? 'rotate-180' : ''}`} />
+                </button>
+
+                {isEventsOpen && (
+                  <div 
+                    className="absolute left-0 mt-2 w-64 bg-white rounded-2xl shadow-warm-xl border border-campus-border py-2 z-50 animate-in fade-in slide-in-from-top-2"
+                    onMouseLeave={() => setIsEventsOpen(false)}
+                  >
+                    <button
+                      onClick={() => {
+                        setActiveTab('events');
+                        setIsEventsOpen(false);
+                      }}
+                      className="w-full text-left px-4 py-2.5 text-xs sm:text-sm hover:bg-campus-warm-white flex items-center gap-3 transition-colors group/item"
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-campus-soft-blue flex items-center justify-center text-campus-blue group-hover/item:scale-105 transition-transform">
+                        <Calendar className="w-4 h-4 text-campus-blue" />
+                      </div>
+                      <div>
+                        <div className="font-bold text-campus-slate-text flex items-center gap-1.5">
+                          Discover Events
+                          <span className="w-1.5 h-1.5 rounded-full bg-campus-bright-red pulse-live"></span>
+                        </div>
+                        <div className="text-[11px] text-campus-muted-text">Browse national hackathons & fests</div>
+                      </div>
+                    </button>
+
+                    <div className="my-1 border-t border-campus-border"></div>
+
+                    <button
+                      onClick={() => {
+                        setIsEventsOpen(false);
+                        const currentUrl = new URL(window.location.href);
+                        currentUrl.searchParams.set('portal', 'organizer');
+                        window.location.href = currentUrl.toString();
+                      }}
+                      className="w-full text-left px-4 py-2.5 text-xs sm:text-sm hover:bg-red-50/70 flex items-center gap-3 transition-colors group/item"
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-red-100 flex items-center justify-center text-campus-red group-hover/item:scale-105 transition-transform">
+                        <CalendarPlus className="w-4 h-4 text-campus-red" />
+                      </div>
+                      <div>
+                        <div className="font-bold text-campus-red flex items-center gap-1.5">
+                          Host Event
+                          <span className="text-[9px] font-extrabold uppercase bg-red-100 text-campus-red px-1.5 py-0.5 rounded border border-red-200">
+                            Organizer
+                          </span>
+                        </div>
+                        <div className="text-[11px] text-campus-muted-text">Submit proposal & college proof</div>
+                      </div>
+                    </button>
+                  </div>
+                )}
+              </div>
 
               <button
                 onClick={() => setActiveTab('mentors')}

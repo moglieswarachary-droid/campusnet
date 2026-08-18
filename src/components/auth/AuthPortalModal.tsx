@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { 
   X, GraduationCap, Award, Sparkles, CheckCircle2, 
@@ -9,19 +9,42 @@ import { RoleType } from '../../types';
 import { MOCK_DEPARTMENTS_LIST, MOCK_INSTITUTIONS_LIST, MOCK_INDIAN_STATES } from '../../data/mockData';
 
 export const AuthPortalModal: React.FC = () => {
-  const { authModalType, setAuthModalType, switchRole, addToast, setCurrentUser } = useApp();
+  const { 
+    authModalType, setAuthModalType, authTargetRole, authTargetMode, 
+    switchRole, setActiveTab, addToast, setCurrentUser, organizerLogin 
+  } = useApp();
   
-  // Primary Tabs: 'student' | 'mentor' | 'scholar'
-  const [selectedRole, setSelectedRole] = useState<'student' | 'mentor' | 'scholar'>(() => {
-    if (authModalType === 'mentor_onboarding') return 'mentor';
-    if (authModalType === 'scholar_register') return 'scholar';
-    return 'student';
-  });
-
+  // Primary Tabs: 'student' | 'mentor' | 'scholar' | 'organizer'
+  const [selectedRole, setSelectedRole] = useState<'student' | 'mentor' | 'scholar' | 'organizer'>('student');
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [showPassword, setShowPassword] = useState(false);
   const [isOtpStep, setIsOtpStep] = useState(false);
   const [otpInput, setOtpInput] = useState('');
+
+  // Sync state whenever modal is opened
+  useEffect(() => {
+    if (authModalType !== 'none') {
+      if (authTargetRole) {
+        setSelectedRole(authTargetRole);
+      } else if (authModalType === 'mentor_onboarding') {
+        setSelectedRole('mentor');
+      } else if (authModalType === 'scholar_register') {
+        setSelectedRole('scholar');
+      } else if (authModalType === 'organizer_login' || authModalType === 'organizer_register') {
+        setSelectedRole('organizer');
+      } else {
+        setSelectedRole('student');
+      }
+
+      if (authTargetMode) {
+        setMode(authTargetMode);
+      } else if (authModalType === 'student_register' || authModalType === 'mentor_onboarding' || authModalType === 'scholar_register' || authModalType === 'organizer_register') {
+        setMode('register');
+      } else {
+        setMode('login');
+      }
+    }
+  }, [authModalType, authTargetRole, authTargetMode]);
 
   // Student Form State
   const [stdName, setStdName] = useState('');
@@ -63,6 +86,16 @@ export const AuthPortalModal: React.FC = () => {
   const [schScholarId, setSchScholarId] = useState('IISC-PHD-2024-09');
   const [schPublications, setSchPublications] = useState('');
 
+  // Organizer Form State
+  const [orgEmail, setOrgEmail] = useState('suresh.babu@kec.ac.in');
+  const [orgPassword, setOrgPassword] = useState('');
+  const [orgInstitution, setOrgInstitution] = useState('Kuppam Engineering College (KEC)');
+  const [orgCoordinator, setOrgCoordinator] = useState('Dr. Suresh Babu');
+  const [orgDesignation, setOrgDesignation] = useState('Dean of Innovation & Event Lead');
+  const [orgMobile, setOrgMobile] = useState('+91 94401 23456');
+  const [orgState, setOrgState] = useState('Andhra Pradesh');
+  const [orgCity, setOrgCity] = useState('Kuppam');
+
   if (authModalType === 'none') return null;
 
   const handleStudentSubmit = (e: React.FormEvent) => {
@@ -79,11 +112,12 @@ export const AuthPortalModal: React.FC = () => {
 
     if (mode === 'login') {
       switchRole('student');
+      setActiveTab('dashboard');
       setAuthModalType('none');
       addToast({
         type: 'success',
         title: 'Welcome to CampusNet!',
-        message: 'Logged into your student innovation workspace.'
+        message: 'Logged into your student innovation dashboard.'
       });
     } else {
       // Register
@@ -107,6 +141,7 @@ export const AuthPortalModal: React.FC = () => {
         role: 'student'
       }));
       switchRole('student');
+      setActiveTab('dashboard');
       setAuthModalType('none');
       addToast({
         type: 'success',
@@ -119,28 +154,53 @@ export const AuthPortalModal: React.FC = () => {
   const handleMentorSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     switchRole('mentor');
+    setActiveTab('dashboard');
     setAuthModalType('none');
     addToast({
       type: 'success',
       title: 'Mentor Portal Activated',
-      message: 'Logged in as Dr. Arvind Rao / Faculty Mentor.'
+      message: 'Logged into your Faculty Mentor Dashboard.'
     });
   };
 
   const handleScholarSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     switchRole('researcher');
+    setActiveTab('dashboard');
     setAuthModalType('none');
     addToast({
       type: 'success',
       title: 'PhD Scholar Portal Activated',
-      message: 'Logged in as Kavya Ramanathan / IISc Bangalore Research Lab.'
+      message: 'Logged into your PhD Scholar Research Dashboard.'
     });
   };
 
-  const quickDemoLogin = (role: RoleType) => {
-    switchRole(role);
+  const handleOrganizerSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    organizerLogin(orgEmail);
     setAuthModalType('none');
+    const url = new URL(window.location.href);
+    url.searchParams.set('portal', 'organizer');
+    window.location.href = url.toString();
+  };
+
+  const quickDemoLogin = (role: 'student' | 'mentor' | 'scholar' | 'organizer') => {
+    if (role === 'organizer') {
+      organizerLogin('suresh.babu@kec.ac.in');
+      setAuthModalType('none');
+      const url = new URL(window.location.href);
+      url.searchParams.set('portal', 'organizer');
+      window.location.href = url.toString();
+    } else {
+      const roleMap: Record<string, RoleType> = {
+        student: 'student',
+        mentor: 'mentor',
+        scholar: 'researcher'
+      };
+      switchRole(roleMap[role]);
+      setActiveTab('dashboard');
+      setAuthModalType('none');
+    }
   };
 
   return (
@@ -165,45 +225,57 @@ export const AuthPortalModal: React.FC = () => {
             Campus<span className="text-amber-400">Net</span> Authentication Portal
           </h2>
           <p className="text-xs sm:text-sm text-slate-200 mt-1 max-w-lg">
-            Choose your official entry portal to access student hackathons, faculty mentorship, or research collaboration.
+            Choose your official entry role to access your dedicated workspace or submit registration.
           </p>
 
-          {/* Role Gateway Switcher Tabs */}
-          <div className="grid grid-cols-3 gap-2 mt-5 p-1 bg-white/10 rounded-2xl backdrop-blur-sm">
+          {/* Role Gateway Switcher Tabs: 4 ROLES */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-5 p-1 bg-white/10 rounded-2xl backdrop-blur-sm">
             <button
               onClick={() => { setSelectedRole('student'); setIsOtpStep(false); }}
-              className={`py-2.5 px-2 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 transition-all ${
+              className={`py-2 px-1.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
                 selectedRole === 'student'
                   ? 'bg-white text-campus-deep-blue shadow-warm-md'
                   : 'text-white/80 hover:text-white hover:bg-white/10'
               }`}
             >
-              <GraduationCap className="w-4 h-4 text-blue-600" />
-              <span>Student Portal</span>
+              <GraduationCap className="w-3.5 h-3.5 text-blue-600" />
+              <span>Student</span>
             </button>
 
             <button
               onClick={() => { setSelectedRole('mentor'); setIsOtpStep(false); }}
-              className={`py-2.5 px-2 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 transition-all ${
+              className={`py-2 px-1.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
                 selectedRole === 'mentor'
                   ? 'bg-white text-campus-deep-blue shadow-warm-md'
                   : 'text-white/80 hover:text-white hover:bg-white/10'
               }`}
             >
-              <ShieldCheck className="w-4 h-4 text-red-600" />
-              <span>Mentor Portal</span>
+              <ShieldCheck className="w-3.5 h-3.5 text-amber-600" />
+              <span>Mentor</span>
             </button>
 
             <button
               onClick={() => { setSelectedRole('scholar'); setIsOtpStep(false); }}
-              className={`py-2.5 px-2 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 transition-all ${
+              className={`py-2 px-1.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
                 selectedRole === 'scholar'
                   ? 'bg-white text-campus-deep-blue shadow-warm-md'
                   : 'text-white/80 hover:text-white hover:bg-white/10'
               }`}
             >
-              <Sparkles className="w-4 h-4 text-amber-500" />
+              <Sparkles className="w-3.5 h-3.5 text-purple-500" />
               <span>PhD Scholar</span>
+            </button>
+
+            <button
+              onClick={() => { setSelectedRole('organizer'); setIsOtpStep(false); }}
+              className={`py-2 px-1.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
+                selectedRole === 'organizer'
+                  ? 'bg-white text-campus-deep-blue shadow-warm-md'
+                  : 'text-white/80 hover:text-white hover:bg-white/10'
+              }`}
+            >
+              <Building2 className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Organizer</span>
             </button>
           </div>
         </div>
@@ -229,7 +301,7 @@ export const AuthPortalModal: React.FC = () => {
                   : 'text-campus-muted-text hover:text-campus-slate-text'
               }`}
             >
-              Register New {selectedRole === 'student' ? 'Student' : selectedRole === 'mentor' ? 'Mentor' : 'Scholar'}
+              Register New {selectedRole === 'student' ? 'Student' : selectedRole === 'mentor' ? 'Mentor' : selectedRole === 'scholar' ? 'Scholar' : 'Organizer'}
             </button>
           </div>
 
@@ -237,7 +309,7 @@ export const AuthPortalModal: React.FC = () => {
           <div className="flex items-center gap-1.5">
             <span className="text-[11px] font-semibold text-campus-muted-text hidden sm:inline">Demo:</span>
             <button
-              onClick={() => quickDemoLogin(selectedRole === 'student' ? 'student' : selectedRole === 'mentor' ? 'mentor' : 'researcher')}
+              onClick={() => quickDemoLogin(selectedRole)}
               className="text-[11px] font-bold text-campus-blue bg-campus-soft-blue px-2.5 py-1 rounded-lg hover:bg-blue-100 transition-colors"
             >
               1-Click Demo Login →
@@ -766,6 +838,149 @@ export const AuthPortalModal: React.FC = () => {
                 className="w-full py-3 rounded-xl text-sm font-bold text-white bg-slate-900 hover:bg-slate-800 shadow-warm-md flex items-center justify-center gap-2"
               >
                 <span>{mode === 'login' ? 'Access PhD Scholar Research Dashboard' : 'Register as Research Scholar'}</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </form>
+          )}
+
+          {/* ORGANIZER FLOW */}
+          {selectedRole === 'organizer' && (
+            <form onSubmit={handleOrganizerSubmit} className="space-y-4">
+              {mode === 'login' ? (
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-xs font-bold uppercase text-campus-slate-text mb-1">
+                      Institutional Coordinator Official Email
+                    </label>
+                    <div className="relative">
+                      <Mail className="w-4 h-4 text-campus-muted-text absolute left-3 top-1/2 -translate-y-1/2" />
+                      <input
+                        type="email"
+                        value={orgEmail}
+                        onChange={e => setOrgEmail(e.target.value)}
+                        required
+                        className="w-full pl-9 pr-3.5 py-2 text-xs sm:text-sm border border-campus-border rounded-xl focus:border-emerald-600 outline-none"
+                        placeholder="coordinator@institution.ac.in"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold uppercase text-campus-slate-text mb-1">Password</label>
+                    <div className="relative">
+                      <Lock className="w-4 h-4 text-campus-muted-text absolute left-3 top-1/2 -translate-y-1/2" />
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        defaultValue="••••••••••••"
+                        required
+                        className="w-full pl-9 pr-10 py-2 text-xs sm:text-sm border border-campus-border rounded-xl focus:border-emerald-600 outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-200 text-xs text-emerald-900 flex items-center justify-between">
+                    <span>Demo Coordinator: <strong>Dr. Suresh Babu (KEC)</strong></span>
+                    <button
+                      type="button"
+                      onClick={() => setOrgEmail('suresh.babu@kec.ac.in')}
+                      className="font-bold underline text-emerald-800"
+                    >
+                      Fill Demo
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[11px] font-bold uppercase text-campus-slate-text mb-1">College / University Name *</label>
+                      <input
+                        type="text"
+                        value={orgInstitution}
+                        onChange={e => setOrgInstitution(e.target.value)}
+                        placeholder="e.g. Kuppam Engineering College"
+                        required
+                        className="w-full px-3 py-2 text-xs border border-campus-border rounded-xl focus:border-emerald-600 outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-bold uppercase text-campus-slate-text mb-1">Coordinator Full Name *</label>
+                      <input
+                        type="text"
+                        value={orgCoordinator}
+                        onChange={e => setOrgCoordinator(e.target.value)}
+                        placeholder="e.g. Dr. Suresh Babu"
+                        required
+                        className="w-full px-3 py-2 text-xs border border-campus-border rounded-xl focus:border-emerald-600 outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[11px] font-bold uppercase text-campus-slate-text mb-1">Official Institution Email *</label>
+                      <input
+                        type="email"
+                        value={orgEmail}
+                        onChange={e => setOrgEmail(e.target.value)}
+                        placeholder="coordinator@kec.ac.in"
+                        required
+                        className="w-full px-3 py-2 text-xs border border-campus-border rounded-xl focus:border-emerald-600 outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-bold uppercase text-campus-slate-text mb-1">Coordinator Mobile *</label>
+                      <input
+                        type="tel"
+                        value={orgMobile}
+                        onChange={e => setOrgMobile(e.target.value)}
+                        placeholder="+91 94401 23456"
+                        required
+                        className="w-full px-3 py-2 text-xs border border-campus-border rounded-xl focus:border-emerald-600 outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    <div>
+                      <label className="block text-[11px] font-bold uppercase text-campus-slate-text mb-1">Designation</label>
+                      <input
+                        type="text"
+                        value={orgDesignation}
+                        onChange={e => setOrgDesignation(e.target.value)}
+                        placeholder="Dean / HOD"
+                        className="w-full px-2.5 py-2 text-xs border border-campus-border rounded-xl focus:border-emerald-600 outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-bold uppercase text-campus-slate-text mb-1">State</label>
+                      <input
+                        type="text"
+                        value={orgState}
+                        onChange={e => setOrgState(e.target.value)}
+                        placeholder="Andhra Pradesh"
+                        className="w-full px-2.5 py-2 text-xs border border-campus-border rounded-xl focus:border-emerald-600 outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-bold uppercase text-campus-slate-text mb-1">City</label>
+                      <input
+                        type="text"
+                        value={orgCity}
+                        onChange={e => setOrgCity(e.target.value)}
+                        placeholder="Kuppam"
+                        className="w-full px-2.5 py-2 text-xs border border-campus-border rounded-xl focus:border-emerald-600 outline-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <button
+                type="submit"
+                className="w-full py-3 rounded-xl text-sm font-bold text-white bg-emerald-700 hover:bg-emerald-800 shadow-warm-md flex items-center justify-center gap-2"
+              >
+                <span>{mode === 'login' ? 'Access Institutional Event Hosting Portal' : 'Register Institution & Access Hosting Portal'}</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
             </form>

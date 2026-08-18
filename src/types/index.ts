@@ -10,19 +10,32 @@ export type OrganizerPermissionRole =
 
 export type EventStatus = 
   | 'draft' 
-  | 'review' 
-  | 'approved' 
+  | 'submitted'
+  | 'pending_document_verification'
+  | 'pending_admin_approval'
+  | 'changes_requested'
+  | 'approved'
+  | 'rejected'
   | 'published' 
   | 'registration_open' 
   | 'registration_closed' 
   | 'live' 
   | 'completed' 
-  | 'archived';
+  | 'archived'
+  | 'review';
 
 export interface UserPrivacySettings {
   emailPublic: boolean;
   phonePublic: boolean;
   showProjectsToPublic: boolean;
+}
+
+export interface UserSocialLinks {
+  linkedin?: string;
+  github?: string;
+  twitter?: string;
+  leetcode?: string;
+  instagram?: string;
 }
 
 export interface User {
@@ -47,6 +60,10 @@ export interface User {
   interests: string[];
   github?: string;
   linkedin?: string;
+  twitter?: string;
+  leetcode?: string;
+  instagram?: string;
+  socialLinks?: UserSocialLinks;
   portfolio?: string;
   idCardVerifiedAt?: string;
   role: RoleType;
@@ -54,6 +71,7 @@ export interface User {
   connectedUserIds?: string[];
   savedItemIds?: string[];
   privacy?: UserPrivacySettings;
+  isDemoData?: boolean;
   status?: 'active' | 'suspended' | 'pending_verification';
 }
 
@@ -69,6 +87,7 @@ export interface Mentor {
   department: string;
   specialization: string;
   yearsExperience: number;
+  experience?: string;
   academicExp: string;
   industryExp: string;
   researchAreas: string[];
@@ -89,6 +108,13 @@ export interface Mentor {
   state?: string;
   city?: string;
   linkedin?: string;
+  github?: string;
+  twitter?: string;
+  leetcode?: string;
+  instagram?: string;
+  socialLinks?: UserSocialLinks;
+  vidwan_profile_url?: string;
+  isDemoData?: boolean;
   status?: 'active' | 'suspended' | 'pending_verification';
 }
 
@@ -115,7 +141,36 @@ export interface Researcher {
   city?: string;
   specialization?: string;
   researchTopics?: string[];
+  linkedin?: string;
+  github?: string;
+  twitter?: string;
+  leetcode?: string;
+  instagram?: string;
+  socialLinks?: UserSocialLinks;
+  vidwan_profile_url?: string;
+  isDemoData?: boolean;
   status?: 'active' | 'suspended' | 'pending_verification';
+}
+
+export interface EventHostingDocument {
+  id: string;
+  eventId: string;
+  type: 'institution_proof' | 'formal_request_letter' | 'other';
+  title: string;
+  fileName: string;
+  fileUrl: string;
+  fileSize: string;
+  mimeType: string;
+  uploadedAt: string;
+  verifiedByAdmin?: boolean;
+  verificationNotes?: string;
+}
+
+export interface StateUTMaster {
+  code: string;
+  name: string;
+  type: 'state' | 'ut';
+  districts: string[];
 }
 
 export interface InstitutionInfo {
@@ -368,6 +423,7 @@ export interface EventItem {
   coordinatorName?: string;
   coordinatorEmail?: string;
   coordinatorPhone?: string;
+  coordinatorDesignation?: string;
   eligibility?: string;
   eligibleDepartments?: string[];
   eligibleYears?: string[];
@@ -388,6 +444,11 @@ export interface EventItem {
     allowedRadiusMeters: number;
   };
   submissionRequirements: string[];
+  documents?: EventHostingDocument[];
+  adminReviewNotes?: string;
+  submittedAt?: string;
+  resubmissionCount?: number;
+  isAcknowledged?: boolean;
   isRegistered?: boolean;
   isSaved?: boolean;
   createdAt?: string;

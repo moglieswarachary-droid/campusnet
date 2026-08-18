@@ -1,13 +1,21 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { 
   Award, ShieldCheck, Code2, Globe, ExternalLink, 
-  BookOpen, FolderKanban, Star, QrCode, Sparkles, CheckCircle2 
+  BookOpen, FolderKanban, Star, QrCode, Sparkles, CheckCircle2,
+  Edit3
 } from 'lucide-react';
+import { 
+  LinkedinIcon, GithubIcon, TwitterIcon, LeetCodeIcon, InstagramIcon 
+} from '../common/SocialIcons';
 import { CertificateCard } from '../certificates/CertificateGenerator';
+import { StudentProfileEditModal } from './StudentProfileEditModal';
 
 export const StudentPortfolioView: React.FC = () => {
   const { currentUser, certificates, projects, publications, setActiveTab } = useApp();
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
+  const socialLinks = currentUser.socialLinks;
 
   return (
     <div className="py-8 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 animate-in fade-in">
@@ -42,17 +50,66 @@ export const StudentPortfolioView: React.FC = () => {
                 {currentUser.institution} • Enrollment ID: <span className="font-mono text-campus-slate-text">{currentUser.studentId}</span>
               </p>
 
-              <div className="flex items-center gap-3 pt-2">
-                {currentUser.github && (
-                  <a href={currentUser.github} target="_blank" rel="noreferrer" className="text-xs font-semibold text-campus-slate-text hover:text-campus-blue flex items-center gap-1">
-                    <Code2 className="w-4 h-4 text-campus-blue" /> GitHub
+              {/* Social Links Row */}
+              <div className="flex items-center gap-2 flex-wrap pt-2">
+                {socialLinks?.linkedin && (
+                  <a
+                    href={socialLinks.linkedin}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-xs font-semibold bg-blue-50 text-blue-700 hover:bg-blue-100 px-2.5 py-1 rounded-lg border border-blue-200 transition-colors"
+                  >
+                    <LinkedinIcon size={14} className="text-blue-700" /> LinkedIn
                   </a>
                 )}
-                {currentUser.linkedin && (
-                  <a href={currentUser.linkedin} target="_blank" rel="noreferrer" className="text-xs font-semibold text-campus-slate-text hover:text-campus-blue flex items-center gap-1">
-                    <Globe className="w-4 h-4 text-campus-blue" /> LinkedIn
+                {socialLinks?.github && (
+                  <a
+                    href={socialLinks.github}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-xs font-semibold bg-slate-100 text-slate-800 hover:bg-slate-200 px-2.5 py-1 rounded-lg border border-slate-200 transition-colors"
+                  >
+                    <GithubIcon size={14} className="text-slate-800" /> GitHub
                   </a>
                 )}
+                {socialLinks?.twitter && (
+                  <a
+                    href={socialLinks.twitter}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-xs font-semibold bg-sky-50 text-sky-600 hover:bg-sky-100 px-2.5 py-1 rounded-lg border border-sky-200 transition-colors"
+                  >
+                    <TwitterIcon size={14} className="text-sky-600" /> Twitter / X
+                  </a>
+                )}
+                {socialLinks?.leetcode && (
+                  <a
+                    href={socialLinks.leetcode}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-xs font-semibold bg-amber-50 text-amber-700 hover:bg-amber-100 px-2.5 py-1 rounded-lg border border-amber-200 transition-colors"
+                  >
+                    <LeetCodeIcon size={14} className="text-amber-700" /> LeetCode
+                  </a>
+                )}
+                {socialLinks?.instagram && (
+                  <a
+                    href={socialLinks.instagram}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-xs font-semibold bg-pink-50 text-pink-700 hover:bg-pink-100 px-2.5 py-1 rounded-lg border border-pink-200 transition-colors"
+                  >
+                    <InstagramIcon size={14} className="text-pink-700" /> Instagram
+                  </a>
+                )}
+
+                <button
+                  onClick={() => setIsEditModalOpen(true)}
+                  className="inline-flex items-center gap-1 text-xs font-bold text-campus-blue hover:text-campus-deep-blue bg-campus-soft-blue/70 hover:bg-campus-soft-blue px-2.5 py-1 rounded-lg border border-blue-200 transition-all cursor-pointer"
+                >
+                  <Edit3 className="w-3.5 h-3.5" />
+                  Edit Profile & Socials
+                </button>
               </div>
             </div>
           </div>
@@ -189,6 +246,11 @@ export const StudentPortfolioView: React.FC = () => {
         </div>
 
       </div>
+
+      <StudentProfileEditModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+      />
 
     </div>
   );

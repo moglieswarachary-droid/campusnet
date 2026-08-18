@@ -57,21 +57,7 @@ const MainContent: React.FC = () => {
   return (
     <main className="min-h-screen flex flex-col justify-between">
       <div>
-        {activeTab === 'home' && (
-          <>
-            <HeroSection />
-            <InstitutionsTicker />
-            <HackathonsSection />
-            <TeamMatchingSection />
-            <MentorMatchingSection />
-            <ProjectsExplorerSection />
-            <ResearchNetworkSection />
-            <StoriesSection />
-            <GovtChallengesSection />
-            <CampusAIPromotion />
-            <CTASection />
-          </>
-        )}
+        {activeTab === 'home' && <HeroSection />}
 
         {activeTab === 'discover' && <DiscoverEcosystemView />}
         {activeTab === 'projects' && <ProjectsEcosystemView />}

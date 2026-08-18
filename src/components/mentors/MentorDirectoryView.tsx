@@ -2,12 +2,16 @@ import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { 
   GraduationCap, Search, Star, ShieldCheck, 
-  MessageSquare, Sparkles, Filter, CheckCircle2, Building 
+  MessageSquare, Sparkles, Filter, CheckCircle2, Building,
+  BookOpen, ExternalLink, Code2 
 } from 'lucide-react';
+import { 
+  LinkedinIcon, GithubIcon, TwitterIcon, LeetCodeIcon, InstagramIcon 
+} from '../common/SocialIcons';
 import { Mentor } from '../../types';
 
 export const MentorDirectoryView: React.FC = () => {
-  const { mentors, sendMentorshipRequest, addToast, currentUser, setActiveTab } = useApp();
+  const { mentors, sendMentorshipRequest, addToast, currentUser, setActiveTab, setSelectedUserProfileModal } = useApp();
   
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDomain, setSelectedDomain] = useState('All');
@@ -113,77 +117,181 @@ export const MentorDirectoryView: React.FC = () => {
 
       {/* Mentors Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
-        {filteredMentors.map(mentor => (
-          <div
-            key={mentor.id}
-            className="bg-white rounded-3xl p-6 border border-campus-border shadow-warm-md hover:shadow-warm-lg transition-all duration-300 flex flex-col justify-between space-y-4"
-          >
-            <div className="space-y-3">
-              <div className="flex items-start gap-4">
-                <img
-                  src={mentor.avatar}
-                  alt={mentor.name}
-                  className="w-18 h-18 sm:w-20 sm:h-20 rounded-2xl object-cover ring-1 ring-campus-border flex-shrink-0"
-                />
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-bold text-base sm:text-lg text-campus-deep-blue">{mentor.name}</h3>
-                    <span className="campus-badge-mentor text-[10px] py-0.5 px-1.5">
-                      Verified
-                    </span>
-                  </div>
-                  
-                  <p className="text-xs text-campus-muted-text font-medium mt-0.5">{mentor.title}</p>
-                  <p className="text-xs font-semibold text-campus-blue mt-0.5">{mentor.institution}</p>
+        {filteredMentors.map(mentor => {
+          const social = mentor.socialLinks;
+          const vidwan = mentor.vidwan_profile_url;
 
-                  <div className="flex items-center gap-2 mt-2 text-xs">
-                    <span className="flex items-center gap-1 font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-md">
-                      <Star className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />
-                      {mentor.rating}
-                    </span>
-                    <span className="text-campus-muted-text font-semibold">
-                      {mentor.projectsGuided} Projects Guided
-                    </span>
+          return (
+            <div
+              key={mentor.id}
+              className="bg-white rounded-3xl p-6 border border-campus-border shadow-warm-md hover:shadow-warm-lg transition-all duration-300 flex flex-col justify-between space-y-4"
+            >
+              <div className="space-y-3">
+                <div className="flex items-start gap-4">
+                  <img
+                    src={mentor.avatar}
+                    alt={mentor.name}
+                    onClick={() => setSelectedUserProfileModal(mentor)}
+                    className="w-18 h-18 sm:w-20 sm:h-20 rounded-2xl object-cover ring-1 ring-campus-border flex-shrink-0 cursor-pointer hover:opacity-90 transition-opacity"
+                  />
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <h3 
+                        onClick={() => setSelectedUserProfileModal(mentor)}
+                        className="font-bold text-base sm:text-lg text-campus-deep-blue truncate hover:text-campus-blue cursor-pointer transition-colors"
+                      >
+                        {mentor.name}
+                      </h3>
+                      
+                      {mentor.isDemoData ? (
+                        <span className="text-[9px] font-bold bg-amber-100 text-amber-800 border border-amber-300 px-1.5 py-0.2 rounded-full">
+                          Demo Data / Seed Profile
+                        </span>
+                      ) : (
+                        <span className="campus-badge-mentor text-[10px] py-0.5 px-1.5">
+                          Verified
+                        </span>
+                      )}
+                    </div>
+                    
+                    <p className="text-xs text-campus-muted-text font-medium mt-0.5 truncate">{mentor.title}</p>
+                    <p className="text-xs font-semibold text-campus-blue mt-0.5 truncate">{mentor.institution}</p>
+
+                    <div className="flex items-center gap-2 mt-2 text-xs flex-wrap">
+                      <span className="flex items-center gap-1 font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-md">
+                        <Star className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />
+                        {mentor.rating}
+                      </span>
+                      {mentor.projectsGuided !== undefined && (
+                        <span className="text-campus-muted-text font-semibold">
+                          {mentor.projectsGuided} Projects Guided
+                        </span>
+                      )}
+                      {mentor.experience && (
+                        <span className="text-campus-slate-text font-semibold bg-slate-100 px-2 py-0.5 rounded">
+                          {mentor.experience}
+                        </span>
+                      )}
+                    </div>
                   </div>
+                </div>
+
+                {/* Compact Info Section */}
+                <div className="p-3 rounded-2xl bg-campus-warm-white/80 border border-campus-border text-xs space-y-1">
+                  {mentor.qualification && <div><strong>Qualification:</strong> {mentor.qualification}</div>}
+                  {mentor.specialization && <div><strong>Specialization:</strong> {mentor.specialization}</div>}
+                  {mentor.department && <div><strong>Department:</strong> {mentor.department}</div>}
+                </div>
+
+                {mentor.bio && (
+                  <p className="text-xs text-campus-slate-text/80 leading-relaxed line-clamp-2">
+                    {mentor.bio}
+                  </p>
+                )}
+
+                {/* Research Areas */}
+                {mentor.researchAreas && mentor.researchAreas.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    {mentor.researchAreas.map((r, i) => (
+                      <span key={i} className="text-[10.5px] font-semibold bg-campus-soft-blue text-campus-blue px-2.5 py-0.5 rounded-md">
+                        {r}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                {/* Social Links & Vidwan Button */}
+                <div className="flex items-center gap-1.5 flex-wrap pt-2 border-t border-campus-border/60">
+                  {social?.linkedin && (
+                    <a
+                      href={social.linkedin}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-1.5 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors"
+                      title="LinkedIn Profile"
+                    >
+                      <LinkedinIcon size={14} className="text-blue-700" />
+                    </a>
+                  )}
+                  {social?.github && (
+                    <a
+                      href={social.github}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-1.5 rounded-lg bg-slate-100 text-slate-800 hover:bg-slate-200 transition-colors"
+                      title="GitHub Profile"
+                    >
+                      <GithubIcon size={14} className="text-slate-800" />
+                    </a>
+                  )}
+                  {social?.twitter && (
+                    <a
+                      href={social.twitter}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-1.5 rounded-lg bg-sky-50 text-sky-600 hover:bg-sky-100 transition-colors"
+                      title="Twitter / X"
+                    >
+                      <TwitterIcon size={14} className="text-sky-600" />
+                    </a>
+                  )}
+                  {social?.leetcode && (
+                    <a
+                      href={social.leetcode}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-1.5 rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 transition-colors"
+                      title="LeetCode"
+                    >
+                      <LeetCodeIcon size={14} className="text-amber-700" />
+                    </a>
+                  )}
+                  {social?.instagram && (
+                    <a
+                      href={social.instagram}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-1.5 rounded-lg bg-pink-50 text-pink-700 hover:bg-pink-100 transition-colors"
+                      title="Instagram"
+                    >
+                      <InstagramIcon size={14} className="text-pink-700" />
+                    </a>
+                  )}
+
+                  {vidwan && (
+                    <a
+                      href={vidwan}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-[11px] font-bold bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 px-2.5 py-1 rounded-lg ml-auto transition-colors"
+                    >
+                      <BookOpen className="w-3 h-3 text-amber-700" />
+                      <span>Vidwan Profile</span>
+                      <ExternalLink className="w-2.5 h-2.5 opacity-70" />
+                    </a>
+                  )}
                 </div>
               </div>
 
-              <div className="p-3 rounded-2xl bg-campus-warm-white/80 border border-campus-border text-xs space-y-1">
-                <div><strong>Qualification:</strong> {mentor.qualification}</div>
-                <div><strong>Specialization:</strong> {mentor.specialization}</div>
+              <div className="pt-3 border-t border-campus-border flex items-center justify-between">
+                <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${
+                  mentor.availability === 'Available' ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'
+                }`}>
+                  ● {mentor.availability}
+                </span>
+
+                <button
+                  onClick={() => setRequestModalMentor(mentor)}
+                  className="campus-btn-red text-xs py-2 px-4 rounded-xl flex items-center gap-1.5"
+                >
+                  <MessageSquare className="w-3.5 h-3.5" />
+                  Request Mentorship
+                </button>
               </div>
 
-              <p className="text-xs text-campus-slate-text/80 leading-relaxed line-clamp-2">
-                {mentor.bio}
-              </p>
-
-              <div className="flex flex-wrap gap-1.5 pt-1">
-                {mentor.researchAreas.map((r, i) => (
-                  <span key={i} className="text-[10.5px] font-semibold bg-campus-soft-blue text-campus-blue px-2.5 py-0.5 rounded-md">
-                    {r}
-                  </span>
-                ))}
-              </div>
             </div>
-
-            <div className="pt-4 border-t border-campus-border flex items-center justify-between">
-              <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${
-                mentor.availability === 'Available' ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'
-              }`}>
-                ● {mentor.availability}
-              </span>
-
-              <button
-                onClick={() => setRequestModalMentor(mentor)}
-                className="campus-btn-red text-xs py-2 px-4 rounded-xl flex items-center gap-1.5"
-              >
-                <MessageSquare className="w-3.5 h-3.5" />
-                Request Mentorship
-              </button>
-            </div>
-
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Mentorship Request Modal */}
