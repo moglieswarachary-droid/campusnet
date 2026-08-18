@@ -1,5 +1,9 @@
 import React, { useEffect } from 'react';
 import { AppProvider, useApp } from './context/AppContext';
+import { PortalRouter } from './components/portal/PortalRouter';
+import { OrganizerApp } from './components/organizer/OrganizerApp';
+import { SuperAdminApp } from './components/admin/SuperAdminApp';
+
 import { Navbar } from './components/common/Navbar';
 import { MobileNav } from './components/common/MobileNav';
 import { Footer } from './components/common/Footer';
@@ -19,7 +23,8 @@ import { CampusAIPromotion } from './components/landing/CampusAIPromotion';
 import { CTASection } from './components/landing/CTASection';
 
 // Hub Views
-import { TeamFormationView } from './components/team/TeamFormationView';
+import { DiscoverEcosystemView } from './components/discovery/DiscoverEcosystemView';
+import { ProjectsEcosystemView } from './components/projects/ProjectsEcosystemView';
 import { WorkspaceView } from './components/team/WorkspaceView';
 import { MentorDirectoryView } from './components/mentors/MentorDirectoryView';
 import { EventsDirectoryView } from './components/events/EventsDirectoryView';
@@ -28,17 +33,21 @@ import { AskCampusView } from './components/community/AskCampusView';
 import { CampusStoriesView } from './components/community/CampusStoriesView';
 import { CertificateVerifyView } from './components/certificates/CertificateVerifyView';
 import { StudentDashboardView } from './components/dashboard/StudentDashboardView';
+import { MentorDashboardView } from './components/dashboard/MentorDashboardView';
+import { PhDScholarDashboardView } from './components/dashboard/PhDScholarDashboardView';
 import { StudentPortfolioView } from './components/dashboard/StudentPortfolioView';
-import { HiddenAdminPortal } from './components/admin/HiddenAdminPortal';
 
 // Modals & Overlays
+import { AuthPortalModal } from './components/auth/AuthPortalModal';
 import { StudentRegistrationModal } from './components/auth/StudentRegistrationModal';
 import { MentorOnboardingModal } from './components/auth/MentorOnboardingModal';
 import { VideoCallModal } from './components/workspace/VideoCallModal';
 import { CampusAIAssistant } from './components/ai/CampusAIAssistant';
+import { DirectMessagingModal } from './components/messaging/DirectMessagingModal';
+import { UserProfileModal } from './components/network/UserProfileModal';
 
 const MainContent: React.FC = () => {
-  const { activeTab } = useApp();
+  const { activeTab, activeRole } = useApp();
 
   // Scroll to top whenever tab changes
   useEffect(() => {
@@ -64,18 +73,26 @@ const MainContent: React.FC = () => {
           </>
         )}
 
-        {activeTab === 'discover' && <TeamFormationView />}
-        {activeTab === 'projects' && <TeamFormationView />}
+        {activeTab === 'discover' && <DiscoverEcosystemView />}
+        {activeTab === 'projects' && <ProjectsEcosystemView />}
         {activeTab === 'events' && <EventsDirectoryView />}
         {activeTab === 'mentors' && <MentorDirectoryView />}
         {activeTab === 'research' && <ResearchHubView />}
         {activeTab === 'workspace' && <WorkspaceView />}
-        {activeTab === 'dashboard' && <StudentDashboardView />}
+        
+        {/* Dynamic Role Dashboard Routing for Public Platform */}
+        {activeTab === 'dashboard' && (
+          <>
+            {activeRole === 'student' && <StudentDashboardView />}
+            {activeRole === 'mentor' && <MentorDashboardView />}
+            {activeRole === 'researcher' && <PhDScholarDashboardView />}
+          </>
+        )}
+
         {activeTab === 'portfolio' && <StudentPortfolioView />}
         {activeTab === 'certificates' && <CertificateVerifyView />}
         {activeTab === 'ask' && <AskCampusView />}
         {activeTab === 'stories' && <CampusStoriesView />}
-        {activeTab === 'admin' && <HiddenAdminPortal />}
       </div>
 
       <Footer />
@@ -83,21 +100,34 @@ const MainContent: React.FC = () => {
   );
 };
 
+const PublicCampusNetApp: React.FC = () => {
+  return (
+    <div className="min-h-screen flex flex-col bg-campus-warm-white text-campus-slate-text">
+      <Navbar />
+      <MainContent />
+      <MobileNav />
+
+      {/* Global Public Overlays & Modals */}
+      <ToastContainer />
+      <AuthPortalModal />
+      <StudentRegistrationModal />
+      <MentorOnboardingModal />
+      <VideoCallModal />
+      <CampusAIAssistant />
+      <DirectMessagingModal />
+      <UserProfileModal />
+    </div>
+  );
+};
+
 export function App() {
   return (
     <AppProvider>
-      <div className="min-h-screen flex flex-col bg-campus-warm-white text-campus-slate-text">
-        <Navbar />
-        <MainContent />
-        <MobileNav />
-
-        {/* Global Overlays & Modals */}
-        <ToastContainer />
-        <StudentRegistrationModal />
-        <MentorOnboardingModal />
-        <VideoCallModal />
-        <CampusAIAssistant />
-      </div>
+      <PortalRouter
+        publicApp={<PublicCampusNetApp />}
+        organizerApp={<OrganizerApp />}
+        adminApp={<SuperAdminApp />}
+      />
     </AppProvider>
   );
 }

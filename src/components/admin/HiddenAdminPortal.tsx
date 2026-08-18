@@ -38,7 +38,7 @@ export const HiddenAdminPortal: React.FC = () => {
             <span className="text-xs text-gray-300">National Platform Integrity</span>
           </div>
           <h1 className="text-xl sm:text-2xl font-extrabold text-white">
-            CampusLink Internal Governance Console
+            CampusNet Internal Governance Console
           </h1>
         </div>
 

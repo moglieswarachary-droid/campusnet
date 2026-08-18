@@ -96,7 +96,7 @@ export const OrganizerDashboardView: React.FC = () => {
 
                   <div className="text-right">
                     <span className="text-green-700 font-bold bg-green-100 px-2 py-0.5 rounded-full text-[10.5px]">
-                      GPS Verified ({Math.round(rec.distanceMeters)}m)
+                      GPS Verified ({Math.round(rec.distanceMeters || 0)}m)
                     </span>
                     <p className="text-[10px] text-campus-muted-text mt-0.5">{new Date(rec.timestamp).toLocaleTimeString()}</p>
                   </div>

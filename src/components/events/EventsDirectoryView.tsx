@@ -2,16 +2,23 @@ import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { 
   Calendar, MapPin, Users, Award, ShieldCheck, 
-  Search, Filter, CheckCircle2, ArrowRight, Camera, FileCheck 
+  Search, Filter, CheckCircle2, ArrowRight, Camera, 
+  FileCheck, Bookmark, BookmarkCheck, ExternalLink 
 } from 'lucide-react';
 import { EventItem } from '../../types';
 import { VerifiedAttendanceModal } from './VerifiedAttendanceModal';
 import { OrganizerDashboardView } from './OrganizerDashboardView';
+import { EventDetailModal } from './EventDetailModal';
+import { MOCK_INDIAN_STATES } from '../../data/mockData';
 
 export const EventsDirectoryView: React.FC = () => {
-  const { events, registerForEvent, currentUser, selectedEventId, setSelectedEventId } = useApp();
+  const { 
+    events, registerForEvent, currentUser, selectedEventModal, 
+    setSelectedEventModal, savedItemIds, toggleSaveItem 
+  } = useApp();
 
   const [selectedType, setSelectedType] = useState('All');
+  const [selectedState, setSelectedState] = useState('All India');
   const [searchQuery, setSearchQuery] = useState('');
   const [attendanceEventModal, setAttendanceEventModal] = useState<EventItem | null>(null);
 
@@ -19,12 +26,13 @@ export const EventsDirectoryView: React.FC = () => {
 
   const filteredEvents = events.filter(e => {
     const matchesType = selectedType === 'All' || e.eventType.toLowerCase().includes(selectedType.toLowerCase());
+    const matchesState = selectedState === 'All India' || e.state === selectedState;
     const matchesSearch = !searchQuery || 
       e.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
       e.organizer.toLowerCase().includes(searchQuery.toLowerCase()) ||
       e.tracks.some(t => t.toLowerCase().includes(searchQuery.toLowerCase()));
 
-    return matchesType && matchesSearch;
+    return matchesType && matchesState && matchesSearch;
   });
 
   const isOrganizer = currentUser.role === 'organizer';
@@ -46,7 +54,7 @@ export const EventsDirectoryView: React.FC = () => {
             Hackathons, Ideathons & Government Challenges
           </h1>
           <p className="text-xs sm:text-sm text-campus-muted-text mt-1">
-            Participate with verified 6-member teams, mark GPS-verified event attendance, and receive QR-verifiable digital certificates.
+            Participate with verified 6-member teams on CampusNet, mark GPS-verified event attendance, and receive QR-verifiable digital certificates.
           </p>
         </div>
 
@@ -63,19 +71,35 @@ export const EventsDirectoryView: React.FC = () => {
       )}
 
       {/* Filter & Search Bar */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-campus-border shadow-warm-sm">
-        <div className="relative flex-1">
-          <Search className="w-4 h-4 text-campus-muted-text absolute left-3.5 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-            placeholder="Search by event title, nodal center, or track..."
-            className="w-full pl-10 pr-4 py-2 text-xs sm:text-sm bg-campus-warm-white rounded-xl border border-campus-border focus:border-campus-blue outline-none"
-          />
+      <div className="bg-white p-4 rounded-2xl border border-campus-border shadow-warm-sm space-y-3">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          
+          <div className="relative md:col-span-2">
+            <Search className="w-4 h-4 text-campus-muted-text absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              placeholder="Search by event title, nodal center, or track..."
+              className="w-full pl-10 pr-4 py-2 text-xs sm:text-sm bg-campus-warm-white rounded-xl border border-campus-border focus:border-campus-blue outline-none"
+            />
+          </div>
+
+          <div>
+            <select
+              value={selectedState}
+              onChange={e => setSelectedState(e.target.value)}
+              className="w-full px-3 py-2 text-xs sm:text-sm bg-campus-warm-white rounded-xl border border-campus-border focus:border-campus-blue outline-none font-medium"
+            >
+              {MOCK_INDIAN_STATES.map(st => (
+                <option key={st} value={st}>{st}</option>
+              ))}
+            </select>
+          </div>
+
         </div>
 
-        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pt-1">
           {eventTypes.map(type => (
             <button
               key={type}
@@ -93,18 +117,19 @@ export const EventsDirectoryView: React.FC = () => {
       </div>
 
       {/* Events Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {filteredEvents.map(event => (
           <div
             key={event.id}
-            className="bg-white rounded-3xl border border-campus-border shadow-warm-md hover:shadow-warm-lg transition-all duration-300 flex flex-col justify-between overflow-hidden"
+            onClick={() => setSelectedEventModal(event)}
+            className="bg-white rounded-3xl border border-campus-border shadow-warm-md hover:shadow-warm-lg transition-all duration-300 flex flex-col justify-between overflow-hidden cursor-pointer group"
           >
             {/* Banner */}
             <div className="h-48 relative overflow-hidden bg-campus-deep-blue">
               <img
                 src={event.bannerUrl}
                 alt={event.title}
-                className="w-full h-full object-cover opacity-85"
+                className="w-full h-full object-cover opacity-85 group-hover:scale-105 transition-transform duration-500"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
 
@@ -130,7 +155,7 @@ export const EventsDirectoryView: React.FC = () => {
             {/* Content Details */}
             <div className="p-6 space-y-4 flex-1 flex flex-col justify-between">
               <div className="space-y-3">
-                <p className="text-xs text-campus-slate-text/80 leading-relaxed line-clamp-3">
+                <p className="text-xs text-campus-slate-text/80 leading-relaxed line-clamp-2">
                   {event.description}
                 </p>
 
@@ -179,7 +204,10 @@ export const EventsDirectoryView: React.FC = () => {
                     </div>
 
                     <button
-                      onClick={() => setAttendanceEventModal(event)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setAttendanceEventModal(event);
+                      }}
                       className="w-full campus-btn-red text-xs py-2.5 rounded-xl shadow-glow-red flex items-center justify-center gap-1.5"
                     >
                       <Camera className="w-4 h-4" />
@@ -187,12 +215,30 @@ export const EventsDirectoryView: React.FC = () => {
                     </button>
                   </div>
                 ) : (
-                  <button
-                    onClick={() => registerForEvent(event.id)}
-                    className="w-full campus-btn-primary text-xs py-2.5 rounded-xl"
-                  >
-                    Register 6-Member Team
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedEventModal(event);
+                      }}
+                      className="flex-1 campus-btn-primary text-xs py-2.5 rounded-xl font-bold"
+                    >
+                      View Details & Register
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleSaveItem(event.id);
+                      }}
+                      className="p-2.5 rounded-xl border border-campus-border hover:bg-campus-warm-white text-campus-muted-text"
+                    >
+                      {savedItemIds.includes(event.id) ? (
+                        <BookmarkCheck className="w-4 h-4 text-campus-blue" />
+                      ) : (
+                        <Bookmark className="w-4 h-4" />
+                      )}
+                    </button>
+                  </div>
                 )}
               </div>
 
@@ -201,6 +247,14 @@ export const EventsDirectoryView: React.FC = () => {
           </div>
         ))}
       </div>
+
+      {/* Event Detail Modal */}
+      {selectedEventModal && (
+        <EventDetailModal
+          event={selectedEventModal}
+          onClose={() => setSelectedEventModal(null)}
+        />
+      )}
 
       {/* Attendance Modal */}
       {attendanceEventModal && (

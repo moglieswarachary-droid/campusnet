@@ -100,7 +100,7 @@ export const StudentRegistrationModal: React.FC = () => {
     setAuthModalType('none');
     addToast({
       type: 'success',
-      title: 'Welcome to CampusLink! 🎉',
+      title: 'Welcome to CampusNet! 🎉',
       message: `${fullName} is now registered with Verified Student credential.`
     });
   };

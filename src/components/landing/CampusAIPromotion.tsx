@@ -23,7 +23,7 @@ export const CampusAIPromotion: React.FC = () => {
               </h2>
 
               <p className="text-sm sm:text-base text-campus-slate-text/80 leading-relaxed">
-                Need to find a Mechanical student with ANSYS simulation skills from VJTI? Or a verified mentor specializing in edge computer vision? Ask Campus AI to search authorized CampusLink databases while respecting privacy.
+                Need to find a Mechanical student with ANSYS simulation skills from VJTI? Or a verified mentor specializing in edge computer vision? Ask Campus AI to search authorized CampusNet databases while respecting privacy.
               </p>
 
               <div className="space-y-2.5 text-xs text-campus-slate-text">

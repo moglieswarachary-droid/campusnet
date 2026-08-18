@@ -16,7 +16,7 @@ export const CTASection: React.FC = () => {
 
         <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-campus-deep-blue tracking-tight">
           Join Over 50,000+ Students, Mentors <br className="hidden sm:block" />
-          and Researchers on CampusLink.
+          and Researchers on CampusNet.
         </h2>
 
         <p className="text-base sm:text-lg text-campus-slate-text/80 max-w-2xl mx-auto leading-relaxed">

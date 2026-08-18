@@ -144,7 +144,7 @@ export const VerifiedAttendanceModal: React.FC<{ event: EventItem; onClose: () =
                 Physical Geo-Fencing Verification
               </div>
               <p>
-                CampusLink checks your device's one-time GPS coordinates against the organizer's designated nodal center (within {event.attendanceWindow.allowedRadiusMeters} meters). Continuous tracking is never enabled.
+                CampusNet checks your device's one-time GPS coordinates against the organizer's designated nodal center (within {event.attendanceWindow.allowedRadiusMeters} meters). Continuous tracking is never enabled.
               </p>
             </div>
 

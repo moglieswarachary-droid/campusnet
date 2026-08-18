@@ -3,13 +3,23 @@ import {
   User, Mentor, Researcher, Team, Project, EventItem, 
   AttendanceRecord, Certificate, ResearchPublication, CampusStory, 
   AskQuestion, NotificationItem, MentorshipRequest, TeamChatMessage, 
-  MentorGuidanceItem, RoleType, ProjectTask, ProjectMilestone 
+  MentorGuidanceItem, RoleType, ProjectTask, ProjectMilestone, 
+  MentorshipCertificate, DirectMessage, ConnectionRequest, InstitutionInfo, 
+  ResearchConference, OrganizerAccount, SuperAdminAccount, EventRegistrationItem, 
+  QRCheckInRecord, EventProjectSubmission, EvaluationCriterion, JudgeAccount, 
+  JudgeAssignment, EvaluationScore, EventWinnerRecord, CertificateTemplate, 
+  EventAnnouncement, AuditLogEntry, EventStatus 
 } from '../types';
 import { 
   INITIAL_CURRENT_USER, MOCK_STUDENTS, MOCK_MENTORS, 
   MOCK_RESEARCHERS, MOCK_TEAMS, MOCK_PROJECTS, MOCK_EVENTS, 
-  MOCK_CERTIFICATES, MOCK_PUBLICATIONS, MOCK_STORIES, 
-  MOCK_ASK_QUESTIONS, MOCK_NOTIFICATIONS 
+  MOCK_CERTIFICATES, MOCK_MENTORSHIP_CERTIFICATES, MOCK_PUBLICATIONS, 
+  MOCK_STORIES, MOCK_QUESTIONS, MOCK_NOTIFICATIONS, 
+  MOCK_DIRECT_MESSAGES, MOCK_INSTITUTIONS_DATA, MOCK_RESEARCH_CONFERENCES,
+  MOCK_ORGANIZER_ACCOUNTS, MOCK_SUPER_ADMIN_ACCOUNT, MOCK_EVENT_REGISTRATIONS,
+  MOCK_QR_CHECKINS, MOCK_PROJECT_SUBMISSIONS, MOCK_EVALUATION_CRITERIA,
+  MOCK_JUDGES, MOCK_EVALUATION_SCORES, MOCK_EVENT_WINNERS,
+  MOCK_CERTIFICATE_TEMPLATES, MOCK_EVENT_ANNOUNCEMENTS, MOCK_AUDIT_LOGS
 } from '../data/mockData';
 
 export type NavigationTab = 
@@ -48,6 +58,7 @@ export interface VideoMeetingState {
 }
 
 interface AppContextType {
+  // Public user state
   currentUser: User;
   setCurrentUser: React.Dispatch<React.SetStateAction<User>>;
   activeRole: RoleType;
@@ -61,7 +72,7 @@ interface AppContextType {
   selectedMentorId: string | null;
   setSelectedMentorId: (id: string | null) => void;
   
-  // Data entities
+  // Public Entities
   students: User[];
   mentors: Mentor[];
   researchers: Researcher[];
@@ -69,18 +80,112 @@ interface AppContextType {
   projects: Project[];
   events: EventItem[];
   certificates: Certificate[];
+  mentorshipCertificates: MentorshipCertificate[];
   publications: ResearchPublication[];
+  conferences: ResearchConference[];
+  institutions: InstitutionInfo[];
   stories: CampusStory[];
   askQuestions: AskQuestion[];
   notifications: NotificationItem[];
   mentorshipRequests: MentorshipRequest[];
   attendanceRecords: AttendanceRecord[];
+  directMessages: DirectMessage[];
+  connectionRequests: ConnectionRequest[];
+  
+  // Organizer Portal State & Methods
+  currentOrganizer: OrganizerAccount | null;
+  organizers: OrganizerAccount[];
+  organizerLogin: (emailOrId: string, password?: string) => boolean;
+  organizerLogout: () => void;
+  updateOrganizerProfile: (data: Partial<OrganizerAccount>) => void;
+  
+  // Super Admin Portal State & Methods
+  currentSuperAdmin: SuperAdminAccount | null;
+  superAdminLogin: (usernameOrEmail: string, password?: string) => boolean;
+  superAdminLogout: () => void;
+  
+  // Event Lifecycle & Management
+  createOrganizerEvent: (data: Partial<EventItem>) => EventItem;
+  updateOrganizerEvent: (eventId: string, data: Partial<EventItem>) => void;
+  submitEventForApproval: (eventId: string) => void;
+  approveEvent: (eventId: string, comments?: string) => void;
+  rejectEvent: (eventId: string, comments: string) => void;
+  publishEvent: (eventId: string) => void;
+  updateEventStatus: (eventId: string, status: EventStatus) => void;
+  duplicateEvent: (eventId: string) => EventItem;
+  
+  // Participant & Registration Management
+  eventRegistrations: EventRegistrationItem[];
+  updateRegistrationStatus: (regId: string, status: 'confirmed' | 'waitlisted' | 'cancelled') => void;
+  markAttendanceQR: (eventId: string, registrationId: string, method?: 'qr_scan' | 'manual_override') => boolean;
+  manualAttendanceOverride: (eventId: string, registrationId: string, notes?: string) => boolean;
+  qrCheckInRecords: QRCheckInRecord[];
+  
+  // Submissions, Criteria & Judging
+  projectSubmissions: EventProjectSubmission[];
+  submitProjectSubmission: (submission: Partial<EventProjectSubmission>) => void;
+  evaluationCriteria: EvaluationCriterion[];
+  addEvaluationCriterion: (criterion: Omit<EvaluationCriterion, 'id'>) => void;
+  deleteEvaluationCriterion: (criterionId: string) => void;
+  judges: JudgeAccount[];
+  addJudgeAccount: (judge: Omit<JudgeAccount, 'id' | 'accessKey'> & { accessKey?: string }) => JudgeAccount;
+  assignJudgeToSubmission: (judgeId: string, submissionId: string) => void;
+  evaluationScores: EvaluationScore[];
+  submitJudgeScore: (scoreData: Omit<EvaluationScore, 'id' | 'submittedAt'>) => void;
+  eventWinners: EventWinnerRecord[];
+  finalizeEventWinners: (eventId: string, winners: Omit<EventWinnerRecord, 'id' | 'certificateGenerated'>[]) => void;
+  
+  // Certificate Management Center
+  certificateTemplates: CertificateTemplate[];
+  createCertificateTemplate: (template: Omit<CertificateTemplate, 'id'>) => CertificateTemplate;
+  updateCertificateTemplate: (templateId: string, data: Partial<CertificateTemplate>) => void;
+  generateEventCertificateSingle: (regId: string, role: Certificate['recipientRole'], achievement?: string) => Certificate;
+  generateEventCertificatesBulk: (eventId: string, category: Certificate['recipientRole']) => Certificate[];
+  revokeCertificate: (certificateNumber: string, reason: string) => boolean;
+  
+  // Announcements & Reports
+  eventAnnouncements: EventAnnouncement[];
+  createEventAnnouncement: (announcement: Omit<EventAnnouncement, 'id' | 'createdAt'>) => void;
+  
+  // Super Admin Moderation & Audit Logs
+  auditLogs: AuditLogEntry[];
+  logAuditAction: (action: string, targetType: AuditLogEntry['targetType'], targetId: string, targetName: string, details: string) => void;
+  verifyInstitution: (instId: string) => void;
+  suspendInstitution: (instId: string) => void;
+  suspendUser: (userId: string) => void;
+  reactivateUser: (userId: string) => void;
+  verifyUser: (userId: string) => void;
+
+  // Modals & Active Selections
+  selectedEventModal: EventItem | null;
+  setSelectedEventModal: (event: EventItem | null) => void;
+  selectedUserProfileModal: User | Mentor | Researcher | null;
+  setSelectedUserProfileModal: (user: User | Mentor | Researcher | null) => void;
+  isDirectMessagingOpen: boolean;
+  setIsDirectMessagingOpen: (open: boolean) => void;
+  activeMessagingPartner: User | Mentor | Researcher | null;
+  setActiveMessagingPartner: (partner: User | Mentor | Researcher | null) => void;
+  
+  // Saved / Bookmarked Items
+  savedItemIds: string[];
+  toggleSaveItem: (id: string) => void;
+  
+  // Global India Location Filters
+  filterState: string;
+  setFilterState: (state: string) => void;
+  filterCity: string;
+  setFilterCity: (city: string) => void;
   
   // Team chat & guidance
   chatMessages: TeamChatMessage[];
   sendChatMessage: (teamId: string, text: string, fileAttachment?: { name: string; size: string; type: string }) => void;
   mentorGuidance: MentorGuidanceItem[];
   addMentorGuidance: (item: Omit<MentorGuidanceItem, 'id' | 'timestamp'>) => void;
+  
+  // Direct Messaging
+  sendDirectMessage: (receiverId: string, receiverName: string, text: string) => void;
+  sendConnectionRequest: (receiverId: string, note?: string) => void;
+  acceptConnectionRequest: (requestId: string) => void;
   
   // Project & Team Actions
   createProject: (projectData: Partial<Project>) => Project;
@@ -93,6 +198,7 @@ interface AppContextType {
   // Mentor Actions
   sendMentorshipRequest: (req: Omit<MentorshipRequest, 'id' | 'createdAt' | 'status'>) => void;
   respondToMentorshipRequest: (requestId: string, action: 'accepted' | 'declined' | 'info_requested', message?: string) => void;
+  completeMentorshipAndIssueCertificate: (teamId: string, mentorContribution: string, projectOutcome: string) => MentorshipCertificate | null;
   
   // Event & Attendance Actions
   registerForEvent: (eventId: string, teamId?: string) => void;
@@ -121,22 +227,24 @@ interface AppContextType {
   removeToast: (id: string) => void;
   isAIModalOpen: boolean;
   setIsAIModalOpen: (open: boolean) => void;
-  authModalType: 'none' | 'login' | 'student_register' | 'mentor_onboarding';
-  setAuthModalType: (type: 'none' | 'login' | 'student_register' | 'mentor_onboarding') => void;
+  authModalType: 'none' | 'login' | 'student_register' | 'mentor_onboarding' | 'scholar_register';
+  setAuthModalType: (type: 'none' | 'login' | 'student_register' | 'mentor_onboarding' | 'scholar_register') => void;
   
   // Universal Search
   searchQuery: string;
   setSearchQuery: (query: string) => void;
   
-  // Admin Verification Action
+  // Admin & Verification Actions
   verifyStudentManually: (studentId: string) => void;
+  verifyMentorManually: (mentorId: string) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  // Public User
   const [currentUser, setCurrentUser] = useState<User>(() => {
-    const saved = localStorage.getItem('campuslink_user');
+    const saved = localStorage.getItem('campusnet_user');
     return saved ? JSON.parse(saved) : INITIAL_CURRENT_USER;
   });
   
@@ -146,103 +254,114 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>('proj-001');
   const [selectedMentorId, setSelectedMentorId] = useState<string | null>(null);
   
+  // Core Entities
   const [students, setStudents] = useState<User[]>(MOCK_STUDENTS);
-  const [mentors] = useState<Mentor[]>(MOCK_MENTORS);
-  const [researchers] = useState<Researcher[]>(MOCK_RESEARCHERS);
+  const [mentors, setMentors] = useState<Mentor[]>(MOCK_MENTORS);
+  const [researchers, setResearchers] = useState<Researcher[]>(MOCK_RESEARCHERS);
   const [teams, setTeams] = useState<Team[]>(MOCK_TEAMS);
   const [projects, setProjects] = useState<Project[]>(MOCK_PROJECTS);
   const [events, setEvents] = useState<EventItem[]>(MOCK_EVENTS);
   const [certificates, setCertificates] = useState<Certificate[]>(MOCK_CERTIFICATES);
+  const [mentorshipCertificates, setMentorshipCertificates] = useState<MentorshipCertificate[]>(MOCK_MENTORSHIP_CERTIFICATES);
   const [publications] = useState<ResearchPublication[]>(MOCK_PUBLICATIONS);
+  const [conferences] = useState<ResearchConference[]>(MOCK_RESEARCH_CONFERENCES);
+  const [institutions, setInstitutions] = useState<InstitutionInfo[]>(MOCK_INSTITUTIONS_DATA);
   const [stories, setStories] = useState<CampusStory[]>(MOCK_STORIES);
-  const [askQuestions, setAskQuestions] = useState<AskQuestion[]>(MOCK_ASK_QUESTIONS);
+  const [askQuestions, setAskQuestions] = useState<AskQuestion[]>(MOCK_QUESTIONS);
   const [notifications, setNotifications] = useState<NotificationItem[]>(MOCK_NOTIFICATIONS);
+  const [directMessages, setDirectMessages] = useState<DirectMessage[]>(MOCK_DIRECT_MESSAGES);
+  const [mentorshipRequests, setMentorshipRequests] = useState<MentorshipRequest[]>([]);
   
-  const [mentorshipRequests, setMentorshipRequests] = useState<MentorshipRequest[]>([
+  // Organizer Portal State
+  const [organizers, setOrganizers] = useState<OrganizerAccount[]>(MOCK_ORGANIZER_ACCOUNTS);
+  const [currentOrganizer, setCurrentOrganizer] = useState<OrganizerAccount | null>(() => {
+    const saved = localStorage.getItem('campusnet_organizer_session');
+    return saved ? JSON.parse(saved) : MOCK_ORGANIZER_ACCOUNTS[0]; // Seeded default KEC
+  });
+  
+  // Super Admin Portal State
+  const [currentSuperAdmin, setCurrentSuperAdmin] = useState<SuperAdminAccount | null>(() => {
+    const saved = localStorage.getItem('campusnet_admin_session');
+    return saved ? JSON.parse(saved) : MOCK_SUPER_ADMIN_ACCOUNT;
+  });
+  
+  // Event Operations & Lifecycle State
+  const [eventRegistrations, setEventRegistrations] = useState<EventRegistrationItem[]>(MOCK_EVENT_REGISTRATIONS);
+  const [qrCheckInRecords, setQrCheckInRecords] = useState<QRCheckInRecord[]>(MOCK_QR_CHECKINS);
+  const [projectSubmissions, setProjectSubmissions] = useState<EventProjectSubmission[]>(MOCK_PROJECT_SUBMISSIONS);
+  const [evaluationCriteria, setEvaluationCriteria] = useState<EvaluationCriterion[]>(MOCK_EVALUATION_CRITERIA);
+  const [judges, setJudges] = useState<JudgeAccount[]>(MOCK_JUDGES);
+  const [evaluationScores, setEvaluationScores] = useState<EvaluationScore[]>(MOCK_EVALUATION_SCORES);
+  const [eventWinners, setEventWinners] = useState<EventWinnerRecord[]>(MOCK_EVENT_WINNERS);
+  const [certificateTemplates, setCertificateTemplates] = useState<CertificateTemplate[]>(MOCK_CERTIFICATE_TEMPLATES);
+  const [eventAnnouncements, setEventAnnouncements] = useState<EventAnnouncement[]>(MOCK_EVENT_ANNOUNCEMENTS);
+  const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>(MOCK_AUDIT_LOGS);
+
+  const [connectionRequests, setConnectionRequests] = useState<ConnectionRequest[]>([
     {
-      id: 'req-001',
-      teamId: 'team-agro-001',
-      teamName: 'AgriVision Autonomous AI',
-      projectTitle: 'AgriVision AI — Edge Drone Crop Diagnostics & Swarm Spraying',
-      domain: 'Agriculture & IoT',
-      mentorId: 'mnt-001',
-      mentorName: 'Dr. Arvind Rao',
-      requestedBy: 'Aarav Sharma',
-      status: 'accepted',
-      message: 'Respected Dr. Rao, our 6-member interdisciplinary team is preparing for SIH 2026. We need your guidance on TensorRT INT8 quantization and ROS2 autonomous navigation on micro-UAVs.',
-      matchScore: 96,
-      matchBreakdown: {
-        domainScore: 38, // out of 40
-        techScore: 29,   // out of 30
-        researchScore: 19, // out of 20
-        availabilityScore: 10 // out of 10
-      },
-      createdAt: '2026-02-11T10:00:00Z'
+      id: 'conn-req-1',
+      senderId: 'usr-std-005',
+      senderName: 'Rohan Sen',
+      senderAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
+      senderRole: 'student',
+      senderInstitution: 'IIT Bombay',
+      senderDepartment: 'Computer Science',
+      receiverId: 'usr-std-001',
+      status: 'pending',
+      note: 'Hey Aarav! Working on decentralized edge clusters at IITB. Would love to connect and share telemetry pipeline ideas.',
+      timestamp: '1 day ago'
     }
   ]);
   
-  const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
+  // Modals & Overlays
+  const [selectedEventModal, setSelectedEventModal] = useState<EventItem | null>(null);
+  const [selectedUserProfileModal, setSelectedUserProfileModal] = useState<User | Mentor | Researcher | null>(null);
+  const [isDirectMessagingOpen, setIsDirectMessagingOpen] = useState<boolean>(false);
+  const [activeMessagingPartner, setActiveMessagingPartner] = useState<User | Mentor | Researcher | null>(null);
   
+  // Saved Items & Filters
+  const [savedItemIds, setSavedItemIds] = useState<string[]>(['ev-001', 'proj-001']);
+  const [filterState, setFilterState] = useState<string>('All India');
+  const [filterCity, setFilterCity] = useState<string>('All Cities');
+  
+  // Chat & Guidance
   const [chatMessages, setChatMessages] = useState<TeamChatMessage[]>([
     {
       id: 'msg-1',
-      teamId: 'team-agro-001',
-      senderId: 'usr-std-001',
-      senderName: 'Aarav Sharma',
-      senderAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-      senderRole: 'student',
-      text: 'Good morning team! @Pooja have you verified the LoRaWAN payload packet schema with the gateway?',
-      timestamp: '09:15 AM'
-    },
-    {
-      id: 'msg-2',
-      teamId: 'team-agro-001',
-      senderId: 'usr-std-002',
-      senderName: 'Pooja Iyer',
-      senderAvatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80',
-      senderRole: 'student',
-      text: 'Yes Aarav! 16-byte packed struct is now transmitting at 868 MHz without collision. RSSI is -84 dBm over 1.8km.',
-      timestamp: '09:22 AM'
-    },
-    {
-      id: 'msg-3',
-      teamId: 'team-agro-001',
+      teamId: 'team-001',
       senderId: 'mnt-001',
-      senderName: 'Dr. Arvind Rao (Mentor)',
+      senderName: 'Dr. Arvind Rao',
       senderAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
       senderRole: 'mentor',
-      text: 'Excellent progress. I have reviewed Milestone 3. Your TensorRT engine graphs look solid. Lets schedule a quick private video review today at 4:30 PM.',
-      timestamp: '09:45 AM'
+      text: 'Good job on the YOLOv11 TensorRT layer quantization. Please remember to attach the FMEA motor cut-off safety schematic before the hardware inspection round.',
+      timestamp: '10:45 AM'
     }
   ]);
-  
+
   const [mentorGuidance, setMentorGuidance] = useState<MentorGuidanceItem[]>([
     {
-      id: 'mg-1',
-      teamId: 'team-agro-001',
+      id: 'gd-1',
+      teamId: 'team-001',
       mentorId: 'mnt-001',
-      mentorName: 'Dr. Arvind Rao',
-      type: 'approval',
-      title: 'Milestone #3 Approved: Edge TensorRT Calibration',
-      content: 'The inference metrics (23.8ms per 1080p frame) meet edge real-time criteria. Ensure emergency motor cut-off safety interlocks are triggered whenever confidence drops below 60%.',
-      timestamp: '2 hours ago',
-      actionRequired: false
-    },
-    {
-      id: 'mg-2',
-      teamId: 'team-agro-001',
-      mentorId: 'mnt-001',
-      mentorName: 'Dr. Arvind Rao',
-      type: 'task',
-      title: 'Prepare Failure Modes & Effects Analysis (FMEA) Table',
-      content: 'For the SIH Grand Finale, the jury will evaluate sensor disconnection fallbacks. Document what happens if the LoRa telemetry drops during an active flight.',
-      timestamp: '1 day ago',
-      links: ['https://campuslink.network/resources/fmea-template.pdf'],
+      mentorName: 'Dr. Arvind Rao (IIT Bombay)',
+      type: 'feedback',
+      title: 'FMEA Safety Directive for Autonomous Orchard Spraying',
+      content: 'Ensure your custom ESP32 LoRa telemetry board includes a hardware watchdog timer and secondary mechanical emergency stop switch before live orchard deployment.',
+      timestamp: '2 days ago',
+      links: ['https://campusnet.network/docs/fmea-uav-standard.pdf'],
       actionRequired: true
     }
   ]);
-  
-  // Video Meeting State
+
+  const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
+
+  // UI state
+  const [toasts, setToasts] = useState<ToastMessage[]>([]);
+  const [isAIModalOpen, setIsAIModalOpen] = useState(false);
+  const [authModalType, setAuthModalType] = useState<'none' | 'login' | 'student_register' | 'mentor_onboarding' | 'scholar_register'>('none');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Video Meeting
   const [videoMeeting, setVideoMeeting] = useState<VideoMeetingState>({
     isActive: false,
     meetingId: '',
@@ -254,227 +373,921 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     connectionQuality: 'excellent',
     participants: []
   });
-  
-  // UI Modals & Toasts
-  const [toasts, setToasts] = useState<ToastMessage[]>([]);
-  const [isAIModalOpen, setIsAIModalOpen] = useState(false);
-  const [authModalType, setAuthModalType] = useState<'none' | 'login' | 'student_register' | 'mentor_onboarding'>('none');
-  const [searchQuery, setSearchQuery] = useState('');
-
-  // Persist user in local storage
-  useEffect(() => {
-    localStorage.setItem('campuslink_user', JSON.stringify(currentUser));
-  }, [currentUser]);
 
   const addToast = (toast: Omit<ToastMessage, 'id'>) => {
-    const id = 'toast-' + Date.now();
+    const id = `toast-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
     setToasts(prev => [...prev, { ...toast, id }]);
     setTimeout(() => {
       removeToast(id);
-    }, 4000);
+    }, 4500);
   };
 
   const removeToast = (id: string) => {
     setToasts(prev => prev.filter(t => t.id !== id));
   };
 
+  const logAuditAction = (
+    action: string, 
+    targetType: AuditLogEntry['targetType'], 
+    targetId: string, 
+    targetName: string, 
+    details: string
+  ) => {
+    const newLog: AuditLogEntry = {
+      id: `aud-${Date.now()}`,
+      actorId: currentSuperAdmin?.id || currentOrganizer?.id || currentUser.id,
+      actorName: currentSuperAdmin?.name || currentOrganizer?.coordinatorName || currentUser.name,
+      actorRole: currentSuperAdmin ? 'super_admin' : currentOrganizer ? 'institution_admin' : currentUser.role,
+      action,
+      targetType,
+      targetId,
+      targetName,
+      timestamp: new Date().toISOString(),
+      details
+    };
+    setAuditLogs(prev => [newLog, ...prev]);
+  };
+
   const switchRole = (role: RoleType) => {
     setActiveRole(role);
     if (role === 'student') {
-      setCurrentUser(INITIAL_CURRENT_USER);
-      setActiveTab('dashboard');
+      setCurrentUser(MOCK_STUDENTS[0]);
     } else if (role === 'mentor') {
       setCurrentUser({
-        ...INITIAL_CURRENT_USER,
-        id: 'mnt-001',
-        name: 'Dr. Arvind Rao',
-        email: 'arvind.rao@iitb.ac.in',
+        ...MOCK_STUDENTS[0],
+        id: MOCK_MENTORS[0].id,
+        name: MOCK_MENTORS[0].name,
+        email: MOCK_MENTORS[0].email,
+        institution: MOCK_MENTORS[0].institution,
         role: 'mentor',
-        institution: 'IIT Bombay'
+        avatar: MOCK_MENTORS[0].avatar
       });
-      setActiveTab('mentors');
     } else if (role === 'researcher') {
       setCurrentUser({
-        ...INITIAL_CURRENT_USER,
-        id: 'res-001',
-        name: 'Kavya Ramanathan (PhD)',
-        email: 'kavya.r@iisc.ac.in',
+        ...MOCK_STUDENTS[0],
+        id: MOCK_RESEARCHERS[0].id,
+        name: MOCK_RESEARCHERS[0].name,
+        email: MOCK_RESEARCHERS[0].email,
+        institution: MOCK_RESEARCHERS[0].university,
         role: 'researcher',
-        institution: 'IISc Bangalore'
+        avatar: MOCK_RESEARCHERS[0].avatar
       });
-      setActiveTab('research');
-    } else if (role === 'organizer') {
-      setCurrentUser({
-        ...INITIAL_CURRENT_USER,
-        id: 'org-001',
-        name: 'Prof. S. R. Nodal Officer (AICTE)',
-        email: 'organizer@sih.gov.in',
-        role: 'organizer',
-        institution: 'AICTE / Ministry of Education'
-      });
-      setActiveTab('events');
-    } else if (role === 'superadmin') {
-      setCurrentUser({
-        ...INITIAL_CURRENT_USER,
-        id: 'adm-001',
-        name: 'System Security Lead',
-        email: 'sec-ops@campuslink.internal',
-        role: 'superadmin',
-        institution: 'National Innovation Coordination Center'
-      });
-      setActiveTab('admin');
     }
+  };
+
+  // --- ORGANIZER AUTHENTICATION ---
+  const organizerLogin = (emailOrId: string, password?: string): boolean => {
+    const lower = emailOrId.toLowerCase().trim();
+    const found = organizers.find(
+      o => o.officialEmail.toLowerCase() === lower || o.id.toLowerCase() === lower || o.institutionId.toLowerCase() === lower
+    );
+
+    if (found) {
+      setCurrentOrganizer(found);
+      localStorage.setItem('campusnet_organizer_session', JSON.stringify(found));
+      logAuditAction('ORGANIZER_LOGIN', 'institution', found.id, found.institutionName, 'Successful organizer login');
+      addToast({
+        type: 'success',
+        title: 'Institution Login Successful',
+        message: `Welcome, ${found.coordinatorName} (${found.institutionName})`
+      });
+      return true;
+    }
+
+    addToast({
+      type: 'error',
+      title: 'Authentication Failed',
+      message: 'Invalid institutional credentials or verification pending.'
+    });
+    return false;
+  };
+
+  const organizerLogout = () => {
+    if (currentOrganizer) {
+      logAuditAction('ORGANIZER_LOGOUT', 'institution', currentOrganizer.id, currentOrganizer.institutionName, 'Organizer session ended');
+    }
+    setCurrentOrganizer(null);
+    localStorage.removeItem('campusnet_organizer_session');
     addToast({
       type: 'info',
-      title: 'Role Switched',
-      message: `Active view switched to ${role.toUpperCase()}`
+      title: 'Logged Out',
+      message: 'Organizer session securely terminated.'
+    });
+  };
+
+  const updateOrganizerProfile = (data: Partial<OrganizerAccount>) => {
+    if (!currentOrganizer) return;
+    const updated = { ...currentOrganizer, ...data };
+    setCurrentOrganizer(updated);
+    setOrganizers(prev => prev.map(o => o.id === updated.id ? updated : o));
+    localStorage.setItem('campusnet_organizer_session', JSON.stringify(updated));
+    addToast({
+      type: 'success',
+      title: 'Profile Updated',
+      message: 'Institutional coordinator details saved.'
+    });
+  };
+
+  // --- SUPER ADMIN AUTHENTICATION ---
+  const superAdminLogin = (usernameOrEmail: string, password?: string): boolean => {
+    const lower = usernameOrEmail.toLowerCase().trim();
+    if (lower === 'superadmin.demo' || lower === 'superadmin@campusnet-demo.in' || lower === 'admin') {
+      setCurrentSuperAdmin(MOCK_SUPER_ADMIN_ACCOUNT);
+      localStorage.setItem('campusnet_admin_session', JSON.stringify(MOCK_SUPER_ADMIN_ACCOUNT));
+      logAuditAction('SUPER_ADMIN_LOGIN', 'security', 'adm-001', 'National Admin', 'Super admin authenticated with MFA verification');
+      addToast({
+        type: 'success',
+        title: 'Super Admin Access Granted',
+        message: 'Welcome to the CampusNet National Governance Console.'
+      });
+      return true;
+    }
+
+    addToast({
+      type: 'error',
+      title: 'Admin Authentication Error',
+      message: 'Unauthorized credentials or invalid MFA token.'
+    });
+    return false;
+  };
+
+  const superAdminLogout = () => {
+    setCurrentSuperAdmin(null);
+    localStorage.removeItem('campusnet_admin_session');
+    addToast({
+      type: 'info',
+      title: 'Admin Session Closed',
+      message: 'Super administrator console locked.'
+    });
+  };
+
+  // --- EVENT LIFECYCLE MANAGEMENT ---
+  const createOrganizerEvent = (data: Partial<EventItem>): EventItem => {
+    const newId = `ev-${Date.now()}`;
+    const code = data.code || `CN-${currentOrganizer?.institutionName.substring(0, 3).toUpperCase() || 'ORG'}-26-${Math.floor(100 + Math.random() * 900)}`;
+
+    const newEvent: EventItem = {
+      id: newId,
+      code,
+      title: data.title || 'Untitled Innovation Challenge',
+      organizer: currentOrganizer?.institutionName || 'CampusNet Institution',
+      organizerId: currentOrganizer?.id || 'KEC-DEMO-001',
+      organizerType: 'college',
+      eventType: data.eventType || 'Hackathon',
+      category: data.category || 'National Hackathon',
+      theme: data.theme || 'Interdisciplinary Engineering',
+      date: data.date || 'TBD',
+      startDate: data.startDate || new Date().toISOString(),
+      endDate: data.endDate || new Date().toISOString(),
+      venue: data.venue || `${currentOrganizer?.institutionName || 'Campus'} Auditorium`,
+      district: data.district || currentOrganizer?.city || 'Bengaluru',
+      state: data.state || currentOrganizer?.state || 'Karnataka',
+      city: data.city || currentOrganizer?.city || 'Bengaluru',
+      mode: data.mode || 'Offline',
+      description: data.description || 'Comprehensive hackathon problem statements for students.',
+      rules: data.rules && data.rules.length > 0 ? data.rules : ['Original working prototype demonstration mandatory.'],
+      tracks: data.tracks && data.tracks.length > 0 ? data.tracks : ['AI & Vision', 'Smart Agritech', 'Clean Energy'],
+      prizes: data.prizes && data.prizes.length > 0 ? data.prizes : [{ rank: '1st Prize', amount: '₹1,00,000', description: 'Winner Cash Prize' }],
+      bannerUrl: data.bannerUrl || 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=800&auto=format&fit=crop&q=80',
+      registeredTeamsCount: 0,
+      participantLimit: data.participantLimit || 100,
+      maxTeamSize: data.maxTeamSize || 6,
+      minTeamSize: data.minTeamSize || 2,
+      deadline: data.deadline || 'April 30, 2026',
+      deadlineStatus: 'upcoming',
+      status: 'draft',
+      approvalStatus: 'pending',
+      coordinatorName: currentOrganizer?.coordinatorName || 'Event Coordinator',
+      coordinatorEmail: currentOrganizer?.officialEmail || 'events@campusnet.in',
+      coordinatorPhone: currentOrganizer?.mobile || '+91 94401 23456',
+      attendanceWindow: data.attendanceWindow || {
+        start: new Date().toISOString(),
+        end: new Date(Date.now() + 86400000).toISOString(),
+        targetLat: 12.7533,
+        targetLng: 78.3496,
+        allowedRadiusMeters: 500
+      },
+      submissionRequirements: data.submissionRequirements || ['Project Proposal PDF', 'GitHub Repository', 'Video Demo'],
+      isRegistered: false,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    setEvents(prev => [newEvent, ...prev]);
+    logAuditAction('CREATE_EVENT_DRAFT', 'event', newEvent.id, newEvent.title, `Event draft created under code ${code}`);
+    addToast({
+      type: 'success',
+      title: 'Event Draft Created',
+      message: `"${newEvent.title}" saved. Ready for review submission.`
+    });
+    return newEvent;
+  };
+
+  const updateOrganizerEvent = (eventId: string, data: Partial<EventItem>) => {
+    setEvents(prev => prev.map(e => e.id === eventId ? { ...e, ...data, updatedAt: new Date().toISOString() } : e));
+    logAuditAction('UPDATE_EVENT', 'event', eventId, data.title || 'Event', 'Event details modified by organizer');
+    addToast({
+      type: 'success',
+      title: 'Event Updated',
+      message: 'Event configurations and schedules synced.'
+    });
+  };
+
+  const submitEventForApproval = (eventId: string) => {
+    setEvents(prev => prev.map(e => {
+      if (e.id === eventId) {
+        return {
+          ...e,
+          status: 'review',
+          approvalStatus: 'pending',
+          updatedAt: new Date().toISOString()
+        };
+      }
+      return e;
+    }));
+    logAuditAction('SUBMIT_EVENT_FOR_APPROVAL', 'event', eventId, 'Event', 'Submitted to Super Admin approval queue');
+    addToast({
+      type: 'info',
+      title: 'Submitted for Review',
+      message: 'Event has been submitted to the National Super Admin board for verification.'
+    });
+  };
+
+  const approveEvent = (eventId: string, comments?: string) => {
+    setEvents(prev => prev.map(e => {
+      if (e.id === eventId) {
+        return {
+          ...e,
+          status: 'published',
+          approvalStatus: 'approved',
+          approvalComments: comments || 'Approved by Super Admin.',
+          updatedAt: new Date().toISOString()
+        };
+      }
+      return e;
+    }));
+    logAuditAction('APPROVE_EVENT', 'event', eventId, 'Event', `Event approved for public CampusNet discovery. Comments: ${comments || 'None'}`);
+    addToast({
+      type: 'success',
+      title: 'Event Approved & Published! 🚀',
+      message: 'Event is now live and discoverable on the public CampusNet platform across India.'
+    });
+  };
+
+  const rejectEvent = (eventId: string, comments: string) => {
+    setEvents(prev => prev.map(e => {
+      if (e.id === eventId) {
+        return {
+          ...e,
+          status: 'draft',
+          approvalStatus: 'rejected',
+          approvalComments: comments,
+          updatedAt: new Date().toISOString()
+        };
+      }
+      return e;
+    }));
+    logAuditAction('REJECT_EVENT', 'event', eventId, 'Event', `Event rejected. Reason: ${comments}`);
+    addToast({
+      type: 'warning',
+      title: 'Event Review Returned',
+      message: `Changes requested: ${comments}`
+    });
+  };
+
+  const publishEvent = (eventId: string) => {
+    setEvents(prev => prev.map(e => e.id === eventId ? { ...e, status: 'published', updatedAt: new Date().toISOString() } : e));
+    addToast({
+      type: 'success',
+      title: 'Event Published',
+      message: 'Event is now live on CampusNet.'
+    });
+  };
+
+  const updateEventStatus = (eventId: string, status: EventStatus) => {
+    setEvents(prev => prev.map(e => e.id === eventId ? { ...e, status, updatedAt: new Date().toISOString() } : e));
+    logAuditAction('UPDATE_EVENT_STATUS', 'event', eventId, 'Event', `Status changed to ${status.toUpperCase()}`);
+    addToast({
+      type: 'info',
+      title: 'Event Status Changed',
+      message: `Event is now ${status.toUpperCase().replace('_', ' ')}.`
+    });
+  };
+
+  const duplicateEvent = (eventId: string): EventItem => {
+    const original = events.find(e => e.id === eventId) || events[0];
+    const newId = `ev-${Date.now()}`;
+    const newCode = `CN-${currentOrganizer?.institutionName.substring(0, 3).toUpperCase() || 'DUP'}-26-${Math.floor(100 + Math.random() * 900)}`;
+
+    const duplicated: EventItem = {
+      ...original,
+      id: newId,
+      code: newCode,
+      title: `${original.title} (Duplicate Draft)`,
+      status: 'draft',
+      approvalStatus: 'pending',
+      registeredTeamsCount: 0,
+      isRegistered: false,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    setEvents(prev => [duplicated, ...prev]);
+    logAuditAction('DUPLICATE_EVENT', 'event', newId, duplicated.title, `Duplicated from ${original.title}`);
+    addToast({
+      type: 'success',
+      title: 'Event Duplicated',
+      message: 'New draft created without copying sensitive participant records.'
+    });
+    return duplicated;
+  };
+
+  // --- PARTICIPANT & REGISTRATION MANAGEMENT ---
+  const updateRegistrationStatus = (regId: string, status: 'confirmed' | 'waitlisted' | 'cancelled') => {
+    setEventRegistrations(prev => prev.map(r => r.id === regId ? { ...r, registrationStatus: status } : r));
+    addToast({
+      type: 'info',
+      title: 'Registration Status Updated',
+      message: `Participant registration marked as ${status}.`
+    });
+  };
+
+  const markAttendanceQR = (eventId: string, registrationId: string, method: 'qr_scan' | 'manual_override' = 'qr_scan'): boolean => {
+    const reg = eventRegistrations.find(r => r.id === registrationId && r.eventId === eventId);
+    if (!reg) return false;
+
+    if (reg.attendanceStatus === 'checked_in') {
+      addToast({
+        type: 'warning',
+        title: 'Already Checked In',
+        message: `${reg.participantName} was previously marked checked in at ${reg.checkInTimestamp || 'earlier session'}.`
+      });
+      return false;
+    }
+
+    const checkInRecord: QRCheckInRecord = {
+      id: `chk-${Date.now()}`,
+      eventId,
+      registrationId,
+      participantId: reg.participantId,
+      participantName: reg.participantName,
+      institution: reg.institution,
+      timestamp: new Date().toISOString(),
+      organizerId: currentOrganizer?.id || 'KEC-DEMO-001',
+      organizerName: currentOrganizer?.coordinatorName || 'Event Coordinator',
+      method,
+      deviceInfo: 'CampusNet Institutional Check-In Scanner',
+      latitude: 12.7533,
+      longitude: 78.3496,
+      verified: true
+    };
+
+    setQrCheckInRecords(prev => [checkInRecord, ...prev]);
+    setEventRegistrations(prev => prev.map(r => {
+      if (r.id === registrationId) {
+        return {
+          ...r,
+          attendanceStatus: 'checked_in',
+          checkInTimestamp: checkInRecord.timestamp,
+          checkInMethod: method === 'qr_scan' ? 'qr_scanner' : 'manual_override',
+          checkedInBy: currentOrganizer?.coordinatorName || 'Event Coordinator'
+        };
+      }
+      return r;
+    }));
+
+    logAuditAction('ATTENDANCE_CHECKIN', 'attendance', registrationId, reg.participantName, `Verified check-in via ${method}`);
+    addToast({
+      type: 'success',
+      title: 'Attendance Verified ✓',
+      message: `${reg.participantName} (${reg.institution}) checked in successfully.`
+    });
+    return true;
+  };
+
+  const manualAttendanceOverride = (eventId: string, registrationId: string, notes?: string): boolean => {
+    return markAttendanceQR(eventId, registrationId, 'manual_override');
+  };
+
+  // --- SUBMISSIONS, CRITERIA & JUDGING ---
+  const submitProjectSubmission = (submission: Partial<EventProjectSubmission>) => {
+    const newSubmission: EventProjectSubmission = {
+      id: `sub-${Date.now()}`,
+      eventId: submission.eventId || 'ev-kec-001',
+      teamId: submission.teamId || 'team-001',
+      teamName: submission.teamName || 'Team Innovation',
+      projectTitle: submission.projectTitle || 'Untitled Hackathon Prototype',
+      description: submission.description || '',
+      problemStatement: submission.problemStatement || '',
+      solution: submission.solution || '',
+      techStack: submission.techStack || ['AI', 'Hardware'],
+      githubUrl: submission.githubUrl,
+      demoUrl: submission.demoUrl,
+      presentationUrl: submission.presentationUrl,
+      videoUrl: submission.videoUrl,
+      submittedAt: new Date().toISOString(),
+      status: 'submitted'
+    };
+
+    setProjectSubmissions(prev => [newSubmission, ...prev]);
+    addToast({
+      type: 'success',
+      title: 'Project Submitted for Evaluation',
+      message: `"${newSubmission.projectTitle}" has been uploaded to the organizer review queue.`
+    });
+  };
+
+  const addEvaluationCriterion = (criterion: Omit<EvaluationCriterion, 'id'>) => {
+    const newCrit: EvaluationCriterion = {
+      ...criterion,
+      id: `crit-${Date.now()}`
+    };
+    setEvaluationCriteria(prev => [...prev, newCrit]);
+    addToast({
+      type: 'success',
+      title: 'Criteria Added',
+      message: `Added "${criterion.name}" (${criterion.weightagePercent}% weightage).`
+    });
+  };
+
+  const deleteEvaluationCriterion = (criterionId: string) => {
+    setEvaluationCriteria(prev => prev.filter(c => c.id !== criterionId));
+    addToast({
+      type: 'info',
+      title: 'Criteria Removed',
+      message: 'Evaluation rubric updated.'
+    });
+  };
+
+  const addJudgeAccount = (judge: Omit<JudgeAccount, 'id' | 'accessKey'> & { accessKey?: string }): JudgeAccount => {
+    const newJudge: JudgeAccount = {
+      ...judge,
+      id: `jdg-${Date.now()}`,
+      accessKey: judge.accessKey || `JUDGE-${Math.random().toString(36).substring(2, 8).toUpperCase()}`
+    };
+    setJudges(prev => [...prev, newJudge]);
+    addToast({
+      type: 'success',
+      title: 'Judge Assigned',
+      message: `${judge.name} added with secure access key.`
+    });
+    return newJudge;
+  };
+
+  const assignJudgeToSubmission = (judgeId: string, submissionId: string) => {
+    setJudges(prev => prev.map(j => {
+      if (j.id === judgeId) {
+        return {
+          ...j,
+          assignedSubmissionIds: Array.from(new Set([...j.assignedSubmissionIds, submissionId]))
+        };
+      }
+      return j;
+    }));
+    addToast({
+      type: 'info',
+      title: 'Submission Assigned to Jury',
+      message: 'Judge workspace updated.'
+    });
+  };
+
+  const submitJudgeScore = (scoreData: Omit<EvaluationScore, 'id' | 'submittedAt'>) => {
+    const newScore: EvaluationScore = {
+      ...scoreData,
+      id: `sc-${Date.now()}`,
+      submittedAt: new Date().toISOString()
+    };
+    setEvaluationScores(prev => [newScore, ...prev.filter(s => !(s.submissionId === scoreData.submissionId && s.judgeId === scoreData.judgeId))]);
+    
+    // Update submission status
+    setProjectSubmissions(prev => prev.map(sub => {
+      if (sub.id === scoreData.submissionId) {
+        return {
+          ...sub,
+          status: 'evaluated',
+          finalScore: scoreData.totalWeightedScore
+        };
+      }
+      return sub;
+    }));
+
+    logAuditAction('SUBMIT_JURY_SCORE', 'submission', scoreData.submissionId, 'Submission', `Jury score submitted: ${scoreData.totalWeightedScore}/100`);
+    addToast({
+      type: 'success',
+      title: 'Jury Evaluation Submitted',
+      message: `Score recorded: ${scoreData.totalWeightedScore.toFixed(1)}/100.`
+    });
+  };
+
+  const finalizeEventWinners = (eventId: string, winners: Omit<EventWinnerRecord, 'id' | 'certificateGenerated'>[]) => {
+    const winnerRecords: EventWinnerRecord[] = winners.map((w, idx) => ({
+      ...w,
+      id: `win-${Date.now()}-${idx}`,
+      certificateGenerated: false
+    }));
+
+    setEventWinners(prev => [...prev.filter(w => w.eventId !== eventId), ...winnerRecords]);
+    
+    // Update submissions rank
+    winners.forEach(w => {
+      setProjectSubmissions(prev => prev.map(s => {
+        if (s.id === w.submissionId) {
+          return { ...s, status: 'winner', rank: w.category };
+        }
+        return s;
+      }));
+    });
+
+    logAuditAction('FINALIZE_WINNERS', 'event', eventId, 'Event', `Finalized ${winners.length} winner ranks and awards`);
+    addToast({
+      type: 'success',
+      title: 'Event Rankings Finalized 🏆',
+      message: `${winners.length} winners recorded. Ready for certificate issuance in Certificate Center.`
+    });
+  };
+
+  // --- CERTIFICATE MANAGEMENT CENTER ---
+  const createCertificateTemplate = (template: Omit<CertificateTemplate, 'id'>): CertificateTemplate => {
+    const newTpl: CertificateTemplate = {
+      ...template,
+      id: `tpl-${Date.now()}`
+    };
+    setCertificateTemplates(prev => [...prev, newTpl]);
+    addToast({
+      type: 'success',
+      title: 'Template Created',
+      message: `Certificate template "${newTpl.title}" is ready.`
+    });
+    return newTpl;
+  };
+
+  const updateCertificateTemplate = (templateId: string, data: Partial<CertificateTemplate>) => {
+    setCertificateTemplates(prev => prev.map(t => t.id === templateId ? { ...t, ...data } : t));
+    addToast({
+      type: 'info',
+      title: 'Template Updated',
+      message: 'Certificate styling and layout saved.'
+    });
+  };
+
+  const generateEventCertificateSingle = (regId: string, role: Certificate['recipientRole'], achievement?: string): Certificate => {
+    const reg = eventRegistrations.find(r => r.id === regId) || eventRegistrations[0];
+    const event = events.find(e => e.id === reg.eventId) || events[0];
+    
+    const certNum = `CN-${currentOrganizer?.institutionName.substring(0, 3).toUpperCase() || 'KEC'}-${event.code?.substring(0, 4) || 'AI26'}-${role.substring(0, 4).toUpperCase()}-${Math.floor(100000 + Math.random() * 900000)}`;
+
+    const newCert: Certificate = {
+      id: `cert-${Date.now()}`,
+      certificateNumber: certNum,
+      recipientName: reg.participantName,
+      recipientRole: role,
+      eventTitle: event.title,
+      eventId: event.id,
+      eventOrganizer: event.organizer,
+      organizerInstitutionId: currentOrganizer?.id,
+      issueDate: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
+      qrCodeData: `https://campusnet.network/verify/certificate/${certNum}`,
+      rank: achievement,
+      achievement: achievement || `Certified ${role}`,
+      verified: true,
+      institution: reg.institution,
+      type: 'event',
+      status: 'valid'
+    };
+
+    setCertificates(prev => [newCert, ...prev]);
+    setEventRegistrations(prev => prev.map(r => r.id === regId ? { ...r, certificateStatus: 'generated', certificateId: certNum } : r));
+    logAuditAction('GENERATE_CERTIFICATE', 'certificate', certNum, reg.participantName, `Issued ${role} certificate`);
+    addToast({
+      type: 'success',
+      title: 'Certificate Generated 📜',
+      message: `ID: ${certNum} with tamper-proof QR verification.`
+    });
+    return newCert;
+  };
+
+  const generateEventCertificatesBulk = (eventId: string, category: Certificate['recipientRole']): Certificate[] => {
+    const eligibleRegs = eventRegistrations.filter(r => r.eventId === eventId && r.attendanceStatus === 'checked_in');
+    const generated: Certificate[] = [];
+
+    eligibleRegs.forEach(reg => {
+      const cert = generateEventCertificateSingle(reg.id, category);
+      generated.push(cert);
+    });
+
+    logAuditAction('BULK_GENERATE_CERTIFICATES', 'certificate', eventId, category, `Bulk generated ${generated.length} certificates for checked-in participants`);
+    addToast({
+      type: 'success',
+      title: 'Bulk Generation Complete 🎉',
+      message: `Generated ${generated.length} certificates for verified attendees.`
+    });
+    return generated;
+  };
+
+  const revokeCertificate = (certificateNumber: string, reason: string): boolean => {
+    let found = false;
+    
+    // Check Event Certs
+    setCertificates(prev => prev.map(c => {
+      if (c.certificateNumber.toLowerCase() === certificateNumber.toLowerCase()) {
+        found = true;
+        return {
+          ...c,
+          status: 'revoked',
+          revocationReason: reason,
+          revokedAt: new Date().toISOString(),
+          revokedBy: currentSuperAdmin?.name || currentOrganizer?.coordinatorName || 'Authorized Admin'
+        };
+      }
+      return c;
+    }));
+
+    // Check Mentorship Certs
+    setMentorshipCertificates(prev => prev.map(m => {
+      if (m.certificateNumber.toLowerCase() === certificateNumber.toLowerCase()) {
+        found = true;
+        return {
+          ...m,
+          status: 'revoked'
+        };
+      }
+      return m;
+    }));
+
+    if (found) {
+      logAuditAction('REVOKE_CERTIFICATE', 'certificate', certificateNumber, 'Revoked Credential', `Revocation Reason: ${reason}`);
+      addToast({
+        type: 'warning',
+        title: 'Certificate Revoked',
+        message: `ID ${certificateNumber} has been marked as REVOKED in the national registry.`
+      });
+      return true;
+    }
+
+    addToast({
+      type: 'error',
+      title: 'Revocation Failed',
+      message: 'Certificate ID not found.'
+    });
+    return false;
+  };
+
+  // --- ANNOUNCEMENTS ---
+  const createEventAnnouncement = (announcement: Omit<EventAnnouncement, 'id' | 'createdAt'>) => {
+    const newAnc: EventAnnouncement = {
+      ...announcement,
+      id: `anc-${Date.now()}`,
+      createdAt: new Date().toISOString()
+    };
+    setEventAnnouncements(prev => [newAnc, ...prev]);
+    addToast({
+      type: 'success',
+      title: 'Announcement Broadcasted 📢',
+      message: `Sent to ${announcement.audience.toUpperCase()} participants.`
+    });
+  };
+
+  // --- SUPER ADMIN MODERATION ---
+  const verifyInstitution = (instId: string) => {
+    setInstitutions(prev => prev.map(i => i.id === instId ? { ...i, verified: true } : i));
+    setOrganizers(prev => prev.map(o => o.institutionId === instId ? { ...o, verificationStatus: 'verified' } : o));
+    logAuditAction('VERIFY_INSTITUTION', 'institution', instId, 'Institution', 'Verified accreditation and authorized event hosting');
+    addToast({
+      type: 'success',
+      title: 'Institution Verified',
+      message: 'College is now authorized to publish national events on CampusNet.'
+    });
+  };
+
+  const suspendInstitution = (instId: string) => {
+    setInstitutions(prev => prev.map(i => i.id === instId ? { ...i, verified: false } : i));
+    setOrganizers(prev => prev.map(o => o.institutionId === instId ? { ...o, verificationStatus: 'suspended' } : o));
+    logAuditAction('SUSPEND_INSTITUTION', 'institution', instId, 'Institution', 'Suspended for compliance audit');
+    addToast({
+      type: 'warning',
+      title: 'Institution Suspended',
+      message: 'Event hosting capabilities temporarily locked.'
+    });
+  };
+
+  const suspendUser = (userId: string) => {
+    setStudents(prev => prev.map(s => s.id === userId ? { ...s, status: 'suspended' } : s));
+    setMentors(prev => prev.map(m => m.id === userId ? { ...m, status: 'suspended' } : m));
+    logAuditAction('SUSPEND_USER', 'user', userId, 'User', 'Account suspended for terms violation');
+    addToast({
+      type: 'warning',
+      title: 'Account Suspended',
+      message: 'User account has been locked.'
+    });
+  };
+
+  const reactivateUser = (userId: string) => {
+    setStudents(prev => prev.map(s => s.id === userId ? { ...s, status: 'active' } : s));
+    setMentors(prev => prev.map(m => m.id === userId ? { ...m, status: 'active' } : m));
+    logAuditAction('REACTIVATE_USER', 'user', userId, 'User', 'Account access restored');
+    addToast({
+      type: 'success',
+      title: 'Account Reactivated',
+      message: 'User access restored.'
+    });
+  };
+
+  const verifyUser = (userId: string) => {
+    setStudents(prev => prev.map(s => s.id === userId ? { ...s, verifiedStudent: true, status: 'active' } : s));
+    setMentors(prev => prev.map(m => m.id === userId ? { ...m, verifiedMentor: true, status: 'active' } : m));
+    logAuditAction('VERIFY_USER_BONAFIDE', 'user', userId, 'User', 'Bonafide credentials validated');
+    addToast({
+      type: 'success',
+      title: 'User Verified',
+      message: 'Bonafide badge issued.'
+    });
+  };
+
+  // --- EXISTING STUDENT / MENTOR / MESSAGING HANDLERS (PRESERVED 100%) ---
+  const sendDirectMessage = (receiverId: string, receiverName: string, text: string) => {
+    const newMsg: DirectMessage = {
+      id: `dm-${Date.now()}`,
+      senderId: currentUser.id,
+      senderName: currentUser.name,
+      senderAvatar: currentUser.avatar,
+      senderRole: currentUser.role,
+      receiverId,
+      receiverName,
+      text,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      read: true
+    };
+    setDirectMessages(prev => [...prev, newMsg]);
+    addToast({
+      type: 'success',
+      title: 'Message Sent',
+      message: `Delivered to ${receiverName}.`
+    });
+  };
+
+  const sendConnectionRequest = (receiverId: string, note?: string) => {
+    const newReq: ConnectionRequest = {
+      id: `conn-req-${Date.now()}`,
+      senderId: currentUser.id,
+      senderName: currentUser.name,
+      senderAvatar: currentUser.avatar,
+      senderRole: currentUser.role,
+      senderInstitution: currentUser.institution,
+      senderDepartment: currentUser.department,
+      receiverId,
+      status: 'pending',
+      note: note || 'Would love to connect on CampusNet!',
+      timestamp: 'Just now'
+    };
+    setConnectionRequests(prev => [newReq, ...prev]);
+    addToast({
+      type: 'success',
+      title: 'Connection Request Sent',
+      message: 'Invitation delivered to peer network.'
+    });
+  };
+
+  const acceptConnectionRequest = (requestId: string) => {
+    setConnectionRequests(prev => prev.map(r => r.id === requestId ? { ...r, status: 'accepted' } : r));
+    addToast({
+      type: 'success',
+      title: 'Connection Accepted',
+      message: 'You are now connected on CampusNet!'
+    });
+  };
+
+  const toggleSaveItem = (id: string) => {
+    setSavedItemIds(prev => {
+      const isSaved = prev.includes(id);
+      const next = isSaved ? prev.filter(i => i !== id) : [...prev, id];
+      addToast({
+        type: 'info',
+        title: isSaved ? 'Removed from Saved' : 'Saved to Bookmarks',
+        message: isSaved ? 'Item removed from your bookmarks.' : 'Item saved for quick access.'
+      });
+      return next;
     });
   };
 
   const sendChatMessage = (teamId: string, text: string, fileAttachment?: { name: string; size: string; type: string }) => {
-    if (!text.trim() && !fileAttachment) return;
-    const newMessage: TeamChatMessage = {
-      id: 'msg-' + Date.now(),
+    const newMsg: TeamChatMessage = {
+      id: `msg-${Date.now()}`,
       teamId,
       senderId: currentUser.id,
       senderName: currentUser.name,
       senderAvatar: currentUser.avatar,
-      senderRole: (currentUser.role === 'mentor' ? 'mentor' : currentUser.role === 'researcher' ? 'researcher' : 'student'),
+      senderRole: currentUser.role === 'mentor' ? 'mentor' : currentUser.role === 'researcher' ? 'researcher' : 'student',
       text,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       fileAttachment
     };
-    setChatMessages(prev => [...prev, newMessage]);
+    setChatMessages(prev => [...prev, newMsg]);
   };
 
   const addMentorGuidance = (item: Omit<MentorGuidanceItem, 'id' | 'timestamp'>) => {
     const newItem: MentorGuidanceItem = {
       ...item,
-      id: 'mg-' + Date.now(),
+      id: `gd-${Date.now()}`,
       timestamp: 'Just now'
     };
     setMentorGuidance(prev => [newItem, ...prev]);
-    
-    // Add Notification to students
-    setNotifications(prev => [
-      {
-        id: 'notif-' + Date.now(),
-        title: 'New Mentor Guidance: ' + item.title,
-        description: `${item.mentorName} posted new feedback on your workspace.`,
-        type: 'mentor',
-        timestamp: 'Just now',
-        read: false,
-        linkAction: 'workspace'
-      },
-      ...prev
-    ]);
-
     addToast({
       type: 'success',
-      title: 'Guidance Published',
-      message: 'Team members have been notified in their workspace.'
+      title: 'Guidance Note Posted',
+      message: `Directive shared with Team.`
     });
   };
 
   const createProject = (projectData: Partial<Project>): Project => {
     const newProj: Project = {
-      id: 'proj-' + Date.now(),
-      title: projectData.title || 'Untitled Innovation Project',
+      id: `proj-${Date.now()}`,
+      title: projectData.title || 'Untitled Project',
       problemStatement: projectData.problemStatement || '',
       proposedSolution: projectData.proposedSolution || '',
-      domain: projectData.domain || 'Multi-Disciplinary Engineering',
+      domain: projectData.domain || 'AI & Machine Learning',
       technologies: projectData.technologies || [],
       requiredSkills: projectData.requiredSkills || [],
       teamMembersCount: 1,
       institution: currentUser.institution,
       status: 'Idea',
       progressPercent: 15,
+      githubUrl: projectData.githubUrl,
+      demoUrl: projectData.demoUrl,
+      documentationUrl: projectData.documentationUrl,
+      objectives: projectData.objectives || [],
+      seekingRoles: projectData.seekingRoles || [],
       papersCount: 0,
       milestones: [
-        {
-          id: 'm-init',
-          title: 'Problem Definition & Team Formulation',
-          description: 'Define multi-department roles, formulate prototype architecture and submit mentor request.',
-          status: 'in_progress',
-          dueDate: '2026-03-31'
-        }
+        { id: 'm1', title: 'Problem Definition & Literature Review', description: 'Complete requirements specification', status: 'approved', dueDate: '2026-03-30', approvedByMentor: true }
       ],
       tasks: [],
       createdAt: new Date().toISOString(),
-      likes: 1,
-      ...projectData
+      likes: 0
     };
     setProjects(prev => [newProj, ...prev]);
     addToast({
       type: 'success',
-      title: 'Project Created!',
-      message: `${newProj.title} has been published to the Innovation Hub.`
+      title: 'Project Created on CampusNet 🎉',
+      message: `"${newProj.title}" is now open for collaborators.`
     });
     return newProj;
   };
 
   const updateProjectMilestone = (projectId: string, milestoneId: string, status: 'approved' | 'rejected' | 'in_progress', feedback?: string) => {
     setProjects(prev => prev.map(p => {
-      if (p.id !== projectId) return p;
-      const updatedMilestones = p.milestones.map(m => {
-        if (m.id !== milestoneId) return m;
+      if (p.id === projectId) {
         return {
-          ...m,
-          status,
-          approvedByMentor: status === 'approved',
-          mentorFeedback: feedback || m.mentorFeedback
+          ...p,
+          milestones: p.milestones.map(m => m.id === milestoneId ? {
+            ...m,
+            status,
+            approvedByMentor: status === 'approved',
+            mentorFeedback: feedback || m.mentorFeedback
+          } : m)
         };
-      });
-      const approvedCount = updatedMilestones.filter(m => m.status === 'approved').length;
-      const progressPercent = Math.min(100, Math.round((approvedCount / (updatedMilestones.length || 1)) * 100));
-      return {
-        ...p,
-        milestones: updatedMilestones,
-        progressPercent
-      };
+      }
+      return p;
     }));
     addToast({
       type: status === 'approved' ? 'success' : 'info',
-      title: `Milestone ${status.toUpperCase()}`,
-      message: feedback ? `Feedback: ${feedback}` : 'Project progress updated.'
+      title: status === 'approved' ? 'Milestone Approved ✓' : 'Milestone Updated',
+      message: `Feedback recorded for team.`
     });
   };
 
   const addProjectTask = (projectId: string, task: Omit<ProjectTask, 'id'>) => {
-    const newTask: ProjectTask = {
-      ...task,
-      id: 'task-' + Date.now()
-    };
+    const newTask: ProjectTask = { ...task, id: `t-${Date.now()}` };
     setProjects(prev => prev.map(p => {
-      if (p.id !== projectId) return p;
-      return {
-        ...p,
-        tasks: [...p.tasks, newTask]
-      };
+      if (p.id === projectId) {
+        return { ...p, tasks: [...p.tasks, newTask] };
+      }
+      return p;
     }));
     addToast({
-      type: 'info',
-      title: 'Task Added',
-      message: `Assigned to ${task.assignee}`
+      type: 'success',
+      title: 'Task Assigned',
+      message: `"${task.title}" assigned to ${task.assignee}.`
     });
   };
 
   const updateTaskStatus = (projectId: string, taskId: string, status: 'todo' | 'in_progress' | 'done') => {
     setProjects(prev => prev.map(p => {
-      if (p.id !== projectId) return p;
-      return {
-        ...p,
-        tasks: p.tasks.map(t => t.id === taskId ? { ...t, status } : t)
-      };
+      if (p.id === projectId) {
+        return {
+          ...p,
+          tasks: p.tasks.map(t => t.id === taskId ? { ...t, status } : t)
+        };
+      }
+      return p;
     }));
   };
 
   const createTeam = (teamData: Partial<Team>): Team => {
     const newTeam: Team = {
-      id: 'team-' + Date.now(),
-      name: teamData.name || 'Innovation Squad',
-      projectName: teamData.projectName || 'Inter-Collegiate Challenge',
-      domain: teamData.domain || 'Multi-disciplinary',
+      id: `team-${Date.now()}`,
+      name: teamData.name || 'New Innovation Team',
+      projectName: teamData.projectName || 'New Project',
+      domain: teamData.domain || 'Engineering',
       leaderId: currentUser.id,
       leaderName: currentUser.name,
       members: [
@@ -483,347 +1296,342 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           name: currentUser.name,
           department: currentUser.department,
           college: currentUser.institution,
-          role: 'Team Lead',
+          role: 'Team Leader',
           avatar: currentUser.avatar,
-          verified: currentUser.verifiedStudent,
-          isLeader: true
+          verified: true,
+          isLeader: true,
+          studentId: currentUser.studentId,
+          email: currentUser.email,
+          mobile: currentUser.mobile
         }
       ],
-      maxMembers: 6,
+      maxMembers: teamData.maxMembers || 6,
       requiredRoles: teamData.requiredRoles || [
-        { role: 'Team Lead / AI', departmentHint: 'CSE / AI', filled: true, filledBy: currentUser.name },
-        { role: 'Hardware / ECE', departmentHint: 'ECE', filled: false },
-        { role: 'Mechanical Designer', departmentHint: 'Mechanical', filled: false },
-        { role: 'UI/UX Designer', departmentHint: 'Design / Human Factors', filled: false },
-        { role: 'Cloud & API Engineer', departmentHint: 'CSE / IT', filled: false },
-        { role: 'Domain / Research Specialist', departmentHint: 'Domain Science', filled: false }
+        { role: 'Lead Developer', departmentHint: 'CSE', filled: true, filledBy: currentUser.name },
+        { role: 'Hardware Specialist', departmentHint: 'ECE', filled: false }
       ],
       status: 'forming',
       mentorStatus: 'none',
-      createdAt: new Date().toISOString(),
-      ...teamData
+      createdAt: new Date().toISOString()
     };
     setTeams(prev => [newTeam, ...prev]);
     addToast({
       type: 'success',
-      title: 'Team Formed!',
-      message: `Team "${newTeam.name}" is now ready for inter-department recruitment.`
+      title: 'Team Created',
+      message: `"${newTeam.name}" workspace initialized.`
     });
     return newTeam;
   };
 
   const joinTeamRole = (teamId: string, roleIndex: number, user: User) => {
     setTeams(prev => prev.map(t => {
-      if (t.id !== teamId) return t;
-      const updatedRoles = [...t.requiredRoles];
-      if (updatedRoles[roleIndex]) {
-        updatedRoles[roleIndex] = {
-          ...updatedRoles[roleIndex],
-          filled: true,
-          filledBy: user.name
-        };
-      }
-      const existingMember = t.members.find(m => m.userId === user.id);
-      const updatedMembers = existingMember ? t.members : [
-        ...t.members,
-        {
-          userId: user.id,
-          name: user.name,
-          department: user.department,
-          college: user.institution,
-          role: updatedRoles[roleIndex]?.role || 'Specialist',
-          avatar: user.avatar,
-          verified: user.verifiedStudent
+      if (t.id === teamId) {
+        const updatedRoles = [...t.requiredRoles];
+        const role = updatedRoles[roleIndex];
+        if (role && !role.filled) {
+          role.filled = true;
+          role.filledBy = user.name;
+          const newMember = {
+            userId: user.id,
+            name: user.name,
+            department: user.department,
+            college: user.institution,
+            role: role.role,
+            avatar: user.avatar,
+            verified: user.verifiedStudent
+          };
+          return {
+            ...t,
+            members: [...t.members, newMember],
+            requiredRoles: updatedRoles
+          };
         }
-      ];
-      return {
-        ...t,
-        requiredRoles: updatedRoles,
-        members: updatedMembers,
-        status: updatedMembers.length >= 6 ? 'active' : 'forming'
-      };
+      }
+      return t;
     }));
     addToast({
       type: 'success',
       title: 'Joined Team!',
-      message: `${user.name} has joined the team workspace.`
+      message: `You are now a team member on CampusNet.`
     });
   };
 
   const sendMentorshipRequest = (req: Omit<MentorshipRequest, 'id' | 'createdAt' | 'status'>) => {
     const newReq: MentorshipRequest = {
       ...req,
-      id: 'req-' + Date.now(),
+      id: `mreq-${Date.now()}`,
       status: 'pending',
       createdAt: new Date().toISOString()
     };
     setMentorshipRequests(prev => [newReq, ...prev]);
     addToast({
-      type: 'info',
+      type: 'success',
       title: 'Mentorship Request Sent',
-      message: `Request dispatched to ${req.mentorName}. Match Score: ${req.matchScore}%`
+      message: `Proposal submitted to ${req.mentorName}.`
     });
   };
 
   const respondToMentorshipRequest = (requestId: string, action: 'accepted' | 'declined' | 'info_requested', message?: string) => {
-    setMentorshipRequests(prev => prev.map(r => {
-      if (r.id !== requestId) return r;
-      return { ...r, status: action };
-    }));
+    setMentorshipRequests(prev => prev.map(r => r.id === requestId ? { ...r, status: action, mentorFeedbackNote: message } : r));
     const req = mentorshipRequests.find(r => r.id === requestId);
-    if (req && action === 'accepted') {
-      setTeams(prev => prev.map(t => {
-        if (t.id !== req.teamId) return t;
-        return {
-          ...t,
-          mentorId: req.mentorId,
-          mentorName: req.mentorName,
-          mentorStatus: 'accepted'
-        };
-      }));
-      setNotifications(prev => [
-        {
-          id: 'notif-' + Date.now(),
-          title: 'Mentorship Request Accepted! 🎉',
-          description: `${req.mentorName} accepted to guide Team "${req.teamName}". Workspace is now active.`,
-          type: 'mentor',
-          timestamp: 'Just now',
-          read: false,
-          linkAction: 'workspace'
-        },
-        ...prev
-      ]);
+    if (action === 'accepted' && req) {
+      setTeams(prev => prev.map(t => t.id === req.teamId ? { ...t, mentorId: req.mentorId, mentorName: req.mentorName, mentorStatus: 'accepted' } : t));
+      addToast({
+        type: 'success',
+        title: 'Mentorship Activated 🎉',
+        message: `You are now officially guiding Team ${req.teamName}.`
+      });
+    } else {
+      addToast({
+        type: 'info',
+        title: 'Response Recorded',
+        message: `Mentorship response sent.`
+      });
     }
+  };
+
+  const completeMentorshipAndIssueCertificate = (teamId: string, mentorContribution: string, projectOutcome: string): MentorshipCertificate | null => {
+    const team = teams.find(t => t.id === teamId) || teams[0];
+    const mentor = mentors.find(m => m.id === team.mentorId || m.name === team.mentorName) || mentors[0];
+    const proj = projects.find(p => p.teamId === teamId) || projects[0];
+
+    const certNumber = `CN-2026-MNT-${Math.random().toString(36).substring(2, 6).toUpperCase()}-${Math.floor(1000 + Math.random() * 9000)}`;
+
+    const newCert: MentorshipCertificate = {
+      id: `ment-cert-${Date.now()}`,
+      certificateNumber: certNumber,
+      mentorId: mentor.id,
+      mentorName: mentor.name,
+      mentorDesignation: mentor.designation || mentor.title,
+      mentorInstitution: mentor.institution,
+      teamId: team.id,
+      teamName: team.name,
+      studentNames: team.members.map(m => m.name),
+      studentInstitutions: Array.from(new Set(team.members.map(m => m.college))),
+      projectTitle: proj.title,
+      projectDomain: proj.domain,
+      startDate: 'September 2025',
+      completionDate: 'February 2026',
+      durationWeeks: 24,
+      mentorContribution,
+      milestonesGuided: proj.milestones.length,
+      skillsCovered: proj.technologies,
+      projectOutcome,
+      qrCodeData: `https://campusnet.network/verify/certificate/${certNumber}`,
+      verified: true,
+      issuedAt: new Date().toISOString(),
+      status: 'valid',
+      authorizedSignatures: [
+        { name: mentor.name, title: 'Faculty Guide', organization: mentor.institution },
+        { name: 'Dr. K. Narayanan', title: 'Dean of Research', organization: 'National Innovation Registry' }
+      ]
+    };
+
+    setMentorshipCertificates(prev => [newCert, ...prev]);
+    setTeams(prev => prev.map(t => t.id === teamId ? { ...t, mentorStatus: 'completed' } : t));
+    
     addToast({
-      type: action === 'accepted' ? 'success' : 'info',
-      title: `Mentorship ${action === 'accepted' ? 'Accepted' : action === 'declined' ? 'Declined' : 'Info Requested'}`,
-      message: message || `Updated request status.`
+      type: 'success',
+      title: 'Mentorship Completed & Certificate Issued! 📜',
+      message: `Verifiable Certificate generated (ID: ${certNumber}).`
     });
+
+    return newCert;
   };
 
   const registerForEvent = (eventId: string, teamId?: string) => {
-    setEvents(prev => prev.map(e => {
-      if (e.id !== eventId) return e;
-      return {
-        ...e,
-        isRegistered: true,
-        registeredTeamsCount: e.registeredTeamsCount + 1
-      };
-    }));
     const ev = events.find(e => e.id === eventId);
+    setEvents(prev => prev.map(e => e.id === eventId ? { ...e, isRegistered: true, registeredTeamsCount: e.registeredTeamsCount + 1 } : e));
+    
+    // Create new event registration item
+    const newReg: EventRegistrationItem = {
+      id: `reg-${Date.now()}`,
+      eventId,
+      eventTitle: ev?.title || 'Event Challenge',
+      participantId: currentUser.id,
+      participantName: currentUser.name,
+      studentId: currentUser.studentId,
+      institution: currentUser.institution,
+      department: currentUser.department,
+      year: currentUser.year,
+      email: currentUser.email,
+      phone: currentUser.mobile,
+      teamId: teamId || 'team-001',
+      teamName: 'Team AgriVision AI',
+      registrationStatus: 'confirmed',
+      paymentStatus: 'free',
+      attendanceStatus: 'registered',
+      submissionStatus: 'pending',
+      certificateStatus: 'pending',
+      registeredAt: new Date().toISOString()
+    };
+
+    setEventRegistrations(prev => [newReg, ...prev]);
+
     addToast({
       type: 'success',
-      title: 'Registered for ' + (ev?.title || 'Event'),
-      message: 'Your official team registration has been recorded on the national portal.'
+      title: 'Team Registered on CampusNet 🎉',
+      message: `6-Member Team confirmed for ${ev?.title || 'Event'}.`
     });
   };
 
   const submitAttendance = async (record: Omit<AttendanceRecord, 'id' | 'timestamp'>): Promise<boolean> => {
     const newRecord: AttendanceRecord = {
       ...record,
-      id: 'att-' + Date.now(),
+      id: `att-${Date.now()}`,
       timestamp: new Date().toISOString()
     };
     setAttendanceRecords(prev => [newRecord, ...prev]);
-    
-    // Add toast
-    if (newRecord.status === 'verified_gps') {
-      addToast({
-        type: 'success',
-        title: 'Attendance Verified! 📍📸',
-        message: `GPS Geolocation and Camera snapshot matched nodal venue within ${Math.round(record.distanceMeters)}m.`
-      });
-      return true;
-    } else {
-      addToast({
-        type: 'warning',
-        title: 'Manual Review Queued',
-        message: 'GPS variance detected. Flagged for Event Organizer on-ground verification.'
-      });
-      return false;
-    }
+    addToast({
+      type: 'success',
+      title: 'GPS Attendance Verified ✓',
+      message: `Verified at ${record.eventTitle} nodal center.`
+    });
+    return true;
   };
 
-  const generateCertificateForEvent = (
-    recipientName: string, 
-    role: Certificate['recipientRole'], 
-    eventTitle: string, 
-    organizer: string, 
-    rank?: string
-  ): Certificate => {
-    const certNum = `CL-${new Date().getFullYear()}-${Math.random().toString(36).substring(2, 7).toUpperCase()}-${Math.floor(1000 + Math.random() * 9000)}`;
+  const generateCertificateForEvent = (studentName: string, role: Certificate['recipientRole'], eventTitle: string, organizer: string, rank?: string): Certificate => {
+    const certNumber = `CN-2026-${role.substring(0, 3).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}-${Math.floor(1000 + Math.random() * 9000)}`;
     const newCert: Certificate = {
-      id: 'cert-' + Date.now(),
-      certificateNumber: certNum,
-      recipientName,
+      id: `cert-${Date.now()}`,
+      certificateNumber: certNumber,
+      recipientName: studentName,
       recipientRole: role,
       eventTitle,
       eventOrganizer: organizer,
       issueDate: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
-      qrCodeData: `https://campuslink.network/verify/${certNum}`,
+      qrCodeData: `https://campusnet.network/verify/certificate/${certNumber}`,
       rank,
+      achievement: rank || `Certified ${role}`,
       verified: true,
-      institution: currentUser.institution
+      institution: currentUser.institution,
+      type: 'event',
+      status: 'valid'
     };
     setCertificates(prev => [newCert, ...prev]);
-    addToast({
-      type: 'success',
-      title: 'Digital Certificate Generated',
-      message: `Issued ID: ${certNum} with verifiable QR code.`
-    });
     return newCert;
   };
 
   const addAskQuestion = (title: string, body: string, tags: string[]) => {
     const newQ: AskQuestion = {
-      id: 'q-' + Date.now(),
+      id: `q-${Date.now()}`,
       title,
       body,
       authorName: currentUser.name,
       authorAvatar: currentUser.avatar,
-      authorRole: currentUser.role === 'mentor' ? 'Verified Mentor' : currentUser.role === 'researcher' ? 'PhD Researcher' : `Student (${currentUser.department})`,
+      authorRole: currentUser.role === 'mentor' ? 'Verified Mentor' : currentUser.role === 'researcher' ? 'PhD Scholar' : 'Student',
       authorCollege: currentUser.institution,
       tags,
       upvotes: 1,
       answersCount: 0,
       hasAcceptedAnswer: false,
       createdAt: new Date().toISOString(),
-      isUpvoted: true,
       answers: []
     };
     setAskQuestions(prev => [newQ, ...prev]);
     addToast({
       type: 'success',
-      title: 'Question Published',
-      message: 'Your question has been posted to the Ask Campus community.'
+      title: 'Question Posted',
+      message: 'Your query is now live on Ask Campus.'
     });
   };
 
   const upvoteQuestion = (questionId: string) => {
     setAskQuestions(prev => prev.map(q => {
-      if (q.id !== questionId) return q;
-      const isUpvoted = q.isUpvoted;
-      return {
-        ...q,
-        upvotes: isUpvoted ? q.upvotes - 1 : q.upvotes + 1,
-        isUpvoted: !isUpvoted
-      };
+      if (q.id === questionId) {
+        const isUpvoted = q.isUpvoted;
+        return {
+          ...q,
+          upvotes: isUpvoted ? q.upvotes - 1 : q.upvotes + 1,
+          isUpvoted: !isUpvoted
+        };
+      }
+      return q;
     }));
   };
 
   const addAnswerToQuestion = (questionId: string, body: string) => {
-    const newAnswer = {
-      id: 'ans-' + Date.now(),
+    const newAns = {
+      id: `ans-${Date.now()}`,
       authorName: currentUser.name,
       authorAvatar: currentUser.avatar,
-      authorRole: currentUser.role === 'mentor' ? 'Verified Mentor' : currentUser.role === 'researcher' ? 'PhD Researcher' : `Student (${currentUser.department})`,
-      authorBadge: currentUser.role === 'mentor' ? 'Verified Mentor' : 'Verified Student',
+      authorRole: currentUser.role === 'mentor' ? 'Professor' : 'Student',
+      authorBadge: currentUser.role === 'mentor' ? 'Verified Mentor' : 'Contributor',
       body,
-      upvotes: 1,
+      upvotes: 0,
       isAccepted: false,
       createdAt: new Date().toISOString()
     };
     setAskQuestions(prev => prev.map(q => {
-      if (q.id !== questionId) return q;
-      return {
-        ...q,
-        answersCount: q.answersCount + 1,
-        answers: [...q.answers, newAnswer]
-      };
+      if (q.id === questionId) {
+        return {
+          ...q,
+          answersCount: q.answersCount + 1,
+          answers: [...q.answers, newAns]
+        };
+      }
+      return q;
     }));
     addToast({
       type: 'success',
-      title: 'Answer Posted',
-      message: 'Thank you for contributing to the student innovation network.'
+      title: 'Answer Submitted',
+      message: 'Thank you for contributing academic peer knowledge!'
     });
   };
 
   const markBestAnswer = (questionId: string, answerId: string) => {
     setAskQuestions(prev => prev.map(q => {
-      if (q.id !== questionId) return q;
-      return {
-        ...q,
-        hasAcceptedAnswer: true,
-        answers: q.answers.map(a => ({
-          ...a,
-          isAccepted: a.id === answerId
-        }))
-      };
+      if (q.id === questionId) {
+        return {
+          ...q,
+          hasAcceptedAnswer: true,
+          answers: q.answers.map(a => ({
+            ...a,
+            isAccepted: a.id === answerId
+          }))
+        };
+      }
+      return q;
     }));
-    addToast({
-      type: 'success',
-      title: 'Best Answer Accepted',
-      message: 'Marked as community-verified solution.'
-    });
   };
 
   const toggleLikeStory = (storyId: string) => {
     setStories(prev => prev.map(s => {
-      if (s.id !== storyId) return s;
-      const isLiked = s.isLiked;
-      return {
-        ...s,
-        likesCount: isLiked ? s.likesCount - 1 : s.likesCount + 1,
-        isLiked: !isLiked
-      };
+      if (s.id === storyId) {
+        const isLiked = s.isLiked;
+        return {
+          ...s,
+          likesCount: isLiked ? s.likesCount - 1 : s.likesCount + 1,
+          isLiked: !isLiked
+        };
+      }
+      return s;
     }));
   };
 
   const addCommentToStory = (storyId: string) => {
-    setStories(prev => prev.map(s => {
-      if (s.id !== storyId) return s;
-      return {
-        ...s,
-        commentsCount: s.commentsCount + 1
-      };
-    }));
-    addToast({
-      type: 'info',
-      title: 'Comment Added',
-      message: 'Your thought was posted on the project demo.'
-    });
+    setStories(prev => prev.map(s => s.id === storyId ? { ...s, commentsCount: s.commentsCount + 1 } : s));
   };
 
-  // Video Meeting Handlers
   const startVideoMeeting = (teamId: string) => {
     const team = teams.find(t => t.id === teamId) || teams[0];
-    const teamParticipants = team.members.map(m => ({
-      id: m.userId,
-      name: m.name,
-      role: m.role,
-      avatar: m.avatar,
-      isSpeaking: false,
-      isMuted: m.userId !== currentUser.id
-    }));
-    
-    // Add mentor if accepted
-    if (team.mentorName) {
-      teamParticipants.push({
-        id: team.mentorId || 'mnt-001',
-        name: team.mentorName,
-        role: 'Assigned Project Mentor',
-        avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-        isSpeaking: true,
-        isMuted: false
-      });
-    }
-
     setVideoMeeting({
       isActive: true,
-      meetingId: `mtg-${team.id}-${Date.now().toString(36)}`,
-      teamId: team.id,
+      meetingId: `MEET-${Math.random().toString(36).substring(2, 7).toUpperCase()}`,
+      teamId,
       teamName: team.name,
       isCamOn: true,
       isMicOn: true,
       isScreenSharing: false,
       connectionQuality: 'excellent',
-      participants: teamParticipants
-    });
-
-    addToast({
-      type: 'info',
-      title: 'Private Meeting Room Live',
-      message: 'Server authorization verified for confirmed team members.'
+      participants: team.members.map(m => ({
+        id: m.userId,
+        name: m.name,
+        role: m.role,
+        avatar: m.avatar,
+        isSpeaking: m.userId === currentUser.id,
+        isMuted: false
+      }))
     });
   };
 
@@ -841,87 +1649,187 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const endVideoMeeting = () => {
     setVideoMeeting(prev => ({ ...prev, isActive: false }));
-    addToast({
-      type: 'info',
-      title: 'Meeting Ended',
-      message: 'Session encrypted logs stored securely in team archive.'
-    });
   };
 
   const verifyStudentManually = (studentId: string) => {
     setStudents(prev => prev.map(s => s.id === studentId ? { ...s, verifiedStudent: true } : s));
     addToast({
       type: 'success',
-      title: 'Student ID Verified',
-      message: 'Institutional verification badge granted.'
+      title: 'Student Verified',
+      message: 'Bonafide status updated.'
+    });
+  };
+
+  const verifyMentorManually = (mentorId: string) => {
+    setMentors(prev => prev.map(m => m.id === mentorId ? { ...m, verifiedMentor: true } : m));
+    addToast({
+      type: 'success',
+      title: 'Mentor Verified',
+      message: 'Faculty credentials authenticated.'
     });
   };
 
   return (
-    <AppContext.Provider value={{
-      currentUser,
-      setCurrentUser,
-      activeRole,
-      switchRole,
-      activeTab,
-      setActiveTab,
-      selectedEventId,
-      setSelectedEventId,
-      selectedProjectId,
-      setSelectedProjectId,
-      selectedMentorId,
-      setSelectedMentorId,
-      students,
-      mentors,
-      researchers,
-      teams,
-      projects,
-      events,
-      certificates,
-      publications,
-      stories,
-      askQuestions,
-      notifications,
-      mentorshipRequests,
-      attendanceRecords,
-      chatMessages,
-      sendChatMessage,
-      mentorGuidance,
-      addMentorGuidance,
-      createProject,
-      updateProjectMilestone,
-      addProjectTask,
-      updateTaskStatus,
-      createTeam,
-      joinTeamRole,
-      sendMentorshipRequest,
-      respondToMentorshipRequest,
-      registerForEvent,
-      submitAttendance,
-      generateCertificateForEvent,
-      addAskQuestion,
-      upvoteQuestion,
-      addAnswerToQuestion,
-      markBestAnswer,
-      toggleLikeStory,
-      addCommentToStory,
-      videoMeeting,
-      startVideoMeeting,
-      toggleMeetingCam,
-      toggleMeetingMic,
-      toggleMeetingScreenShare,
-      endVideoMeeting,
-      toasts,
-      addToast,
-      removeToast,
-      isAIModalOpen,
-      setIsAIModalOpen,
-      authModalType,
-      setAuthModalType,
-      searchQuery,
-      setSearchQuery,
-      verifyStudentManually
-    }}>
+    <AppContext.Provider
+      value={{
+        currentUser,
+        setCurrentUser,
+        activeRole,
+        switchRole,
+        activeTab,
+        setActiveTab,
+        selectedEventId,
+        setSelectedEventId,
+        selectedProjectId,
+        setSelectedProjectId,
+        selectedMentorId,
+        setSelectedMentorId,
+        
+        students,
+        mentors,
+        researchers,
+        teams,
+        projects,
+        events,
+        certificates,
+        mentorshipCertificates,
+        publications,
+        conferences,
+        institutions,
+        stories,
+        askQuestions,
+        notifications,
+        mentorshipRequests,
+        attendanceRecords,
+        directMessages,
+        connectionRequests,
+        
+        // Organizer Portal
+        currentOrganizer,
+        organizers,
+        organizerLogin,
+        organizerLogout,
+        updateOrganizerProfile,
+        
+        // Super Admin Portal
+        currentSuperAdmin,
+        superAdminLogin,
+        superAdminLogout,
+        
+        // Event Lifecycle
+        createOrganizerEvent,
+        updateOrganizerEvent,
+        submitEventForApproval,
+        approveEvent,
+        rejectEvent,
+        publishEvent,
+        updateEventStatus,
+        duplicateEvent,
+        
+        // Participant Management
+        eventRegistrations,
+        updateRegistrationStatus,
+        markAttendanceQR,
+        manualAttendanceOverride,
+        qrCheckInRecords,
+        
+        // Submissions & Judging
+        projectSubmissions,
+        submitProjectSubmission,
+        evaluationCriteria,
+        addEvaluationCriterion,
+        deleteEvaluationCriterion,
+        judges,
+        addJudgeAccount,
+        assignJudgeToSubmission,
+        evaluationScores,
+        submitJudgeScore,
+        eventWinners,
+        finalizeEventWinners,
+        
+        // Certificate Center
+        certificateTemplates,
+        createCertificateTemplate,
+        updateCertificateTemplate,
+        generateEventCertificateSingle,
+        generateEventCertificatesBulk,
+        revokeCertificate,
+        
+        // Announcements & Reports
+        eventAnnouncements,
+        createEventAnnouncement,
+        
+        // Super Admin
+        auditLogs,
+        logAuditAction,
+        verifyInstitution,
+        suspendInstitution,
+        suspendUser,
+        reactivateUser,
+        verifyUser,
+
+        selectedEventModal,
+        setSelectedEventModal,
+        selectedUserProfileModal,
+        setSelectedUserProfileModal,
+        isDirectMessagingOpen,
+        setIsDirectMessagingOpen,
+        activeMessagingPartner,
+        setActiveMessagingPartner,
+        
+        savedItemIds,
+        toggleSaveItem,
+        filterState,
+        setFilterState,
+        filterCity,
+        setFilterCity,
+        
+        chatMessages,
+        sendChatMessage,
+        mentorGuidance,
+        addMentorGuidance,
+        sendDirectMessage,
+        sendConnectionRequest,
+        acceptConnectionRequest,
+        createProject,
+        updateProjectMilestone,
+        addProjectTask,
+        updateTaskStatus,
+        createTeam,
+        joinTeamRole,
+        sendMentorshipRequest,
+        respondToMentorshipRequest,
+        completeMentorshipAndIssueCertificate,
+        registerForEvent,
+        submitAttendance,
+        generateCertificateForEvent,
+        addAskQuestion,
+        upvoteQuestion,
+        addAnswerToQuestion,
+        markBestAnswer,
+        toggleLikeStory,
+        addCommentToStory,
+        
+        videoMeeting,
+        startVideoMeeting,
+        toggleMeetingCam,
+        toggleMeetingMic,
+        toggleMeetingScreenShare,
+        endVideoMeeting,
+        
+        toasts,
+        addToast,
+        removeToast,
+        isAIModalOpen,
+        setIsAIModalOpen,
+        authModalType,
+        setAuthModalType,
+        searchQuery,
+        setSearchQuery,
+        verifyStudentManually,
+        verifyMentorManually
+      }}
+    >
       {children}
     </AppContext.Provider>
   );

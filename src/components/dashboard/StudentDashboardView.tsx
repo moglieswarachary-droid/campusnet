@@ -3,17 +3,29 @@ import { useApp } from '../../context/AppContext';
 import { 
   CheckCircle2, Clock, AlertCircle, ArrowRight, Video, 
   GraduationCap, Calendar, Users, Award, ShieldCheck, 
-  FolderKanban, Sparkles, ChevronRight, Activity
+  FolderKanban, Sparkles, ChevronRight, Activity, 
+  Compass, Plus, UserPlus, QrCode, Search 
 } from 'lucide-react';
 
 export const StudentDashboardView: React.FC = () => {
   const { 
     currentUser, projects, teams, events, mentors, 
-    certificates, setActiveTab, startVideoMeeting, setSelectedProjectId 
+    certificates, setActiveTab, startVideoMeeting, 
+    setSelectedProjectId, setSelectedEventModal 
   } = useApp();
 
   const activeProject = projects[0];
   const activeTeam = teams[0];
+
+  const quickActions = [
+    { label: 'Discover Events', icon: Calendar, tab: 'events', color: 'bg-blue-50 text-campus-blue' },
+    { label: 'Discover Projects', icon: FolderKanban, tab: 'projects', color: 'bg-amber-50 text-amber-600' },
+    { label: 'Find Mentors', icon: ShieldCheck, tab: 'mentors', color: 'bg-green-50 text-green-700' },
+    { label: 'Find Students', icon: Users, tab: 'discover', color: 'bg-purple-50 text-purple-700' },
+    { label: 'Create Project', icon: Plus, tab: 'projects', color: 'bg-red-50 text-campus-red' },
+    { label: 'Team Workspace', icon: Users, tab: 'workspace', color: 'bg-indigo-50 text-indigo-700' },
+    { label: 'Verifiable Certs', icon: QrCode, tab: 'certificates', color: 'bg-slate-100 text-campus-slate-text' },
+  ];
 
   return (
     <div className="py-8 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 animate-in fade-in">
@@ -64,13 +76,37 @@ export const StudentDashboardView: React.FC = () => {
         </div>
       </div>
 
+      {/* QUICK ACTIONS DOCK */}
+      <div className="space-y-3">
+        <h3 className="text-xs font-bold uppercase tracking-wider text-campus-muted-text">
+          Quick Launch Actions
+        </h3>
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
+          {quickActions.map(act => {
+            const Icon = act.icon;
+            return (
+              <button
+                key={act.label}
+                onClick={() => setActiveTab(act.tab as any)}
+                className="p-3.5 rounded-2xl bg-white border border-campus-border shadow-warm-sm hover:shadow-warm-md hover:border-campus-blue transition-all flex flex-col items-center text-center gap-2 group"
+              >
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${act.color} group-hover:scale-110 transition-transform`}>
+                  <Icon className="w-5 h-5" />
+                </div>
+                <span className="text-xs font-bold text-campus-slate-text leading-tight">{act.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       {/* TODAY'S PRIORITIES SECTION */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-campus-bright-red pulse-live"></span>
             <h2 className="text-base sm:text-lg font-extrabold text-campus-deep-blue uppercase tracking-wider">
-              Today's Priorities
+              Today's Priorities & Active Deadlines
             </h2>
           </div>
           <span className="text-xs font-semibold text-campus-muted-text">
@@ -94,7 +130,7 @@ export const StudentDashboardView: React.FC = () => {
                 Milestone #3 Review with Dr. Arvind Rao
               </h4>
               <p className="text-[11.5px] text-campus-muted-text mt-1">
-                6-Member team video conference to review TensorRT latency metrics.
+                6-Member team video conference to review TensorRT latency metrics on CampusNet.
               </p>
             </div>
 
@@ -250,7 +286,7 @@ export const StudentDashboardView: React.FC = () => {
         <div className="lg:col-span-5 space-y-4">
           <div className="flex items-center gap-2">
             <Activity className="w-4 h-4 text-campus-red" />
-            <h3 className="font-bold text-base text-campus-deep-blue">Transparency Center</h3>
+            <h3 className="font-bold text-base text-campus-deep-blue">National Portal Transparency Center</h3>
           </div>
 
           <div className="p-5 rounded-3xl bg-white border border-campus-border shadow-warm-md space-y-3.5 text-xs">

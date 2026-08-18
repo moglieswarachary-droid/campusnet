@@ -73,61 +73,61 @@ export const CampusAIAssistant: React.FC = () => {
       const lower = userText.toLowerCase();
 
       if (lower.includes('ece') || lower.includes('hardware') || lower.includes('teammate') || lower.includes('student')) {
-        aiReply.text = 'I searched authorized CampusLink student registries across affiliated universities and found eligible verified candidates with matching hardware skills:';
+        aiReply.text = 'I searched authorized CampusNet student registries across affiliated universities and found eligible verified candidates with matching hardware skills:';
         aiReply.recommendations = [
           {
             type: 'student',
-            title: 'Pooja Iyer (ECE Lead)',
-            subtitle: 'College of Engineering, Guindy (Anna Univ)',
-            detail: 'Skills: Embedded C, PCB Design, ESP32, LoRaWAN Telemetry. Innovation Score: 790.',
+            title: 'Pooja Iyer (Hardware Lead)',
+            subtitle: 'CEG Anna University • LoRaWAN & ESP32 PCB',
+            detail: 'Verified Student • Innovation Score: 790. Ready for inter-collegiate SIH team.',
             actionTab: 'discover'
           },
           {
             type: 'student',
             title: 'Vikramaditya Deshmukh (Mechatronics)',
-            subtitle: 'VJTI Mumbai',
-            detail: 'Skills: SolidWorks, FEA, Aerodynamics & Carbon-Fiber Frame design.',
+            subtitle: 'VJTI Mumbai • ANSYS & Structural FEA',
+            detail: 'Verified Student • Robotics & Drone Airframe Lead.',
             actionTab: 'discover'
           }
         ];
-      } else if (lower.includes('mentor') || lower.includes('professor') || lower.includes('vision')) {
-        aiReply.text = 'Based on your technical keywords, here are verified faculty mentors with active research labs in this domain:';
+      } else if (lower.includes('mentor') || lower.includes('faculty') || lower.includes('guide')) {
+        aiReply.text = 'Here are verified faculty guides with open project mentorship capacity on CampusNet:';
         aiReply.recommendations = [
           {
             type: 'mentor',
-            title: 'Dr. Arvind Rao (Professor, IIT Bombay)',
-            subtitle: 'Specialization: Computer Vision & Edge AI',
-            detail: 'Guided 38 teams. 14 Years Exp. High fit for micro-UAV inference optimization.',
+            title: 'Dr. Arvind Rao (IIT Bombay)',
+            subtitle: 'Computer Vision & Edge Systems • 2 Slots Available',
+            detail: '14 Years Experience. Guided 38 teams in Edge AI and TensorRT inference.',
             actionTab: 'mentors'
           },
           {
             type: 'mentor',
-            title: 'Dr. Meenakshi Sundaram (IIT Madras)',
-            subtitle: 'Specialization: Ultra-Low Power VLSI & IoT',
-            detail: 'Guided 27 teams. Focus on micro-power telemetry and energy harvesting.',
+            title: 'Dr. Priya Sundaram (IISc)',
+            subtitle: 'Autonomous Systems & Drone Guidance • 1 Slot Available',
+            detail: 'Autonomous UAVs, PX4 Flight Controllers & ROS2 Navigation.',
             actionTab: 'mentors'
           }
         ];
-      } else if (lower.includes('event') || lower.includes('hackathon') || lower.includes('challenge')) {
-        aiReply.text = 'Here are verified government and university challenges matching your eligibility criteria:';
+      } else if (lower.includes('event') || lower.includes('hackathon') || lower.includes('sih')) {
+        aiReply.text = 'Here are top verified national challenges with active registration windows:';
         aiReply.recommendations = [
           {
             type: 'event',
-            title: 'Smart India Hackathon 2026',
-            subtitle: 'Ministry of Education & AICTE',
-            detail: 'Hardware & Software Grand Finale. ₹1,00,000 / Problem Statement Prize pool.',
+            title: 'Smart India Hackathon 2026 (SIH)',
+            subtitle: 'Ministry of Education & AICTE • Hardware Prototype Track',
+            detail: 'National Grand Finale. ₹1,00,000 prize pool per problem statement.',
             actionTab: 'events'
           },
           {
             type: 'event',
-            title: 'IIT Madras Clean Energy Ideathon',
-            subtitle: 'IITM Energy Consortium',
-            detail: 'Battery management & Microgrid tracks. Prototype seed funding available.',
+            title: 'IIT Bombay National Techfest 2026',
+            subtitle: 'IIT Bombay • Robosub & Autonomous Challenge',
+            detail: 'Annual Innovation Conclave. Seed funding and incubation support.',
             actionTab: 'events'
           }
         ];
       } else {
-        aiReply.text = `I have indexed your query: "${userText}". Here are recommended opportunities across the CampusLink network:`;
+        aiReply.text = `I have indexed your query: "${userText}". Here are recommended opportunities across the CampusNet network:`;
         aiReply.recommendations = [
           {
             type: 'student',

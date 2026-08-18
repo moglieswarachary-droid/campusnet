@@ -16,7 +16,7 @@ export const ResearchNetworkSection: React.FC = () => {
               PhD Scholars & Academic Publications
             </div>
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white">
-              The CampusLink Research Hub
+              The CampusNet Research Hub
             </h2>
             <p className="text-sm text-gray-300 mt-1 max-w-xl">
               Connecting doctoral candidates, research labs, and undergraduate engineering innovators for co-authoring papers, open datasets, and translational research.

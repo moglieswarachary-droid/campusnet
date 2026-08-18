@@ -33,7 +33,7 @@ export const TeamMatchingSection: React.FC = () => {
             </h2>
 
             <p className="text-sm sm:text-base text-campus-slate-text/80 leading-relaxed">
-              Real-world breakthroughs require interdisciplinary talent. CampusLink intelligently matches students from one department with students from other colleges, universities, and research institutes based on real project requirements.
+              Real-world breakthroughs require interdisciplinary talent. CampusNet intelligently matches students from one department with students from other colleges, universities, and research institutes based on real project requirements.
             </p>
 
             <div className="space-y-3 pt-2">

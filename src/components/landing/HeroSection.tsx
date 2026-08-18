@@ -2,11 +2,12 @@ import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { 
   ArrowRight, ShieldCheck, Sparkles, Users, 
-  Layers, Award, GraduationCap, Cpu, Compass
+  Layers, Award, GraduationCap, Cpu, Compass, 
+  FolderKanban, BookOpen, UserCheck 
 } from 'lucide-react';
 
 export const HeroSection: React.FC = () => {
-  const { setActiveTab, setAuthModalType, setIsAIModalOpen } = useApp();
+  const { setActiveTab, setAuthModalType, setIsAIModalOpen, switchRole } = useApp();
   const [selectedNode, setSelectedNode] = useState<'ai' | 'ece' | 'mech' | 'mentor' | 'event'>('ai');
 
   const nodeInfo = {
@@ -29,7 +30,7 @@ export const HeroSection: React.FC = () => {
       badge: 'Verified Student • Robotics Finalist'
     },
     mentor: {
-      title: 'Dr. Arvind Rao (Research Mentor)',
+      title: 'Dr. Arvind Rao (Faculty Mentor)',
       college: 'IIT Bombay Computer Vision Lab',
       role: 'Edge Computing & Milestone Validation',
       badge: 'Verified Mentor • 14 Yrs Experience'
@@ -54,7 +55,7 @@ export const HeroSection: React.FC = () => {
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/90 border border-campus-border shadow-warm-sm backdrop-blur-sm">
             <span className="w-2 h-2 rounded-full bg-campus-bright-red pulse-live"></span>
             <span className="text-xs font-bold uppercase tracking-wider text-campus-deep-blue">
-              The Student Innovation & Research Network
+              CampusNet India — National Student, Mentor & Research Network
             </span>
           </div>
         </div>
@@ -62,31 +63,97 @@ export const HeroSection: React.FC = () => {
         {/* Hero Title & Subtitle */}
         <div className="text-center max-w-4xl mx-auto space-y-5">
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-campus-deep-blue leading-[1.12]">
-            BUILD. CONNECT. <br className="hidden sm:block" />
+            CONNECT. MENTOR. <br className="hidden sm:block" />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-campus-blue via-campus-deep-blue to-campus-red">
               RESEARCH. INNOVATE.
             </span>
           </h1>
 
           <p className="text-base sm:text-lg lg:text-xl text-campus-slate-text/80 font-normal leading-relaxed max-w-2xl mx-auto">
-            One ecosystem for students, researchers, mentors and institutions to discover opportunities, build teams, solve problems and turn ideas into impact.
+            India's unified national networking platform for students, faculty guides, PhD researchers, and institutions to discover hackathons, guide projects, build cross-college teams, and earn verified credentials.
           </p>
+
+          {/* 3 Dedicated Gateways Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-3xl mx-auto pt-4 text-left">
+            
+            {/* 1. Student Portal */}
+            <button
+              onClick={() => {
+                switchRole('student');
+                setAuthModalType('student_register');
+              }}
+              className="p-4 rounded-2xl bg-white border border-campus-border shadow-warm-md hover:border-campus-blue hover:shadow-warm-lg transition-all group"
+            >
+              <div className="flex items-center justify-between mb-2">
+                <div className="w-10 h-10 rounded-xl bg-blue-50 text-campus-blue flex items-center justify-center font-bold group-hover:scale-110 transition-transform">
+                  <UserCheck className="w-5 h-5" />
+                </div>
+                <span className="text-[10px] font-bold text-campus-blue bg-campus-soft-blue px-2 py-0.5 rounded-full">
+                  Enter Portal
+                </span>
+              </div>
+              <h3 className="text-sm font-bold text-campus-deep-blue">Student Portal</h3>
+              <p className="text-[11px] text-campus-muted-text mt-0.5">Projects, Hackathons & 6-Member Team Finder</p>
+            </button>
+
+            {/* 2. Mentor Portal */}
+            <button
+              onClick={() => {
+                switchRole('mentor');
+                setAuthModalType('mentor_onboarding');
+              }}
+              className="p-4 rounded-2xl bg-white border border-campus-border shadow-warm-md hover:border-amber-500 hover:shadow-warm-lg transition-all group"
+            >
+              <div className="flex items-center justify-between mb-2">
+                <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold group-hover:scale-110 transition-transform">
+                  <ShieldCheck className="w-5 h-5" />
+                </div>
+                <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full">
+                  Faculty Guide
+                </span>
+              </div>
+              <h3 className="text-sm font-bold text-campus-deep-blue">Mentor Portal</h3>
+              <p className="text-[11px] text-campus-muted-text mt-0.5">Guide Teams, Approve Milestones & Certify</p>
+            </button>
+
+            {/* 3. PhD Scholar Portal */}
+            <button
+              onClick={() => {
+                switchRole('researcher');
+                setAuthModalType('scholar_register');
+              }}
+              className="p-4 rounded-2xl bg-white border border-campus-border shadow-warm-md hover:border-purple-500 hover:shadow-warm-lg transition-all group"
+            >
+              <div className="flex items-center justify-between mb-2">
+                <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-700 flex items-center justify-center font-bold group-hover:scale-110 transition-transform">
+                  <BookOpen className="w-5 h-5" />
+                </div>
+                <span className="text-[10px] font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-full">
+                  PhD & Labs
+                </span>
+              </div>
+              <h3 className="text-sm font-bold text-campus-deep-blue">PhD Scholar Portal</h3>
+              <p className="text-[11px] text-campus-muted-text mt-0.5">Research Papers, Conferences & Student Collab</p>
+            </button>
+
+          </div>
 
           {/* CTAs */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 pt-4">
             <button
               onClick={() => setActiveTab('discover')}
-              className="campus-btn-primary w-full sm:w-auto px-8 py-3.5 text-base rounded-xl shadow-warm-lg"
+              className="campus-btn-primary w-full sm:w-auto px-8 py-3.5 text-base rounded-xl shadow-warm-lg flex items-center justify-center gap-2"
             >
               <Compass className="w-5 h-5" />
-              Explore Opportunities
+              Discover National Ecosystem
             </button>
 
             <button
-              onClick={() => setAuthModalType('student_register')}
-              className="campus-btn-secondary w-full sm:w-auto px-7 py-3.5 text-base rounded-xl"
+              onClick={() => setActiveTab('projects')}
+              className="campus-btn-secondary w-full sm:w-auto px-7 py-3.5 text-base rounded-xl flex items-center justify-center gap-2"
             >
-              Join CampusLink
+              <FolderKanban className="w-5 h-5 text-amber-500" />
+              Explore Projects & Teams
               <ArrowRight className="w-4 h-4 text-campus-red" />
             </button>
           </div>
@@ -106,7 +173,7 @@ export const HeroSection: React.FC = () => {
                   <span className="text-xs font-bold text-campus-muted-text">Live Interactive Demo</span>
                 </div>
                 <h3 className="text-lg sm:text-xl font-bold text-campus-deep-blue mt-1">
-                  How CampusLink Forms High-Impact Interdisciplinary Teams
+                  How CampusNet Forms High-Impact Interdisciplinary Teams
                 </h3>
               </div>
 
@@ -116,7 +183,7 @@ export const HeroSection: React.FC = () => {
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-campus-soft-blue text-campus-blue text-xs font-bold hover:bg-blue-100 transition-colors"
                 >
                   <Sparkles className="w-3.5 h-3.5 text-campus-red" />
-                  Ask AI Matcher
+                  Ask Campus AI Matcher
                 </button>
               </div>
             </div>
@@ -280,7 +347,7 @@ export const HeroSection: React.FC = () => {
                     onClick={() => setActiveTab('discover')}
                     className="text-xs font-bold text-campus-blue hover:underline"
                   >
-                    Start Matching →
+                    Start Matching on CampusNet →
                   </button>
                 </div>
               </div>

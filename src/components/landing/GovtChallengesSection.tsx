@@ -23,7 +23,7 @@ export const GovtChallengesSection: React.FC = () => {
             </h2>
 
             <p className="text-sm sm:text-base text-gray-200 leading-relaxed max-w-2xl">
-              Central Ministries and State Nodal Centers release verified problem statements directly onto CampusLink. Student teams compete with verified GPS attendance, peer review, and transparent evaluation rubrics.
+              Central Ministries and State Nodal Centers release verified problem statements directly onto CampusNet. Student teams compete with verified GPS attendance, peer review, and transparent evaluation rubrics.
             </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">

@@ -77,7 +77,7 @@ export const TeamFormationView: React.FC = () => {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-base sm:text-lg font-bold text-campus-deep-blue flex items-center gap-2">
-            <span>Active Formed Teams on CampusLink</span>
+            <span>Active Formed Teams on CampusNet</span>
             <span className="text-xs font-semibold bg-campus-soft-blue text-campus-blue px-2 py-0.5 rounded-full">
               {teams.length}
             </span>

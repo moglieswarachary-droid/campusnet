@@ -3,7 +3,8 @@ import { useApp } from '../../context/AppContext';
 import { 
   Sparkles, Search, Bell, ChevronDown, 
   HelpCircle, Video, Award, ShieldCheck, Check, 
-  Layers, UserCheck, MessageSquareCode
+  Layers, UserCheck, MessageSquareCode, MessageSquare, 
+  Compass, FolderKanban, GraduationCap 
 } from 'lucide-react';
 import { RoleType } from '../../types';
 
@@ -12,7 +13,8 @@ export const Navbar: React.FC = () => {
     activeTab, setActiveTab, 
     currentUser, activeRole, switchRole, 
     notifications, setIsAIModalOpen, 
-    setAuthModalType, searchQuery, setSearchQuery 
+    setAuthModalType, searchQuery, setSearchQuery, 
+    setIsDirectMessagingOpen, directMessages 
   } = useApp();
 
   const [isCommunityOpen, setIsCommunityOpen] = useState(false);
@@ -22,12 +24,12 @@ export const Navbar: React.FC = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   const unreadCount = notifications.filter(n => !n.read).length;
+  const unreadMessagesCount = directMessages.filter(m => !m.read && m.receiverId === currentUser.id).length;
 
   const roles: { role: RoleType; label: string; desc: string; icon: any }[] = [
-    { role: 'student', label: 'Student View', desc: 'Aarav Sharma (NITK Surathkal)', icon: UserCheck },
-    { role: 'mentor', label: 'Mentor View', desc: 'Dr. Arvind Rao (IIT Bombay)', icon: ShieldCheck },
-    { role: 'researcher', label: 'PhD Researcher View', desc: 'Kavya Ramanathan (IISc)', icon: Sparkles },
-    { role: 'organizer', label: 'Event Organizer View', desc: 'AICTE / SIH Committee', icon: Award },
+    { role: 'student', label: 'Student Portal', desc: 'Aarav Sharma (NITK Surathkal)', icon: UserCheck },
+    { role: 'mentor', label: 'Faculty Mentor Portal', desc: 'Dr. Arvind Rao (IIT Bombay)', icon: ShieldCheck },
+    { role: 'researcher', label: 'PhD Scholar Portal', desc: 'Kavya Ramanathan (IISc Bangalore)', icon: Sparkles }
   ];
 
   return (
@@ -36,7 +38,7 @@ export const Navbar: React.FC = () => {
         <div className="flex items-center justify-between h-16 sm:h-18">
           
           {/* Logo & Brand Identity */}
-          <div className="flex items-center gap-8">
+          <div className="flex items-center gap-6 lg:gap-8">
             <button 
               onClick={() => setActiveTab('home')}
               className="flex items-center gap-3 group text-left focus:outline-none"
@@ -44,29 +46,29 @@ export const Navbar: React.FC = () => {
               <div className="w-10 h-10 rounded-xl bg-campus-deep-blue flex items-center justify-center text-white shadow-warm-md group-hover:scale-105 transition-transform">
                 <div className="relative">
                   <Layers className="w-5 h-5 text-white" />
-                  <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-campus-bright-red rounded-full ring-2 ring-white"></span>
+                  <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-campus-bright-red rounded-full ring-2 ring-white animate-pulse"></span>
                 </div>
               </div>
               <div>
                 <div className="flex items-center gap-1.5">
-                  <span className="text-xl font-bold tracking-tight text-campus-deep-blue">
-                    Campus<span className="text-campus-red">Link</span>
+                  <span className="text-xl font-black tracking-tight text-campus-deep-blue">
+                    Campus<span className="text-campus-red">Net</span>
                   </span>
-                  <span className="text-[10px] font-bold uppercase tracking-wider bg-campus-soft-blue text-campus-blue px-1.5 py-0.5 rounded">
-                    Network
+                  <span className="text-[10px] font-extrabold uppercase tracking-wider bg-campus-soft-blue text-campus-blue px-1.5 py-0.5 rounded border border-blue-200">
+                    India
                   </span>
                 </div>
                 <p className="text-[10.5px] font-medium text-campus-muted-text hidden md:block leading-none mt-0.5">
-                  Connect. Build. Research. Innovate.
+                  National Student & Innovation Ecosystem
                 </p>
               </div>
             </button>
 
             {/* Desktop Navigation Links */}
-            <nav className="hidden lg:flex items-center gap-1 xl:gap-2">
+            <nav className="hidden lg:flex items-center gap-1 xl:gap-1.5">
               <button
                 onClick={() => setActiveTab('home')}
-                className={`px-3 py-2 text-sm font-semibold rounded-lg transition-colors ${
+                className={`px-3 py-2 text-xs xl:text-sm font-bold rounded-lg transition-colors ${
                   activeTab === 'home'
                     ? 'text-campus-blue bg-campus-soft-blue'
                     : 'text-campus-slate-text hover:text-campus-blue hover:bg-campus-warm-white'
@@ -77,29 +79,31 @@ export const Navbar: React.FC = () => {
               
               <button
                 onClick={() => setActiveTab('discover')}
-                className={`px-3 py-2 text-sm font-semibold rounded-lg transition-colors ${
+                className={`px-3 py-2 text-xs xl:text-sm font-bold rounded-lg transition-colors flex items-center gap-1 ${
                   activeTab === 'discover'
                     ? 'text-campus-blue bg-campus-soft-blue'
                     : 'text-campus-slate-text hover:text-campus-blue hover:bg-campus-warm-white'
                 }`}
               >
+                <Compass className="w-4 h-4 text-campus-red" />
                 Discover
               </button>
 
               <button
                 onClick={() => setActiveTab('projects')}
-                className={`px-3 py-2 text-sm font-semibold rounded-lg transition-colors ${
+                className={`px-3 py-2 text-xs xl:text-sm font-bold rounded-lg transition-colors flex items-center gap-1 ${
                   activeTab === 'projects'
                     ? 'text-campus-blue bg-campus-soft-blue'
                     : 'text-campus-slate-text hover:text-campus-blue hover:bg-campus-warm-white'
                 }`}
               >
+                <FolderKanban className="w-4 h-4 text-amber-500" />
                 Projects
               </button>
 
               <button
                 onClick={() => setActiveTab('events')}
-                className={`px-3 py-2 text-sm font-semibold rounded-lg transition-colors flex items-center gap-1.5 ${
+                className={`px-3 py-2 text-xs xl:text-sm font-bold rounded-lg transition-colors flex items-center gap-1.5 ${
                   activeTab === 'events'
                     ? 'text-campus-blue bg-campus-soft-blue'
                     : 'text-campus-slate-text hover:text-campus-blue hover:bg-campus-warm-white'
@@ -111,7 +115,7 @@ export const Navbar: React.FC = () => {
 
               <button
                 onClick={() => setActiveTab('mentors')}
-                className={`px-3 py-2 text-sm font-semibold rounded-lg transition-colors ${
+                className={`px-3 py-2 text-xs xl:text-sm font-bold rounded-lg transition-colors ${
                   activeTab === 'mentors'
                     ? 'text-campus-blue bg-campus-soft-blue'
                     : 'text-campus-slate-text hover:text-campus-blue hover:bg-campus-warm-white'
@@ -122,13 +126,24 @@ export const Navbar: React.FC = () => {
 
               <button
                 onClick={() => setActiveTab('research')}
-                className={`px-3 py-2 text-sm font-semibold rounded-lg transition-colors ${
+                className={`px-3 py-2 text-xs xl:text-sm font-bold rounded-lg transition-colors ${
                   activeTab === 'research'
                     ? 'text-campus-blue bg-campus-soft-blue'
                     : 'text-campus-slate-text hover:text-campus-blue hover:bg-campus-warm-white'
                 }`}
               >
                 Research
+              </button>
+
+              <button
+                onClick={() => setActiveTab('dashboard')}
+                className={`px-3 py-2 text-xs xl:text-sm font-bold rounded-lg transition-colors ${
+                  activeTab === 'dashboard'
+                    ? 'text-campus-blue bg-campus-soft-blue'
+                    : 'text-campus-slate-text hover:text-campus-blue hover:bg-campus-warm-white'
+                }`}
+              >
+                Dashboard
               </button>
 
               {/* Community Dropdown */}
@@ -138,19 +153,19 @@ export const Navbar: React.FC = () => {
                     setIsCommunityOpen(!isCommunityOpen);
                     setIsMoreOpen(false);
                   }}
-                  className={`px-3 py-2 text-sm font-semibold rounded-lg transition-colors flex items-center gap-1 ${
+                  className={`px-3 py-2 text-xs xl:text-sm font-bold rounded-lg transition-colors flex items-center gap-1 ${
                     activeTab === 'ask' || activeTab === 'stories'
                       ? 'text-campus-blue bg-campus-soft-blue'
                       : 'text-campus-slate-text hover:text-campus-blue hover:bg-campus-warm-white'
                   }`}
                 >
                   Community
-                  <ChevronDown className={`w-4 h-4 transition-transform ${isCommunityOpen ? 'rotate-180' : ''}`} />
+                  <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isCommunityOpen ? 'rotate-180' : ''}`} />
                 </button>
 
                 {isCommunityOpen && (
                   <div 
-                    className="absolute left-0 mt-2 w-56 bg-white rounded-xl shadow-warm-xl border border-campus-border py-2 z-50 animate-in fade-in slide-in-from-top-2"
+                    className="absolute left-0 mt-2 w-56 bg-white rounded-2xl shadow-warm-xl border border-campus-border py-2 z-50 animate-in fade-in slide-in-from-top-2"
                     onMouseLeave={() => setIsCommunityOpen(false)}
                   >
                     <button
@@ -158,14 +173,14 @@ export const Navbar: React.FC = () => {
                         setActiveTab('ask');
                         setIsCommunityOpen(false);
                       }}
-                      className="w-full text-left px-4 py-2.5 text-sm hover:bg-campus-warm-white flex items-center gap-3 transition-colors"
+                      className="w-full text-left px-4 py-2.5 text-xs sm:text-sm hover:bg-campus-warm-white flex items-center gap-3 transition-colors"
                     >
                       <div className="w-8 h-8 rounded-lg bg-campus-soft-blue flex items-center justify-center text-campus-blue">
                         <HelpCircle className="w-4 h-4" />
                       </div>
                       <div>
-                        <div className="font-semibold text-campus-slate-text">Ask Campus</div>
-                        <div className="text-xs text-campus-muted-text">Academic problem solving</div>
+                        <div className="font-bold text-campus-slate-text">Ask Campus</div>
+                        <div className="text-[11px] text-campus-muted-text">Academic problem solving</div>
                       </div>
                     </button>
 
@@ -174,14 +189,14 @@ export const Navbar: React.FC = () => {
                         setActiveTab('stories');
                         setIsCommunityOpen(false);
                       }}
-                      className="w-full text-left px-4 py-2.5 text-sm hover:bg-campus-warm-white flex items-center gap-3 transition-colors"
+                      className="w-full text-left px-4 py-2.5 text-xs sm:text-sm hover:bg-campus-warm-white flex items-center gap-3 transition-colors"
                     >
                       <div className="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center text-campus-red">
                         <Video className="w-4 h-4" />
                       </div>
                       <div>
-                        <div className="font-semibold text-campus-slate-text">Campus Stories</div>
-                        <div className="text-xs text-campus-muted-text">Short project video demos</div>
+                        <div className="font-bold text-campus-slate-text">Campus Stories</div>
+                        <div className="text-[11px] text-campus-muted-text">Short project video demos</div>
                       </div>
                     </button>
                   </div>
@@ -195,50 +210,34 @@ export const Navbar: React.FC = () => {
                     setIsMoreOpen(!isMoreOpen);
                     setIsCommunityOpen(false);
                   }}
-                  className={`px-3 py-2 text-sm font-semibold rounded-lg transition-colors flex items-center gap-1 ${
-                    activeTab === 'workspace' || activeTab === 'portfolio' || activeTab === 'dashboard' || activeTab === 'certificates'
+                  className={`px-3 py-2 text-xs xl:text-sm font-bold rounded-lg transition-colors flex items-center gap-1 ${
+                    activeTab === 'workspace' || activeTab === 'portfolio' || activeTab === 'certificates'
                       ? 'text-campus-blue bg-campus-soft-blue'
                       : 'text-campus-slate-text hover:text-campus-blue hover:bg-campus-warm-white'
                   }`}
                 >
                   More
-                  <ChevronDown className={`w-4 h-4 transition-transform ${isMoreOpen ? 'rotate-180' : ''}`} />
+                  <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isMoreOpen ? 'rotate-180' : ''}`} />
                 </button>
 
                 {isMoreOpen && (
                   <div 
-                    className="absolute left-0 mt-2 w-64 bg-white rounded-xl shadow-warm-xl border border-campus-border py-2 z-50 animate-in fade-in slide-in-from-top-2"
+                    className="absolute left-0 mt-2 w-64 bg-white rounded-2xl shadow-warm-xl border border-campus-border py-2 z-50 animate-in fade-in slide-in-from-top-2"
                     onMouseLeave={() => setIsMoreOpen(false)}
                   >
-                    <button
-                      onClick={() => {
-                        setActiveTab('dashboard');
-                        setIsMoreOpen(false);
-                      }}
-                      className="w-full text-left px-4 py-2 text-sm hover:bg-campus-warm-white flex items-center gap-3"
-                    >
-                      <div className="w-8 h-8 rounded-lg bg-campus-soft-blue flex items-center justify-center text-campus-blue">
-                        <Layers className="w-4 h-4" />
-                      </div>
-                      <div>
-                        <div className="font-semibold text-campus-slate-text">Today's Dashboard</div>
-                        <div className="text-xs text-campus-muted-text">Priorities & Transparency</div>
-                      </div>
-                    </button>
-
                     <button
                       onClick={() => {
                         setActiveTab('workspace');
                         setIsMoreOpen(false);
                       }}
-                      className="w-full text-left px-4 py-2 text-sm hover:bg-campus-warm-white flex items-center gap-3"
+                      className="w-full text-left px-4 py-2.5 text-xs sm:text-sm hover:bg-campus-warm-white flex items-center gap-3"
                     >
                       <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-campus-blue">
                         <MessageSquareCode className="w-4 h-4" />
                       </div>
                       <div>
-                        <div className="font-semibold text-campus-slate-text">Team Workspace</div>
-                        <div className="text-xs text-campus-muted-text">Private 6-member studio</div>
+                        <div className="font-bold text-campus-slate-text">Team Workspace</div>
+                        <div className="text-[11px] text-campus-muted-text">Private 6-member studio</div>
                       </div>
                     </button>
 
@@ -247,14 +246,14 @@ export const Navbar: React.FC = () => {
                         setActiveTab('portfolio');
                         setIsMoreOpen(false);
                       }}
-                      className="w-full text-left px-4 py-2 text-sm hover:bg-campus-warm-white flex items-center gap-3"
+                      className="w-full text-left px-4 py-2.5 text-xs sm:text-sm hover:bg-campus-warm-white flex items-center gap-3"
                     >
                       <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center text-campus-amber">
                         <Award className="w-4 h-4" />
                       </div>
                       <div>
-                        <div className="font-semibold text-campus-slate-text">Innovation Portfolio</div>
-                        <div className="text-xs text-campus-muted-text">Verified student growth</div>
+                        <div className="font-bold text-campus-slate-text">Innovation Portfolio</div>
+                        <div className="text-[11px] text-campus-muted-text">Verified student growth</div>
                       </div>
                     </button>
 
@@ -263,14 +262,14 @@ export const Navbar: React.FC = () => {
                         setActiveTab('certificates');
                         setIsMoreOpen(false);
                       }}
-                      className="w-full text-left px-4 py-2 text-sm hover:bg-campus-warm-white flex items-center gap-3"
+                      className="w-full text-left px-4 py-2.5 text-xs sm:text-sm hover:bg-campus-warm-white flex items-center gap-3"
                     >
                       <div className="w-8 h-8 rounded-lg bg-green-50 flex items-center justify-center text-campus-green">
                         <ShieldCheck className="w-4 h-4" />
                       </div>
                       <div>
-                        <div className="font-semibold text-campus-slate-text">Verifiable Certificates</div>
-                        <div className="text-xs text-campus-muted-text">QR code validation portal</div>
+                        <div className="font-bold text-campus-slate-text">Verifiable Certificates</div>
+                        <div className="text-[11px] text-campus-muted-text">QR code validation portal</div>
                       </div>
                     </button>
                   </div>
@@ -285,7 +284,7 @@ export const Navbar: React.FC = () => {
             {/* Campus AI Assistant Button */}
             <button
               onClick={() => setIsAIModalOpen(true)}
-              className="relative inline-flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl bg-campus-deep-blue text-white text-xs sm:text-sm font-semibold shadow-warm-md hover:bg-campus-blue transition-all group"
+              className="relative inline-flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl bg-campus-deep-blue text-white text-xs sm:text-sm font-bold shadow-warm-md hover:bg-campus-blue transition-all group"
             >
               <Sparkles className="w-4 h-4 text-amber-300 animate-spin" style={{ animationDuration: '6s' }} />
               <span className="hidden sm:inline">Campus</span> AI
@@ -293,6 +292,18 @@ export const Navbar: React.FC = () => {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-campus-bright-red opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-campus-bright-red"></span>
               </span>
+            </button>
+
+            {/* Direct Messaging Trigger */}
+            <button
+              onClick={() => setIsDirectMessagingOpen(true)}
+              className="p-2 rounded-xl text-campus-slate-text hover:bg-campus-warm-white transition-colors relative"
+              title="CampusNet Direct Messages"
+            >
+              <MessageSquare className="w-5 h-5 text-campus-muted-text" />
+              {unreadMessagesCount > 0 && (
+                <span className="absolute top-1 right-1 w-2 h-2 bg-campus-bright-red rounded-full" />
+              )}
             </button>
 
             {/* Universal Search Bar / Trigger */}
@@ -458,7 +469,7 @@ export const Navbar: React.FC = () => {
                       }}
                       className="w-full text-left px-3 py-1.5 text-xs text-campus-blue font-semibold hover:bg-campus-soft-blue rounded-lg transition-colors"
                     >
-                      + New Student Verification
+                      + Student Registration
                     </button>
                     <button
                       onClick={() => {
@@ -467,19 +478,28 @@ export const Navbar: React.FC = () => {
                       }}
                       className="w-full text-left px-3 py-1.5 text-xs text-campus-red font-semibold hover:bg-red-50 rounded-lg transition-colors"
                     >
-                      + Mentor Onboarding Flow
+                      + Mentor Onboarding
+                    </button>
+                    <button
+                      onClick={() => {
+                        setAuthModalType('scholar_register');
+                        setIsRoleMenuOpen(false);
+                      }}
+                      className="w-full text-left px-3 py-1.5 text-xs text-purple-700 font-semibold hover:bg-purple-50 rounded-lg transition-colors"
+                    >
+                      + PhD Scholar Registration
                     </button>
                   </div>
                 </div>
               )}
             </div>
 
-            {/* Quick Auth Modal Trigger if needed */}
+            {/* Quick Auth Modal Trigger */}
             <button
-              onClick={() => setAuthModalType('student_register')}
-              className="hidden xl:inline-flex campus-btn-red text-xs px-3 py-2"
+              onClick={() => setAuthModalType('login')}
+              className="hidden xl:inline-flex campus-btn-red text-xs px-3.5 py-2 font-bold shadow-warm-sm"
             >
-              Verify ID
+              Sign In
             </button>
           </div>
 
