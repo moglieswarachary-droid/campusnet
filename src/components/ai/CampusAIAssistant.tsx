@@ -56,7 +56,7 @@ export const CampusAIAssistant: React.FC = () => {
     {
       id: 'ai-welcome',
       sender: 'ai',
-      text: 'Namaste! I am **Campus AI**, your interdisciplinary innovation copilot across 100+ Indian universities. Select a specialized mode or ask me anything to find teammates, match faculty guides, evaluate hackathon abstracts, or plan development sprints.',
+      text: 'Namaste! I am **CampusNet+ AI**, your interdisciplinary innovation copilot across 100+ Indian universities. Select a specialized mode or ask me anything to find teammates, match faculty guides, evaluate hackathon abstracts, or plan development sprints.',
       recommendations: [
         {
           type: 'student',
@@ -268,7 +268,7 @@ export const CampusAIAssistant: React.FC = () => {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="font-extrabold text-base tracking-tight">Campus AI Copilot</h3>
+                <h3 className="font-extrabold text-base tracking-tight">CampusNet+ AI Copilot</h3>
                 <span className="text-[10px] font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full border border-emerald-400/30 flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                   Online

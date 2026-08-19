@@ -90,7 +90,7 @@ export const InnovationTranscriptModal: React.FC<InnovationTranscriptModalProps>
             <div className="space-y-1">
               <div className="flex items-center gap-2">
                 <span className="text-[10px] font-black uppercase tracking-widest text-campus-red bg-red-50 border border-red-200 px-2 py-0.5 rounded">
-                  NATIONAL INNOVATION COUNCIL • CAMPUSNET INDIA
+                  NATIONAL INNOVATION COUNCIL • CAMPUSNET+ INDIA
                 </span>
               </div>
               <h1 className="text-2xl sm:text-3xl font-serif font-black text-campus-deep-blue">
@@ -230,7 +230,7 @@ export const InnovationTranscriptModal: React.FC<InnovationTranscriptModalProps>
           <div className="pt-4 border-t-2 border-campus-deep-blue flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-campus-muted-text">
             <div className="flex items-center gap-2 text-green-700 font-bold">
               <CheckCircle2 className="w-4 h-4 text-green-600" />
-              <span>Digitally Authenticated by CampusNet Higher Education Registry</span>
+              <span>Digitally Authenticated by CampusNet+ Higher Education Registry</span>
             </div>
             <div className="text-right">
               Generated: {new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })} • Tamper-proof

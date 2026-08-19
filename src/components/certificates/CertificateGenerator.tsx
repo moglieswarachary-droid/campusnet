@@ -33,7 +33,7 @@ export const CertificateCard: React.FC<{ certificate: Certificate }> = ({ certif
       <div className="flex items-start justify-between gap-4 pt-2">
         <div>
           <span className="text-[10px] font-bold tracking-widest uppercase text-campus-red">
-            CAMPUSNET NATIONAL VERIFIED CREDENTIAL
+            CAMPUSNET+ NATIONAL VERIFIED CREDENTIAL
           </span>
           <h3 className="text-xl sm:text-2xl font-serif font-bold text-campus-deep-blue mt-0.5">
             Certificate of {certificate.recipientRole === 'Winner' ? 'Merit & Excellence' : 'Recognition'}
@@ -136,7 +136,7 @@ export const MentorshipCertificateCard: React.FC<{ cert: MentorshipCertificate }
       <div className="flex items-start justify-between gap-4 pt-2">
         <div>
           <span className="text-[10px] font-bold tracking-widest uppercase text-amber-600">
-            CAMPUSNET NATIONAL FACULTY MENTORSHIP REGISTRY
+            CAMPUSNET+ NATIONAL FACULTY MENTORSHIP REGISTRY
           </span>
           <h3 className="text-xl sm:text-2xl font-serif font-bold text-campus-deep-blue mt-0.5">
             Certificate of Project Mentorship Excellence

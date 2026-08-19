@@ -19,7 +19,7 @@ export const Footer: React.FC = () => {
                 <Layers className="w-5 h-5 text-campus-blue" />
               </div>
               <span className="text-2xl font-bold tracking-tight text-white">
-                Campus<span className="text-campus-bright-red">Net</span>
+                Campus<span className="text-campus-bright-red">Net+</span>
               </span>
             </div>
 
@@ -158,7 +158,7 @@ export const Footer: React.FC = () => {
 
         {/* Sub-footer / Copyright */}
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-gray-400">
-          <p>© 2026 CampusNet National Academic & Innovation Network. All rights reserved across India.</p>
+          <p>© 2026 CampusNet+ National Academic & Innovation Network. All rights reserved across India.</p>
           
           <div className="flex items-center gap-6">
             <span>Privacy Policy</span>

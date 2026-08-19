@@ -2,7 +2,7 @@ import React from 'react';
 import { Layers } from 'lucide-react';
 
 export const LoadingFallback: React.FC<{ message?: string }> = ({ 
-  message = 'Loading CampusNet...' 
+  message = 'Loading CampusNet+...' 
 }) => {
   return (
     <div className="min-h-[60vh] flex flex-col items-center justify-center p-8 animate-in fade-in duration-300">

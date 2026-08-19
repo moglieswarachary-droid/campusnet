@@ -57,7 +57,7 @@ export const SuperAdminLayout: React.FC<Props> = ({ activeSection, setActiveSect
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-base sm:text-lg font-black text-white tracking-tight">
-                  Campus<span className="text-red-500">Net</span>
+                  Campus<span className="text-red-500">Net+</span>
                 </span>
                 <span className="text-[9px] font-extrabold uppercase tracking-widest bg-red-500/20 text-red-300 border border-red-500/30 px-1.5 py-0.2 rounded">
                   Super Admin

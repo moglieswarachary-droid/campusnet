@@ -1,10 +1,10 @@
-# 🎓 CampusNet — India's Premier National Academic & Innovation Network
+# 🎓 CampusNet+ — India's Premier National Academic & Innovation Network
 
-[![Live Platform](https://img.shields.io/badge/Live%20Platform-CampusNet%20Railway-00C7B7?style=for-the-badge&logo=railway)](https://campusnet-production.up.railway.app)
+[![Live Platform](https://img.shields.io/badge/Live%20Platform-CampusNet%2B%20Railway-00C7B7?style=for-the-badge&logo=railway)](https://campusnet-production.up.railway.app)
 [![React](https://img.shields.io/badge/Frontend-React%20%2B%20TypeScript%20%2B%20Vite-61DAFB?style=for-the-badge&logo=react)](https://reactjs.org)
 [![TailwindCSS](https://img.shields.io/badge/Styling-TailwindCSS%203.4-38B2AC?style=for-the-badge&logo=tailwind-css)](https://tailwindcss.com)
 
-**CampusNet** is a state-of-the-art national-level student, mentor, project, research, and events networking ecosystem connecting higher education institutions, faculty guides, PhD scholars, and national hackathons across all 28 states and Union Territories in India.
+**CampusNet+** is a state-of-the-art national-level student, mentor, project, research, and events networking ecosystem connecting higher education institutions, faculty guides, PhD scholars, and national hackathons across all 28 states and Union Territories in India.
 
 ---
 

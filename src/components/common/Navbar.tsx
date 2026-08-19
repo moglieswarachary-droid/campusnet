@@ -53,7 +53,7 @@ export const Navbar: React.FC = () => {
               <div>
                 <div className="flex items-center gap-1.5">
                   <span className="text-xl font-black tracking-tight text-campus-deep-blue">
-                    Campus<span className="text-campus-red">Net</span>
+                    Campus<span className="text-campus-red">Net+</span>
                   </span>
                   <span className="text-[10px] font-extrabold uppercase tracking-wider bg-campus-soft-blue text-campus-blue px-1.5 py-0.5 rounded border border-blue-200">
                     India

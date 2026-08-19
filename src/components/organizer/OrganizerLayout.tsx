@@ -71,7 +71,7 @@ export const OrganizerLayout: React.FC<Props> = ({ activeSection, setActiveSecti
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-base sm:text-lg font-black text-white tracking-tight">
-                  Campus<span className="text-amber-400">Net</span>
+                  Campus<span className="text-amber-400">Net+</span>
                 </span>
                 <span className="text-[9px] font-bold uppercase tracking-widest bg-amber-500/20 text-amber-300 border border-amber-500/30 px-1.5 py-0.2 rounded">
                   Organizer
