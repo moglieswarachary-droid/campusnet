@@ -24,7 +24,7 @@ export const CertificateCard: React.FC<{ certificate: Certificate }> = ({ certif
   };
 
   return (
-    <div className="bg-white rounded-3xl p-6 sm:p-8 border-2 border-campus-border shadow-warm-lg space-y-6 relative overflow-hidden">
+    <div className="bg-white rounded-3xl p-6 sm:p-8 border-2 border-campus-border shadow-warm-lg space-y-6 relative overflow-hidden certificate-printable">
       
       {/* Decorative Gold & Royal Borders */}
       <div className="absolute top-0 left-0 right-0 h-3 bg-gradient-to-r from-campus-blue via-campus-deep-blue to-campus-red" />
@@ -43,7 +43,7 @@ export const CertificateCard: React.FC<{ certificate: Certificate }> = ({ certif
         <div className="flex items-center gap-2">
           <button
             onClick={handlePrint}
-            className="p-2 rounded-xl border border-campus-border hover:bg-campus-warm-white text-campus-muted-text flex items-center gap-1 text-xs font-bold"
+            className="p-2 rounded-xl border border-campus-border hover:bg-campus-warm-white text-campus-muted-text flex items-center gap-1 text-xs font-bold no-print cursor-pointer"
             title="Print Certificate"
           >
             <Printer className="w-4 h-4" />
@@ -127,7 +127,7 @@ export const MentorshipCertificateCard: React.FC<{ cert: MentorshipCertificate }
   };
 
   return (
-    <div className="bg-white rounded-3xl p-6 sm:p-8 border-2 border-amber-300 shadow-warm-lg space-y-6 relative overflow-hidden">
+    <div className="bg-white rounded-3xl p-6 sm:p-8 border-2 border-amber-300 shadow-warm-lg space-y-6 relative overflow-hidden certificate-printable">
       
       {/* Decorative Gold & Royal Borders */}
       <div className="absolute top-0 left-0 right-0 h-3 bg-gradient-to-r from-amber-500 via-campus-deep-blue to-amber-600" />
@@ -146,7 +146,7 @@ export const MentorshipCertificateCard: React.FC<{ cert: MentorshipCertificate }
         <div className="flex items-center gap-2">
           <button
             onClick={handlePrint}
-            className="p-2 rounded-xl border border-campus-border hover:bg-campus-warm-white text-campus-muted-text flex items-center gap-1 text-xs font-bold"
+            className="p-2 rounded-xl border border-campus-border hover:bg-campus-warm-white text-campus-muted-text flex items-center gap-1 text-xs font-bold no-print cursor-pointer"
             title="Print Certificate"
           >
             <Printer className="w-4 h-4" />

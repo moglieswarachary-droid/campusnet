@@ -10,7 +10,7 @@ import { Footer } from './components/common/Footer';
 import { ToastContainer } from './components/common/Toast';
 
 // Landing Sections (Critical Path)
-import { HeroSection } from './components/landing/HeroSection';
+import { LandingPageView } from './components/landing/LandingPageView';
 
 // Lazy Loaded Portals & Apps
 const OrganizerApp = lazy(() => import('./components/organizer/OrganizerApp').then(m => ({ default: m.OrganizerApp })));
@@ -77,7 +77,7 @@ const MainContent: React.FC = () => {
     <main className="min-h-screen flex flex-col justify-between">
       <Suspense fallback={<LoadingFallback message="Loading CampusNet Experience..." />}>
         <Routes>
-          <Route path="/" element={<HeroSection />} />
+          <Route path="/" element={<LandingPageView />} />
           <Route path="/discover" element={<DiscoverEcosystemView />} />
           
           <Route path="/projects" element={<ProjectsEcosystemView />} />

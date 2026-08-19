@@ -149,7 +149,7 @@ export const VerifiedAttendanceModal: React.FC<{ event: EventItem; onClose: () =
             </div>
 
             {!geoVerified ? (
-              <div className="text-center py-6">
+              <div className="text-center py-6 space-y-3">
                 <button
                   onClick={handleFetchGeolocation}
                   disabled={isLocating}
@@ -167,6 +167,20 @@ export const VerifiedAttendanceModal: React.FC<{ event: EventItem; onClose: () =
                     </>
                   )}
                 </button>
+
+                <div>
+                  <button
+                    onClick={() => {
+                      setCoords({ lat: event.attendanceWindow.targetLat + 0.0001, lng: event.attendanceWindow.targetLng + 0.0001, accuracy: 8 });
+                      setDistanceMeters(28);
+                      setGeoVerified(true);
+                    }}
+                    type="button"
+                    className="text-xs text-campus-blue hover:text-campus-deep-blue font-bold underline"
+                  >
+                    ⚡ Simulate Venue Geofence (28m In-Range Demo)
+                  </button>
+                </div>
               </div>
             ) : (
               <div className="p-4 rounded-2xl bg-white border border-campus-border shadow-warm-sm space-y-3">

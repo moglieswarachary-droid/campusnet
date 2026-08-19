@@ -24,6 +24,20 @@ export const Navbar: React.FC = () => {
   const [isRoleMenuOpen, setIsRoleMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
+  // Global Ctrl+K / Cmd+K listener for instant search
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setIsSearchOpen(prev => !prev);
+      } else if (e.key === 'Escape') {
+        setIsSearchOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   const unreadCount = notifications.filter(n => !n.read).length;
   const unreadMessagesCount = directMessages.filter(m => !m.read && m.receiverId === currentUser.id).length;
 
@@ -390,10 +404,13 @@ export const Navbar: React.FC = () => {
               ) : (
                 <button
                   onClick={() => setIsSearchOpen(true)}
-                  className="p-2 rounded-xl text-campus-slate-text hover:bg-campus-warm-white transition-colors"
-                  title="Search platform"
+                  className="p-2 rounded-xl text-campus-slate-text hover:bg-campus-warm-white transition-colors flex items-center gap-1.5"
+                  title="Search platform (Ctrl+K / ⌘K)"
                 >
                   <Search className="w-5 h-5 text-campus-muted-text" />
+                  <span className="hidden xl:inline-flex text-[10px] font-bold text-campus-muted-text bg-campus-warm-white border border-campus-border px-1.5 py-0.5 rounded shadow-warm-xs">
+                    Ctrl K
+                  </span>
                 </button>
               )}
             </div>

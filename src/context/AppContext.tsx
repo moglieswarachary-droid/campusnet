@@ -259,6 +259,7 @@ interface AppContextType {
   // Admin & Verification Actions
   verifyStudentManually: (studentId: string) => void;
   verifyMentorManually: (mentorId: string) => void;
+  resetDemoData: () => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -318,28 +319,52 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const saved = localStorage.getItem('campusnet_researchers');
     return saved ? JSON.parse(saved) : MOCK_RESEARCHERS;
   });
-  const [teams, setTeams] = useState<Team[]>(MOCK_TEAMS);
-  const [projects, setProjects] = useState<Project[]>(MOCK_PROJECTS);
+  const [teams, setTeams] = useState<Team[]>(() => {
+    const saved = localStorage.getItem('campusnet_teams');
+    return saved ? JSON.parse(saved) : MOCK_TEAMS;
+  });
+  const [projects, setProjects] = useState<Project[]>(() => {
+    const saved = localStorage.getItem('campusnet_projects');
+    return saved ? JSON.parse(saved) : MOCK_PROJECTS;
+  });
   const [events, setEvents] = useState<EventItem[]>(() => {
     const saved = localStorage.getItem('campusnet_events');
     return saved ? JSON.parse(saved) : MOCK_EVENTS;
   });
-  const [certificates, setCertificates] = useState<Certificate[]>(MOCK_CERTIFICATES);
-  const [mentorshipCertificates, setMentorshipCertificates] = useState<MentorshipCertificate[]>(MOCK_MENTORSHIP_CERTIFICATES);
+  const [certificates, setCertificates] = useState<Certificate[]>(() => {
+    const saved = localStorage.getItem('campusnet_certificates');
+    return saved ? JSON.parse(saved) : MOCK_CERTIFICATES;
+  });
+  const [mentorshipCertificates, setMentorshipCertificates] = useState<MentorshipCertificate[]>(() => {
+    const saved = localStorage.getItem('campusnet_mentorship_certificates');
+    return saved ? JSON.parse(saved) : MOCK_MENTORSHIP_CERTIFICATES;
+  });
   const [publications] = useState<ResearchPublication[]>(MOCK_PUBLICATIONS);
   const [conferences] = useState<ResearchConference[]>(MOCK_RESEARCH_CONFERENCES);
   const [institutions, setInstitutions] = useState<InstitutionInfo[]>(() => {
     const saved = localStorage.getItem('campusnet_institutions');
     return saved ? JSON.parse(saved) : MOCK_INSTITUTIONS_DATA;
   });
-  const [stories, setStories] = useState<CampusStory[]>(MOCK_STORIES);
-  const [askQuestions, setAskQuestions] = useState<AskQuestion[]>(MOCK_QUESTIONS);
+  const [stories, setStories] = useState<CampusStory[]>(() => {
+    const saved = localStorage.getItem('campusnet_stories');
+    return saved ? JSON.parse(saved) : MOCK_STORIES;
+  });
+  const [askQuestions, setAskQuestions] = useState<AskQuestion[]>(() => {
+    const saved = localStorage.getItem('campusnet_questions');
+    return saved ? JSON.parse(saved) : MOCK_QUESTIONS;
+  });
   const [notifications, setNotifications] = useState<NotificationItem[]>(() => {
     const saved = localStorage.getItem('campusnet_notifications');
     return saved ? JSON.parse(saved) : MOCK_NOTIFICATIONS;
   });
-  const [directMessages, setDirectMessages] = useState<DirectMessage[]>(MOCK_DIRECT_MESSAGES);
-  const [mentorshipRequests, setMentorshipRequests] = useState<MentorshipRequest[]>([]);
+  const [directMessages, setDirectMessages] = useState<DirectMessage[]>(() => {
+    const saved = localStorage.getItem('campusnet_direct_messages');
+    return saved ? JSON.parse(saved) : MOCK_DIRECT_MESSAGES;
+  });
+  const [mentorshipRequests, setMentorshipRequests] = useState<MentorshipRequest[]>(() => {
+    const saved = localStorage.getItem('campusnet_mentorship_requests');
+    return saved ? JSON.parse(saved) : [];
+  });
   
   // Organizer Portal State
   const [organizers, setOrganizers] = useState<OrganizerAccount[]>(() => {
@@ -358,15 +383,42 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   });
   
   // Event Operations & Lifecycle State
-  const [eventRegistrations, setEventRegistrations] = useState<EventRegistrationItem[]>(MOCK_EVENT_REGISTRATIONS);
-  const [qrCheckInRecords, setQrCheckInRecords] = useState<QRCheckInRecord[]>(MOCK_QR_CHECKINS);
-  const [projectSubmissions, setProjectSubmissions] = useState<EventProjectSubmission[]>(MOCK_PROJECT_SUBMISSIONS);
-  const [evaluationCriteria, setEvaluationCriteria] = useState<EvaluationCriterion[]>(MOCK_EVALUATION_CRITERIA);
-  const [judges, setJudges] = useState<JudgeAccount[]>(MOCK_JUDGES);
-  const [evaluationScores, setEvaluationScores] = useState<EvaluationScore[]>(MOCK_EVALUATION_SCORES);
-  const [eventWinners, setEventWinners] = useState<EventWinnerRecord[]>(MOCK_EVENT_WINNERS);
-  const [certificateTemplates, setCertificateTemplates] = useState<CertificateTemplate[]>(MOCK_CERTIFICATE_TEMPLATES);
-  const [eventAnnouncements, setEventAnnouncements] = useState<EventAnnouncement[]>(MOCK_EVENT_ANNOUNCEMENTS);
+  const [eventRegistrations, setEventRegistrations] = useState<EventRegistrationItem[]>(() => {
+    const saved = localStorage.getItem('campusnet_event_registrations');
+    return saved ? JSON.parse(saved) : MOCK_EVENT_REGISTRATIONS;
+  });
+  const [qrCheckInRecords, setQrCheckInRecords] = useState<QRCheckInRecord[]>(() => {
+    const saved = localStorage.getItem('campusnet_qr_checkins');
+    return saved ? JSON.parse(saved) : MOCK_QR_CHECKINS;
+  });
+  const [projectSubmissions, setProjectSubmissions] = useState<EventProjectSubmission[]>(() => {
+    const saved = localStorage.getItem('campusnet_project_submissions');
+    return saved ? JSON.parse(saved) : MOCK_PROJECT_SUBMISSIONS;
+  });
+  const [evaluationCriteria, setEvaluationCriteria] = useState<EvaluationCriterion[]>(() => {
+    const saved = localStorage.getItem('campusnet_evaluation_criteria');
+    return saved ? JSON.parse(saved) : MOCK_EVALUATION_CRITERIA;
+  });
+  const [judges, setJudges] = useState<JudgeAccount[]>(() => {
+    const saved = localStorage.getItem('campusnet_judges');
+    return saved ? JSON.parse(saved) : MOCK_JUDGES;
+  });
+  const [evaluationScores, setEvaluationScores] = useState<EvaluationScore[]>(() => {
+    const saved = localStorage.getItem('campusnet_evaluation_scores');
+    return saved ? JSON.parse(saved) : MOCK_EVALUATION_SCORES;
+  });
+  const [eventWinners, setEventWinners] = useState<EventWinnerRecord[]>(() => {
+    const saved = localStorage.getItem('campusnet_event_winners');
+    return saved ? JSON.parse(saved) : MOCK_EVENT_WINNERS;
+  });
+  const [certificateTemplates, setCertificateTemplates] = useState<CertificateTemplate[]>(() => {
+    const saved = localStorage.getItem('campusnet_certificate_templates');
+    return saved ? JSON.parse(saved) : MOCK_CERTIFICATE_TEMPLATES;
+  });
+  const [eventAnnouncements, setEventAnnouncements] = useState<EventAnnouncement[]>(() => {
+    const saved = localStorage.getItem('campusnet_event_announcements');
+    return saved ? JSON.parse(saved) : MOCK_EVENT_ANNOUNCEMENTS;
+  });
   const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>(() => {
     const saved = localStorage.getItem('campusnet_audit_logs');
     return saved ? JSON.parse(saved) : MOCK_AUDIT_LOGS;
@@ -386,16 +438,84 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, [researchers]);
 
   useEffect(() => {
+    localStorage.setItem('campusnet_teams', JSON.stringify(teams));
+  }, [teams]);
+
+  useEffect(() => {
+    localStorage.setItem('campusnet_projects', JSON.stringify(projects));
+  }, [projects]);
+
+  useEffect(() => {
     localStorage.setItem('campusnet_events', JSON.stringify(events));
   }, [events]);
+
+  useEffect(() => {
+    localStorage.setItem('campusnet_certificates', JSON.stringify(certificates));
+  }, [certificates]);
+
+  useEffect(() => {
+    localStorage.setItem('campusnet_mentorship_certificates', JSON.stringify(mentorshipCertificates));
+  }, [mentorshipCertificates]);
 
   useEffect(() => {
     localStorage.setItem('campusnet_institutions', JSON.stringify(institutions));
   }, [institutions]);
 
   useEffect(() => {
+    localStorage.setItem('campusnet_stories', JSON.stringify(stories));
+  }, [stories]);
+
+  useEffect(() => {
+    localStorage.setItem('campusnet_questions', JSON.stringify(askQuestions));
+  }, [askQuestions]);
+
+  useEffect(() => {
+    localStorage.setItem('campusnet_direct_messages', JSON.stringify(directMessages));
+  }, [directMessages]);
+
+  useEffect(() => {
+    localStorage.setItem('campusnet_mentorship_requests', JSON.stringify(mentorshipRequests));
+  }, [mentorshipRequests]);
+
+  useEffect(() => {
     localStorage.setItem('campusnet_organizers', JSON.stringify(organizers));
   }, [organizers]);
+
+  useEffect(() => {
+    localStorage.setItem('campusnet_event_registrations', JSON.stringify(eventRegistrations));
+  }, [eventRegistrations]);
+
+  useEffect(() => {
+    localStorage.setItem('campusnet_qr_checkins', JSON.stringify(qrCheckInRecords));
+  }, [qrCheckInRecords]);
+
+  useEffect(() => {
+    localStorage.setItem('campusnet_project_submissions', JSON.stringify(projectSubmissions));
+  }, [projectSubmissions]);
+
+  useEffect(() => {
+    localStorage.setItem('campusnet_evaluation_criteria', JSON.stringify(evaluationCriteria));
+  }, [evaluationCriteria]);
+
+  useEffect(() => {
+    localStorage.setItem('campusnet_judges', JSON.stringify(judges));
+  }, [judges]);
+
+  useEffect(() => {
+    localStorage.setItem('campusnet_evaluation_scores', JSON.stringify(evaluationScores));
+  }, [evaluationScores]);
+
+  useEffect(() => {
+    localStorage.setItem('campusnet_event_winners', JSON.stringify(eventWinners));
+  }, [eventWinners]);
+
+  useEffect(() => {
+    localStorage.setItem('campusnet_certificate_templates', JSON.stringify(certificateTemplates));
+  }, [certificateTemplates]);
+
+  useEffect(() => {
+    localStorage.setItem('campusnet_event_announcements', JSON.stringify(eventAnnouncements));
+  }, [eventAnnouncements]);
 
   useEffect(() => {
     localStorage.setItem('campusnet_audit_logs', JSON.stringify(auditLogs));
@@ -2033,6 +2153,47 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
   };
 
+  const resetDemoData = useCallback(() => {
+    try {
+      localStorage.clear();
+    } catch (e) {
+      console.warn('Could not clear localStorage', e);
+    }
+    setStudents(MOCK_STUDENTS);
+    setMentors(MOCK_MENTORS);
+    setResearchers(MOCK_RESEARCHERS);
+    setTeams(MOCK_TEAMS);
+    setProjects(MOCK_PROJECTS);
+    setEvents(MOCK_EVENTS);
+    setCertificates(MOCK_CERTIFICATES);
+    setMentorshipCertificates(MOCK_MENTORSHIP_CERTIFICATES);
+    setInstitutions(MOCK_INSTITUTIONS_DATA);
+    setStories(MOCK_STORIES);
+    setAskQuestions(MOCK_QUESTIONS);
+    setNotifications(MOCK_NOTIFICATIONS);
+    setDirectMessages(MOCK_DIRECT_MESSAGES);
+    setMentorshipRequests([]);
+    setOrganizers(MOCK_ORGANIZER_ACCOUNTS);
+    setCurrentOrganizer(MOCK_ORGANIZER_ACCOUNTS[0]);
+    setCurrentSuperAdmin(MOCK_SUPER_ADMIN_ACCOUNT);
+    setEventRegistrations(MOCK_EVENT_REGISTRATIONS);
+    setQrCheckInRecords(MOCK_QR_CHECKINS);
+    setProjectSubmissions(MOCK_PROJECT_SUBMISSIONS);
+    setEvaluationCriteria(MOCK_EVALUATION_CRITERIA);
+    setJudges(MOCK_JUDGES);
+    setEvaluationScores(MOCK_EVALUATION_SCORES);
+    setEventWinners(MOCK_EVENT_WINNERS);
+    setCertificateTemplates(MOCK_CERTIFICATE_TEMPLATES);
+    setEventAnnouncements(MOCK_EVENT_ANNOUNCEMENTS);
+    setAuditLogs(MOCK_AUDIT_LOGS);
+    setCurrentUser(INITIAL_CURRENT_USER);
+    addToast({
+      type: 'info',
+      title: 'Demo Data Reset',
+      message: 'All system entities have been restored to default seeds.'
+    });
+  }, [addToast]);
+
   return (
     <AppContext.Provider
       value={{
@@ -2147,7 +2308,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         suspendUser,
         reactivateUser,
         verifyUser,
-
+        
+        // Saved & Modals
+        savedItemIds,
+        toggleSaveItem,
         selectedEventModal,
         setSelectedEventModal,
         selectedUserProfileModal,
@@ -2157,8 +2321,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         activeMessagingPartner,
         setActiveMessagingPartner,
         
-        savedItemIds,
-        toggleSaveItem,
         filterState,
         setFilterState,
         filterCity,
@@ -2177,6 +2339,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         updateTaskStatus,
         createTeam,
         joinTeamRole,
+        
+        // Public Actions
         sendMentorshipRequest,
         respondToMentorshipRequest,
         completeMentorshipAndIssueCertificate,
@@ -2212,7 +2376,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         searchQuery,
         setSearchQuery,
         verifyStudentManually,
-        verifyMentorManually
+        verifyMentorManually,
+        resetDemoData
       }}
     >
       {children}
