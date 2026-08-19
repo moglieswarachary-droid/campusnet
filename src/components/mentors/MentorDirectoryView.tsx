@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 import { 
   GraduationCap, Search, Star, ShieldCheck, 
@@ -12,6 +13,17 @@ import { Mentor } from '../../types';
 
 export const MentorDirectoryView: React.FC = () => {
   const { mentors, sendMentorshipRequest, addToast, currentUser, setActiveTab, setSelectedUserProfileModal } = useApp();
+  
+  const { id } = useParams<{ id?: string }>();
+
+  useEffect(() => {
+    if (id && mentors.length > 0) {
+      const found = mentors.find(m => m.id.toLowerCase() === id.toLowerCase());
+      if (found) {
+        setSelectedUserProfileModal(found as any);
+      }
+    }
+  }, [id, mentors, setSelectedUserProfileModal]);
   
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDomain, setSelectedDomain] = useState('All');

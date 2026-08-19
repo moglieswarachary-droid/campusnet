@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 import { 
   Calendar, MapPin, Users, Award, ShieldCheck, 
@@ -17,10 +18,21 @@ export const EventsDirectoryView: React.FC = () => {
     setSelectedEventModal, savedItemIds, toggleSaveItem 
   } = useApp();
 
+  const { id } = useParams<{ id?: string }>();
+
   const [selectedType, setSelectedType] = useState('All');
   const [selectedState, setSelectedState] = useState('All India');
   const [searchQuery, setSearchQuery] = useState('');
   const [attendanceEventModal, setAttendanceEventModal] = useState<EventItem | null>(null);
+
+  useEffect(() => {
+    if (id && events.length > 0) {
+      const found = events.find(e => e.id.toLowerCase() === id.toLowerCase());
+      if (found) {
+        setSelectedEventModal(found);
+      }
+    }
+  }, [id, events, setSelectedEventModal]);
 
   const eventTypes = ['All', 'Government Challenge', 'Hackathon', 'Ideathon', 'Research Symposium'];
 

@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 import { 
   ShieldCheck, Search, Award, CheckCircle2, 
@@ -8,17 +9,16 @@ import { CertificateCard, MentorshipCertificateCard } from './CertificateGenerat
 
 export const CertificateVerifyView: React.FC = () => {
   const { certificates, mentorshipCertificates } = useApp();
+  const { certId } = useParams<{ certId?: string }>();
   
-  const [lookupId, setLookupId] = useState('CN-2026-MNT-8F2A-3914');
+  const [lookupId, setLookupId] = useState(certId || 'CN-2026-MNT-8F2A-3914');
   const [searchedEventCert, setSearchedEventCert] = useState<any>(null);
-  const [searchedMentorCert, setSearchedMentorCert] = useState<any>(mentorshipCertificates[0] || null);
-  const [hasSearched, setHasSearched] = useState(true);
+  const [searchedMentorCert, setSearchedMentorCert] = useState<any>(null);
+  const [hasSearched, setHasSearched] = useState(false);
 
-  const handleVerifyLookup = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!lookupId.trim()) return;
-
-    const trimmed = lookupId.trim().toLowerCase();
+  const performLookup = (idToSearch: string) => {
+    if (!idToSearch.trim()) return;
+    const trimmed = idToSearch.trim().toLowerCase();
     
     // Check Event Certs
     const foundEvent = certificates.find(c => c.certificateNumber.toLowerCase() === trimmed);
@@ -37,6 +37,22 @@ export const CertificateVerifyView: React.FC = () => {
     }
 
     setHasSearched(true);
+  };
+
+  // Run on mount or when certId changes
+  useEffect(() => {
+    if (certId) {
+      setLookupId(certId);
+      performLookup(certId);
+    } else {
+      // Default demo lookup
+      performLookup('CN-2026-MNT-8F2A-3914');
+    }
+  }, [certId, certificates, mentorshipCertificates]);
+
+  const handleVerifyLookup = (e: React.FormEvent) => {
+    e.preventDefault();
+    performLookup(lookupId);
   };
 
   const isFound = searchedEventCert || searchedMentorCert;

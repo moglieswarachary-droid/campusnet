@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   User, Mentor, Researcher, Team, Project, EventItem, 
   AttendanceRecord, Certificate, ResearchPublication, CampusStory, 
@@ -263,6 +264,8 @@ interface AppContextType {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const navigate = useNavigate();
+
   // Public User
   const [currentUser, setCurrentUser] = useState<User>(() => {
     const saved = localStorage.getItem('campusnet_user');
@@ -270,10 +273,37 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   });
   
   const [activeRole, setActiveRole] = useState<RoleType>('student');
-  const [activeTab, setActiveTab] = useState<NavigationTab>('home');
+  const [activeTab, setActiveTabState] = useState<NavigationTab>('home');
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>('proj-001');
   const [selectedMentorId, setSelectedMentorId] = useState<string | null>(null);
+
+  const setActiveTab = useCallback((tab: NavigationTab) => {
+    setActiveTabState(tab);
+    const routeMap: Record<NavigationTab, string> = {
+      home: '/',
+      discover: '/discover',
+      projects: '/projects',
+      events: '/events',
+      mentors: '/mentors',
+      research: '/research',
+      workspace: '/workspace',
+      dashboard: '/dashboard',
+      portfolio: '/portfolio',
+      certificates: '/certificates',
+      ask: '/ask',
+      stories: '/stories',
+      community: '/discover',
+      admin: '/admin'
+    };
+    const target = routeMap[tab] || '/';
+    if (typeof window !== 'undefined') {
+      const currentPath = window.location.pathname;
+      if (currentPath !== target && !currentPath.startsWith(target + '/')) {
+        navigate(target);
+      }
+    }
+  }, [navigate]);
   
   // Core Entities with LocalStorage Persistence
   const [students, setStudents] = useState<User[]>(() => {

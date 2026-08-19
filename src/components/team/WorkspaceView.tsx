@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useParams } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 import { 
   Users, Video, MessageSquare, CheckSquare, GraduationCap, 
@@ -11,9 +12,10 @@ import { MentorGuidanceTab } from '../workspace/MentorGuidanceTab';
 
 export const WorkspaceView: React.FC = () => {
   const { teams, projects, startVideoMeeting, currentUser, setActiveTab } = useApp();
+  const { teamId } = useParams<{ teamId?: string }>();
   
-  const activeTeam = teams[0]; // AgriVision Autonomous AI (6 members)
-  const activeProject = projects[0];
+  const activeTeam = (teamId ? teams.find(t => t.id.toLowerCase() === teamId.toLowerCase()) : null) || teams[0];
+  const activeProject = projects.find(p => p.id === activeTeam?.projectId) || projects[0];
 
   const [activeTab, setActiveTabState] = useState<'overview' | 'tasks' | 'chat' | 'mentor' | 'files'>('overview');
 

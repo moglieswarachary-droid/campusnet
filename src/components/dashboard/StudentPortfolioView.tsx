@@ -10,10 +10,12 @@ import {
 } from '../common/SocialIcons';
 import { CertificateCard } from '../certificates/CertificateGenerator';
 import { StudentProfileEditModal } from './StudentProfileEditModal';
+import { InnovationTranscriptModal } from './InnovationTranscriptModal';
 
 export const StudentPortfolioView: React.FC = () => {
   const { currentUser, certificates, projects, publications, setActiveTab } = useApp();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isTranscriptModalOpen, setIsTranscriptModalOpen] = useState(false);
 
   const socialLinks = currentUser.socialLinks;
 
@@ -109,6 +111,14 @@ export const StudentPortfolioView: React.FC = () => {
                 >
                   <Edit3 className="w-3.5 h-3.5" />
                   Edit Profile & Socials
+                </button>
+
+                <button
+                  onClick={() => setIsTranscriptModalOpen(true)}
+                  className="inline-flex items-center gap-1.5 text-xs font-bold text-white bg-campus-red hover:bg-campus-bright-red px-3 py-1 rounded-lg transition-all cursor-pointer shadow-warm-sm"
+                >
+                  <Award className="w-3.5 h-3.5" />
+                  Export Innovation Transcript
                 </button>
               </div>
             </div>
@@ -250,6 +260,15 @@ export const StudentPortfolioView: React.FC = () => {
       <StudentProfileEditModal
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
+      />
+
+      <InnovationTranscriptModal
+        isOpen={isTranscriptModalOpen}
+        onClose={() => setIsTranscriptModalOpen(false)}
+        user={currentUser}
+        certificates={certificates}
+        projects={projects}
+        publications={publications}
       />
 
     </div>

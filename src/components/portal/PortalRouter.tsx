@@ -1,12 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { useApp } from '../../context/AppContext';
+import React, { Suspense } from 'react';
+import { useLocation } from 'react-router-dom';
+import { LoadingFallback } from '../common/LoadingFallback';
 
 export type PortalType = 'public' | 'organizer' | 'admin';
 
-export const getInitialPortal = (): PortalType => {
-  const hostname = window.location.hostname.toLowerCase();
-  const pathname = window.location.pathname.toLowerCase();
-  const search = window.location.search.toLowerCase();
+export const getPortalFromEnvironment = (pathname: string, search: string): PortalType => {
+  const hostname = typeof window !== 'undefined' ? window.location.hostname.toLowerCase() : '';
+  const cleanPath = pathname.toLowerCase();
+  const cleanSearch = search.toLowerCase();
 
   // Subdomain routing in production
   if (hostname.startsWith('organizer.') || hostname === 'organizer.campusnet.in') {
@@ -16,11 +17,20 @@ export const getInitialPortal = (): PortalType => {
     return 'admin';
   }
 
-  // Path or query param routing in local development / testing
-  if (pathname.startsWith('/organizer') || search.includes('portal=organizer')) {
+  // Path or query param routing in local development / testing / direct URLs
+  if (
+    cleanPath.startsWith('/organizer') || 
+    cleanPath.startsWith('/portal/organizer') || 
+    cleanSearch.includes('portal=organizer')
+  ) {
     return 'organizer';
   }
-  if (pathname.startsWith('/admin') || search.includes('portal=admin')) {
+
+  if (
+    cleanPath.startsWith('/admin') || 
+    cleanPath.startsWith('/portal/admin') || 
+    cleanSearch.includes('portal=admin')
+  ) {
     return 'admin';
   }
 
@@ -34,43 +44,14 @@ interface PortalRouterProps {
 }
 
 export const PortalRouter: React.FC<PortalRouterProps> = ({ publicApp, organizerApp, adminApp }) => {
-  const [activePortal, setActivePortal] = useState<PortalType>(getInitialPortal());
-  const [showDevSwitcher, setShowDevSwitcher] = useState(false);
-
-  // Listen to popstate / url changes
-  useEffect(() => {
-    const handleLocationChange = () => {
-      setActivePortal(getInitialPortal());
-    };
-
-    window.addEventListener('popstate', handleLocationChange);
-    return () => window.removeEventListener('popstate', handleLocationChange);
-  }, []);
-
-  const navigateToPortal = (portal: PortalType) => {
-    setActivePortal(portal);
-    
-    // Update browser URL smoothly without reloading
-    const url = new URL(window.location.href);
-    if (portal === 'public') {
-      url.searchParams.delete('portal');
-      if (url.pathname.startsWith('/organizer') || url.pathname.startsWith('/admin')) {
-        window.history.pushState({}, '', '/');
-      } else {
-        window.history.pushState({}, '', url.pathname + (url.searchParams.toString() ? `?${url.searchParams.toString()}` : ''));
-      }
-    } else {
-      url.searchParams.set('portal', portal);
-      window.history.pushState({}, '', `?portal=${portal}`);
-    }
-  };
+  const location = useLocation();
+  const activePortal = getPortalFromEnvironment(location.pathname, location.search);
 
   return (
-    <>
-      {/* Active Portal Body */}
+    <Suspense fallback={<LoadingFallback message="Loading Portal..." />}>
       {activePortal === 'public' && publicApp}
       {activePortal === 'organizer' && organizerApp}
       {activePortal === 'admin' && adminApp}
-    </>
+    </Suspense>
   );
 };

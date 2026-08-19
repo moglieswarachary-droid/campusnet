@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 import { 
   FolderKanban, Plus, Search, Filter, ShieldCheck, 
@@ -17,6 +18,17 @@ export const ProjectsEcosystemView: React.FC = () => {
     setActiveTab, savedItemIds, toggleSaveItem, addToast, 
     sendMentorshipRequest, mentors 
   } = useApp();
+
+  const { id } = useParams<{ id?: string }>();
+
+  useEffect(() => {
+    if (id && projects.length > 0) {
+      const found = projects.find(p => p.id.toLowerCase() === id.toLowerCase());
+      if (found) {
+        setSelectedProjectId(found.id);
+      }
+    }
+  }, [id, projects, setSelectedProjectId]);
 
   const [primaryTab, setPrimaryTab] = useState<'projects' | 'research'>('projects');
 
