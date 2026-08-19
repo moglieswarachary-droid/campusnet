@@ -202,20 +202,6 @@ export const HeroSection: React.FC = () => {
         </div>
 
       </div>
-
-      {/* Minimal Footer Strip on Landing */}
-      <div className="mt-8 pt-4 border-t border-campus-border/60 flex flex-col sm:flex-row items-center justify-between text-xs text-campus-muted-text max-w-6xl mx-auto w-full gap-2">
-        <div className="flex items-center gap-2">
-          <span>CampusNet+ India Ecosystem</span>
-          <span>•</span>
-          <span>AISHE & National Nodal Connected</span>
-        </div>
-        <div className="flex items-center gap-4">
-          <button onClick={() => setActiveTab('discover')} className="hover:text-campus-blue">Institutions</button>
-          <button onClick={() => setActiveTab('certificates')} className="hover:text-campus-blue">Verify QR Certificate</button>
-          <button onClick={() => setActiveTab('ask')} className="hover:text-campus-blue">Ask Campus</button>
-        </div>
-      </div>
     </section>
   );
 };
