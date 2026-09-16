@@ -1,44 +1,63 @@
 import React from 'react';
-import { ShieldCheck, Building2, Award, CheckCircle } from 'lucide-react';
+import { ShieldCheck, CheckCircle2, Award, Lock, ExternalLink } from 'lucide-react';
 
 export const InstitutionsTicker: React.FC = () => {
-  const institutions = [
-    'IIT Bombay', 'IIT Madras', 'IIT Delhi', 'IISc Bangalore', 
-    'NITK Surathkal', 'Anna University (CEG)', 'VJTI Mumbai', 
-    'BITS Pilani', 'DTU Delhi', 'NID Ahmedabad', 'AIIMS Delhi'
+  const institutes = [
+    { name: 'IIT Bombay', logo: '🏛️' },
+    { name: 'IIT Madras', logo: '🔬' },
+    { name: 'IIT Delhi', logo: '⚡' },
+    { name: 'IISc Bangalore', logo: '🧪' },
+    { name: 'NITK Surathkal', logo: '💻' },
+    { name: 'Anna University', logo: '🎓' }
   ];
 
   return (
-    <div className="bg-white border-y border-campus-border py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-          
-          <div className="flex-shrink-0 md:max-w-xs">
-            <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-campus-red">
-              <ShieldCheck className="w-4 h-4" />
-              Verified Institutional Network
-            </div>
-            <p className="text-xs text-campus-muted-text mt-0.5">
-              Connecting 150+ colleges, research labs & government challenge nodes.
-            </p>
+    <section className="py-12 bg-slate-50/70 border-b border-slate-200 text-center relative">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+        
+        {/* Top Section Header */}
+        <div className="space-y-2">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-extrabold border border-blue-200 uppercase tracking-wider">
+            VERIFIED INSTITUTIONAL NETWORK
           </div>
-
-          <div className="flex-1 overflow-x-auto no-scrollbar py-2">
-            <div className="flex items-center gap-6 sm:gap-8 min-w-max">
-              {institutions.map((inst, index) => (
-                <div 
-                  key={index}
-                  className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-campus-warm-white border border-campus-border/80 text-xs font-bold text-campus-slate-text"
-                >
-                  <Building2 className="w-3.5 h-3.5 text-campus-blue" />
-                  {inst}
-                </div>
-              ))}
-            </div>
-          </div>
-
+          <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+            Connected to India's Premier Research Hubs
+          </h3>
+          <p className="text-xs sm:text-sm text-slate-600 font-medium">
+            Authenticated via National Knowledge Network (NKN) & DigiLocker Student Credential API.
+          </p>
         </div>
+
+        {/* Institution Floating Badges */}
+        <div className="flex flex-wrap items-center justify-center gap-3 pt-2 max-w-4xl mx-auto">
+          {institutes.map((inst, idx) => (
+            <div 
+              key={idx}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-white border border-slate-200 shadow-warm-xs text-xs font-extrabold text-slate-800 hover:shadow-warm-md hover:border-blue-300 transition-all cursor-default"
+            >
+              <span>{inst.logo}</span>
+              <span>{inst.name}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Trust Badges Bar matching screenshot */}
+        <div className="pt-4 flex flex-wrap items-center justify-center gap-6 text-xs font-semibold text-slate-600">
+          <div className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+            <span>Direct API Sync with AISHE Portal</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+            <span>DigiLocker Certified Student Identity</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+            <span>Zero Public ID Exposure Architecture</span>
+          </div>
+        </div>
+
       </div>
-    </div>
+    </section>
   );
 };

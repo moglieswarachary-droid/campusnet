@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 import { 
   Calendar, ShieldCheck, FolderKanban, Building2, 
-  ArrowRight, Sparkles, Award, Users, BookOpen, KeyRound 
+  ArrowRight, Sparkles, Award, Users, BookOpen, KeyRound,
+  TrendingUp, Network, Coins, FlaskConical
 } from 'lucide-react';
 import { FederatedSearchDropdown } from './FederatedSearchDropdown';
 import { RoleAuthSidebar } from './RoleAuthSidebar';
@@ -18,16 +19,16 @@ export const HeroSection: React.FC = () => {
   const projectsAndResearchCount = projects.length + researchers.length;
 
   return (
-    <section className="relative min-h-[calc(100vh-4rem)] flex flex-col justify-between pt-6 pb-12 sm:pt-8 sm:pb-16 px-4 sm:px-6 lg:px-8 academic-mesh-bg overflow-hidden">
+    <section className="relative pt-6 pb-12 sm:pt-10 sm:pb-16 px-4 sm:px-6 lg:px-8 academic-mesh-bg overflow-hidden">
       {/* Subtle radial ambient background glow */}
-      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[650px] h-[380px] bg-campus-soft-blue/60 rounded-full blur-3xl pointer-events-none -z-10" />
+      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[400px] bg-blue-100/50 rounded-full blur-3xl pointer-events-none -z-10" />
 
-      <div className="max-w-7xl mx-auto w-full my-auto space-y-6">
+      <div className="max-w-7xl mx-auto w-full space-y-8">
         
         {/* Mobile Quick Action Pill for Role Gateways */}
         <div className="lg:hidden flex items-center justify-between bg-white/95 p-3 rounded-2xl border border-campus-border shadow-warm-sm">
           <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-campus-bright-red pulse-live" />
+            <span className="w-2 h-2 rounded-full bg-pink-600 animate-pulse" />
             <span className="text-xs font-bold text-campus-deep-blue">
               Role Access & Portals:
             </span>
@@ -51,33 +52,79 @@ export const HeroSection: React.FC = () => {
             setIsMobileDrawerOpen={setIsMobileDrawerOpen} 
           />
 
-          {/* Right/Center Hero Content */}
-          <div className="flex-1 w-full space-y-8 sm:space-y-10 text-center">
+          {/* Center/Right Hero Content */}
+          <div className="flex-1 w-full space-y-8 text-center">
             
             {/* National Badge Pill */}
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/90 border border-campus-border shadow-warm-sm backdrop-blur-sm animate-in fade-in duration-300">
-              <span className="w-2 h-2 rounded-full bg-campus-bright-red pulse-live"></span>
-              <span className="text-[11px] font-extrabold uppercase tracking-wider text-campus-deep-blue">
-                National Academic Innovation & Research Network
-              </span>
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-pink-50/80 border border-pink-200/80 text-pink-700 text-xs font-extrabold tracking-wide backdrop-blur-sm animate-in fade-in duration-300">
+              <span className="w-2.5 h-2.5 rounded-full bg-pink-600 animate-pulse"></span>
+              <span>NATIONAL ACADEMIC INNOVATION & RESEARCH NETWORK</span>
             </div>
 
-            {/* 1-Line Headline & 1-Line Subtext */}
-            <div className="space-y-3 max-w-3xl mx-auto">
-              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-campus-deep-blue leading-tight">
-                CONNECT. MENTOR. <span className="text-transparent bg-clip-text bg-gradient-to-r from-campus-blue via-campus-deep-blue to-campus-red">RESEARCH. INNOVATE.</span>
+            {/* Main Headline & Subtitle matching the screenshot */}
+            <div className="space-y-4 max-w-4xl mx-auto">
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-black text-slate-900 tracking-tight leading-[1.15] uppercase">
+                CONNECT. MENTOR.<br />
+                RESEARCH. <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">INNOVATE.</span>
               </h1>
-              <p className="text-xs sm:text-base text-campus-slate-text/90 font-medium max-w-xl mx-auto">
-                Discover hackathons, find faculty mentors, collaborate on research, and build national-scale projects across India.
+              <p className="text-sm sm:text-base text-slate-600 font-medium max-w-2xl mx-auto leading-relaxed">
+                India's unified ecosystem connecting 50,000+ collegiate innovators, verified research chairs, and national competitions across premier institutes.
               </p>
             </div>
 
             {/* Single Federated Universal Search Bar */}
-            <div className="pt-1">
+            <div className="pt-1 max-w-2xl mx-auto">
               <FederatedSearchDropdown />
             </div>
 
-            {/* EXACTLY 4 PRIMARY ACTION CARDS */}
+            {/* Floating Metrics Bar (Exact Match from Screenshot) */}
+            <div className="pt-4 max-w-4xl mx-auto">
+              <div className="bg-white/90 backdrop-blur-md border border-slate-200/90 rounded-2xl shadow-warm-md p-3.5 sm:p-4 grid grid-cols-2 md:grid-cols-4 gap-3 text-left">
+                
+                <div className="flex items-center gap-3 p-2.5 rounded-xl bg-blue-50/60 border border-blue-100/60">
+                  <div className="w-9 h-9 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center font-bold">
+                    <TrendingUp className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="text-sm font-black text-slate-900">4,820</div>
+                    <div className="text-[9.5px] font-extrabold text-slate-500 uppercase tracking-wider">ACTIVE SQUADS</div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 p-2.5 rounded-xl bg-purple-50/60 border border-purple-100/60">
+                  <div className="w-9 h-9 rounded-lg bg-purple-100 text-purple-700 flex items-center justify-center font-bold">
+                    <Network className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="text-sm font-black text-slate-900">150+ Nodes</div>
+                    <div className="text-[9.5px] font-extrabold text-slate-500 uppercase tracking-wider">UNIVERSITIES & IITS</div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 p-2.5 rounded-xl bg-amber-50/60 border border-amber-100/60">
+                  <div className="w-9 h-9 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center font-bold">
+                    <Coins className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="text-sm font-black text-slate-900">₹1.8 Cr+</div>
+                    <div className="text-[9.5px] font-extrabold text-slate-500 uppercase tracking-wider">DIRECT GRANTS WON</div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 p-2.5 rounded-xl bg-emerald-50/60 border border-emerald-100/60">
+                  <div className="w-9 h-9 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold">
+                    <FlaskConical className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="text-sm font-black text-slate-900">320 Labs</div>
+                    <div className="text-[9.5px] font-extrabold text-slate-500 uppercase tracking-wider">OPEN PHD RESEARCH</div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            {/* 4 PRIMARY ACTION CARDS */}
             <div className="pt-2 sm:pt-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-5xl mx-auto text-left">
                 
@@ -205,4 +252,3 @@ export const HeroSection: React.FC = () => {
     </section>
   );
 };
-

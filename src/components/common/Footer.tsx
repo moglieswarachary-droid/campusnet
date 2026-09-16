@@ -1,169 +1,117 @@
 import React from 'react';
 import { useApp } from '../../context/AppContext';
-import { Layers, ShieldCheck, Award, HeartHandshake, FileText, CheckCircle2, Lock, Sparkles, GraduationCap } from 'lucide-react';
+import { Layers, ShieldCheck, Award, Lock, CheckCircle2 } from 'lucide-react';
 
 export const Footer: React.FC = () => {
   const { setActiveTab, setAuthModalType, switchRole } = useApp();
 
+  const consortia = ['IIT Bombay', 'IIT Madras', 'IIT Delhi', 'IISc Bangalore', 'NITK Surathkal'];
+
   return (
-    <footer className="bg-campus-deep-blue text-white pt-16 pb-24 lg:pb-12 border-t border-campus-border/20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <footer className="bg-slate-950 text-white pt-12 pb-24 lg:pb-12 border-t border-slate-800">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
         
-        {/* Main Footer Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 pb-12 border-b border-white/10">
+        {/* Participating Technical Consortia Ticker Bar */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 py-4 px-6 rounded-2xl bg-slate-900/90 border border-slate-800 text-xs text-slate-400">
+          <div className="flex items-center gap-2 font-extrabold uppercase tracking-wider text-slate-300">
+            <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+            <span>PARTICIPATING TECHNICAL CONSORTIA</span>
+          </div>
+          <div className="flex flex-wrap items-center gap-4 sm:gap-6 font-bold text-slate-200">
+            {consortia.map((c, idx) => (
+              <span key={idx} className="hover:text-blue-400 transition-colors cursor-default">
+                {c}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        {/* Main Footer Columns */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 pb-8 border-b border-slate-800">
           
-          {/* Brand Info */}
-          <div className="lg:col-span-2 space-y-4">
+          {/* Column 1: Brand Info */}
+          <div className="space-y-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-white text-campus-deep-blue flex items-center justify-center font-bold shadow-warm-md">
-                <Layers className="w-5 h-5 text-campus-blue" />
+              <div className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold shadow-warm-md">
+                <Layers className="w-5 h-5 text-white" />
               </div>
-              <span className="text-2xl font-bold tracking-tight text-white">
-                Campus<span className="text-campus-bright-red">Net+</span>
+              <span className="text-xl font-black tracking-tight text-white">
+                Campus<span className="text-pink-500">Net</span>
               </span>
             </div>
 
-            <p className="text-sm text-gray-300 leading-relaxed max-w-sm">
-              India's premier national student, mentor, project, research, and events networking platform connecting higher education institutions, faculty guides, PhD scholars, and government challenges.
+            <p className="text-xs text-slate-400 leading-relaxed">
+              Open platform unifying collegiate technical hackathons, doctoral labs, patent filings, and corporate grants across India.
             </p>
 
-            <div className="flex flex-wrap gap-2 pt-2">
-              <span className="inline-flex items-center gap-1 text-xs bg-white/10 px-2.5 py-1 rounded-full text-gray-200 border border-white/10">
-                <ShieldCheck className="w-3.5 h-3.5 text-campus-bright-red" />
-                Verified Student Identity
+            <div className="flex flex-wrap gap-2 pt-1 text-[11px]">
+              <span className="bg-slate-900 px-2.5 py-1 rounded text-slate-300 border border-slate-800">
+                AICTE / UGC Aligned
               </span>
-              <span className="inline-flex items-center gap-1 text-xs bg-white/10 px-2.5 py-1 rounded-full text-gray-200 border border-white/10">
-                <Award className="w-3.5 h-3.5 text-amber-300" />
-                QR Verifiable Credentials
-              </span>
-              <span className="inline-flex items-center gap-1 text-xs bg-white/10 px-2.5 py-1 rounded-full text-gray-200 border border-white/10">
-                <Lock className="w-3.5 h-3.5 text-green-400" />
-                Private 6-Member Workspace
+              <span className="bg-slate-900 px-2.5 py-1 rounded text-slate-300 border border-slate-800">
+                AICTE Recognized
               </span>
             </div>
           </div>
 
-          {/* Portals & Gateways */}
+          {/* Column 2: Role Portals */}
           <div>
-            <h4 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-4">Dedicated Portals</h4>
-            <ul className="space-y-2.5 text-sm">
+            <h4 className="text-xs font-black uppercase tracking-wider text-slate-400 mb-4">Role Portals</h4>
+            <ul className="space-y-2.5 text-xs text-slate-300">
               <li>
-                <button 
-                  onClick={() => {
-                    switchRole('student');
-                    setActiveTab('dashboard');
-                  }} 
-                  className="text-gray-300 hover:text-white transition-colors"
-                >
-                  Student Dashboard
+                <button onClick={() => { switchRole('student'); setActiveTab('dashboard'); }} className="hover:text-white transition-colors">
+                  Student Innovators
                 </button>
               </li>
               <li>
-                <button 
-                  onClick={() => {
-                    switchRole('mentor');
-                    setActiveTab('dashboard');
-                  }} 
-                  className="text-gray-300 hover:text-white transition-colors"
-                >
-                  Faculty Mentor Portal
+                <button onClick={() => { switchRole('mentor'); setActiveTab('dashboard'); }} className="hover:text-white transition-colors">
+                  Faculty & R&D Mentors
                 </button>
               </li>
               <li>
-                <button 
-                  onClick={() => {
-                    switchRole('researcher');
-                    setActiveTab('dashboard');
-                  }} 
-                  className="text-gray-300 hover:text-white transition-colors"
-                >
-                  PhD Research Portal
+                <button onClick={() => { switchRole('researcher'); setActiveTab('dashboard'); }} className="hover:text-white transition-colors">
+                  Institute Deans & Incubators
                 </button>
               </li>
               <li>
-                <button 
-                  onClick={() => setAuthModalType('student_register')} 
-                  className="text-campus-blue font-bold hover:underline transition-colors"
-                >
-                  + Student Registration
-                </button>
-              </li>
-              <li>
-                <button 
-                  onClick={() => setAuthModalType('mentor_onboarding')} 
-                  className="text-amber-400 font-bold hover:underline transition-colors"
-                >
-                  + Faculty Onboarding
+                <button onClick={() => setActiveTab('discover')} className="hover:text-white transition-colors">
+                  Corporate R&D Sponsors
                 </button>
               </li>
             </ul>
           </div>
 
-          {/* National Ecosystem */}
+          {/* Column 3: Initiatives & Grants */}
           <div>
-            <h4 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-4">Ecosystem</h4>
-            <ul className="space-y-2.5 text-sm">
-              <li>
-                <button onClick={() => setActiveTab('discover')} className="text-gray-300 hover:text-white transition-colors">
-                  National Discovery
-                </button>
-              </li>
-              <li>
-                <button onClick={() => setActiveTab('projects')} className="text-gray-300 hover:text-white transition-colors">
-                  Projects Ecosystem
-                </button>
-              </li>
-              <li>
-                <button onClick={() => setActiveTab('events')} className="text-gray-300 hover:text-white transition-colors">
-                  Hackathons & SIH
-                </button>
-              </li>
-              <li>
-                <button onClick={() => setActiveTab('mentors')} className="text-gray-300 hover:text-white transition-colors">
-                  Verified Mentors
-                </button>
-              </li>
-              <li>
-                <button onClick={() => setActiveTab('certificates')} className="text-gray-300 hover:text-white transition-colors">
-                  Verify Credentials
-                </button>
-              </li>
+            <h4 className="text-xs font-black uppercase tracking-wider text-slate-400 mb-4">Initiatives & Grants</h4>
+            <ul className="space-y-2.5 text-xs text-slate-300">
+              <li>National Hardware Grand Challenge</li>
+              <li>Inter-NIT Innovation Fellowship</li>
+              <li>Open Access Preprint Archive</li>
+              <li>IPR & Patent Fast-Track Desk</li>
             </ul>
           </div>
 
-          {/* Institutional Compliance */}
+          {/* Column 4: Statutory Telemetry */}
           <div>
-            <h4 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-4">Institutional Standards</h4>
-            <div className="text-xs text-gray-400 space-y-2">
-              <p className="flex items-center gap-1.5 text-gray-300">
-                <CheckCircle2 className="w-3.5 h-3.5 text-green-400 flex-shrink-0" />
-                Inter-Collegiate Team Protocols
-              </p>
-              <p className="flex items-center gap-1.5 text-gray-300">
-                <CheckCircle2 className="w-3.5 h-3.5 text-green-400 flex-shrink-0" />
-                GPS Geo-fenced Event Attendance
-              </p>
-              <p className="flex items-center gap-1.5 text-gray-300">
-                <CheckCircle2 className="w-3.5 h-3.5 text-green-400 flex-shrink-0" />
-                AICTE / UGC Framework Alignment
-              </p>
-              <p className="flex items-center gap-1.5 text-gray-300">
-                <CheckCircle2 className="w-3.5 h-3.5 text-green-400 flex-shrink-0" />
-                Tamper-Proof QR Certificates
-              </p>
+            <h4 className="text-xs font-black uppercase tracking-wider text-slate-400 mb-4">Statutory Telemetry</h4>
+            <div className="text-xs text-slate-400 space-y-2">
+              <p>Operated under Ministry of Education Innovation Cell (MIC) open telemetry protocol v2.4.</p>
+              <p>NKN Interoperability Compliant.</p>
+              <p>DigiLocker Verified Credentials (ISO/IEC 27001 Certified System).</p>
             </div>
           </div>
 
         </div>
 
-        {/* Sub-footer / Copyright */}
-        <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-gray-400">
-          <p>© 2026 CampusNet+ National Academic & Innovation Network. All rights reserved across India.</p>
+        {/* Sub-footer Copyright Bar matching screenshot */}
+        <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
+          <p>© 2026 CampusNet National Technical Council. All rights reserved.</p>
           
           <div className="flex items-center gap-6">
-            <span>Privacy Policy</span>
-            <span>Terms of Service</span>
-            <span>Security Whitepaper</span>
+            <span className="hover:text-slate-300 cursor-pointer">Privacy Framework</span>
+            <span className="hover:text-slate-300 cursor-pointer">Research Ethics Code</span>
+            <span className="hover:text-slate-300 cursor-pointer">API Documentation</span>
           </div>
         </div>
 
