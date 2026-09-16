@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 import { 
   GraduationCap, ShieldCheck, Sparkles, Building2, 
@@ -17,15 +18,11 @@ export const RoleAuthSidebar: React.FC<RoleAuthSidebarProps> = ({
   isMobileDrawerOpen = false, 
   setIsMobileDrawerOpen 
 }) => {
+  const navigate = useNavigate();
   const { openAuthModal } = useApp();
 
   const handleOrganizerClick = (action: 'login' | 'register') => {
-    const url = new URL(window.location.href);
-    url.searchParams.set('portal', 'organizer');
-    if (action === 'register') {
-      url.searchParams.set('action', 'register');
-    }
-    window.location.href = url.toString();
+    navigate('/organizer');
   };
 
   const roleCards = [

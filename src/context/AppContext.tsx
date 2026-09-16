@@ -597,12 +597,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setAuthTargetRole(role);
     setAuthTargetMode(mode);
     if (role === 'organizer') {
-      const url = new URL(window.location.href);
-      url.searchParams.set('portal', 'organizer');
-      if (mode === 'register') {
-        url.searchParams.set('action', 'register');
-      }
-      window.location.href = url.toString();
+      window.location.pathname = '/organizer';
       return;
     }
 

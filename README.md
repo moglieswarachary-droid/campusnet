@@ -15,8 +15,8 @@ The platform features a **dedicated 3-tier portal routing architecture** strictl
 | Portal | Live Deployed Link | Production Subdomain | Target Audience |
 | :--- | :--- | :--- | :--- |
 | **🌐 Public CampusNet** | [https://campusnet-production.up.railway.app/](https://campusnet-production.up.railway.app/) | `https://campusnet.in` | Students, Faculty Mentors, PhD Scholars |
-| **🏢 Institutional Organizer Portal** | [https://campusnet-production.up.railway.app/?portal=organizer](https://campusnet-production.up.railway.app/?portal=organizer) | `https://organizer.campusnet.in` | Colleges, Universities & Event Chairs |
-| **🛡️ Super Admin Console** | [https://campusnet-production.up.railway.app/?portal=admin](https://campusnet-production.up.railway.app/?portal=admin) | `https://admin.campusnet.in` | National Governance & Accreditation |
+| **🏢 Institutional Organizer Portal** | [https://campusnet-production.up.railway.app/organizer](https://campusnet-production.up.railway.app/organizer) | `https://organizer.campusnet.in` | Colleges, Universities & Event Chairs |
+| **🛡️ Super Admin Console** | [https://campusnet-production.up.railway.app/admin](https://campusnet-production.up.railway.app/admin) | `https://admin.campusnet.in` | National Governance & Accreditation |
 
 > 📱 **Mobile Access**: The platform is 100% responsive. When navigating on mobile, an interactive **floating switcher dock** is located at the bottom-right corner for 1-tap switching between all portals.
 
@@ -25,7 +25,7 @@ The platform features a **dedicated 3-tier portal routing architecture** strictl
 ## 🔑 2. Master System Login Keys & Demo Credentials
 
 ### 🛡️ A. National Super Admin Console
-👉 **Link**: [https://campusnet-production.up.railway.app/?portal=admin](https://campusnet-production.up.railway.app/?portal=admin)
+👉 **Link**: [https://campusnet-production.up.railway.app/admin](https://campusnet-production.up.railway.app/admin)
 
 * **Username / Email**: `superadmin.demo` or `superadmin@campusnet-demo.in`
 * **Master Password**: `Admin@CampusNet2026`
@@ -36,7 +36,7 @@ The platform features a **dedicated 3-tier portal routing architecture** strictl
 ---
 
 ### 🏢 B. Institutional Event Organizer Portal
-👉 **Link**: [https://campusnet-production.up.railway.app/?portal=organizer](https://campusnet-production.up.railway.app/?portal=organizer)
+👉 **Link**: [https://campusnet-production.up.railway.app/organizer](https://campusnet-production.up.railway.app/organizer)
 
 #### Account 1 — Kuppam Engineering College (KEC)
 * **Institution ID**: `KEC-DEMO-001`
@@ -127,8 +127,8 @@ npm run dev -- --host
 
 ### Local URLs:
 - **Public Platform**: `http://localhost:3000/`
-- **Organizer Portal**: `http://localhost:3000/?portal=organizer`
-- **Super Admin Console**: `http://localhost:3000/?portal=admin`
+- **Organizer Portal**: `http://localhost:3000/organizer`
+- **Super Admin Console**: `http://localhost:3000/admin`
 
 ### Build Production Bundle:
 ```bash

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 import { 
   Sparkles, Search, Bell, ChevronDown, 
@@ -9,6 +10,7 @@ import {
 import { RoleType } from '../../types';
 
 export const Navbar: React.FC = () => {
+  const navigate = useNavigate();
   const { 
     activeTab, setActiveTab, 
     currentUser, activeRole, switchRole, 
@@ -165,9 +167,7 @@ export const Navbar: React.FC = () => {
                     <button
                       onClick={() => {
                         setIsEventsOpen(false);
-                        const currentUrl = new URL(window.location.href);
-                        currentUrl.searchParams.set('portal', 'organizer');
-                        window.location.href = currentUrl.toString();
+                        navigate('/organizer');
                       }}
                       className="w-full text-left px-4 py-2.5 text-xs sm:text-sm hover:bg-red-50/70 flex items-center gap-3 transition-colors group/item"
                     >

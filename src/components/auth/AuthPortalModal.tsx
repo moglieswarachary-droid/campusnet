@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 import { 
   X, GraduationCap, Award, Sparkles, CheckCircle2, 
@@ -9,6 +10,7 @@ import { RoleType } from '../../types';
 import { MOCK_DEPARTMENTS_LIST, MOCK_INSTITUTIONS_LIST, MOCK_INDIAN_STATES } from '../../data/mockData';
 
 export const AuthPortalModal: React.FC = () => {
+  const navigate = useNavigate();
   const { 
     authModalType, setAuthModalType, authTargetRole, authTargetMode, 
     switchRole, setActiveTab, addToast, setCurrentUser, organizerLogin 
@@ -179,18 +181,14 @@ export const AuthPortalModal: React.FC = () => {
     e.preventDefault();
     organizerLogin(orgEmail);
     setAuthModalType('none');
-    const url = new URL(window.location.href);
-    url.searchParams.set('portal', 'organizer');
-    window.location.href = url.toString();
+    navigate('/organizer');
   };
 
   const quickDemoLogin = (role: 'student' | 'mentor' | 'scholar' | 'organizer') => {
     if (role === 'organizer') {
       organizerLogin('suresh.babu@kec.ac.in');
       setAuthModalType('none');
-      const url = new URL(window.location.href);
-      url.searchParams.set('portal', 'organizer');
-      window.location.href = url.toString();
+      navigate('/organizer');
     } else {
       const roleMap: Record<string, RoleType> = {
         student: 'student',

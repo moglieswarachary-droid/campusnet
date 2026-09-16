@@ -4,6 +4,17 @@ import { LoadingFallback } from '../common/LoadingFallback';
 
 export type PortalType = 'public' | 'organizer' | 'admin';
 
+export const getPortalPath = (portal: PortalType): string => {
+  switch (portal) {
+    case 'organizer':
+      return '/organizer';
+    case 'admin':
+      return '/admin';
+    default:
+      return '/';
+  }
+};
+
 export const getPortalFromEnvironment = (pathname: string, search: string): PortalType => {
   const hostname = typeof window !== 'undefined' ? window.location.hostname.toLowerCase() : '';
   const cleanPath = pathname.toLowerCase();
@@ -17,7 +28,7 @@ export const getPortalFromEnvironment = (pathname: string, search: string): Port
     return 'admin';
   }
 
-  // Path or query param routing in local development / testing / direct URLs
+  // Path-based or query param routing in local development / direct URLs
   if (
     cleanPath.startsWith('/organizer') || 
     cleanPath.startsWith('/portal/organizer') || 
@@ -55,3 +66,4 @@ export const PortalRouter: React.FC<PortalRouterProps> = ({ publicApp, organizer
     </Suspense>
   );
 };
+

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 import { 
   Calendar, ShieldCheck, FolderKanban, Building2, 
@@ -8,6 +9,7 @@ import { FederatedSearchDropdown } from './FederatedSearchDropdown';
 import { RoleAuthSidebar } from './RoleAuthSidebar';
 
 export const HeroSection: React.FC = () => {
+  const navigate = useNavigate();
   const { setActiveTab, events, mentors, projects, researchers } = useApp();
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
 
@@ -166,9 +168,7 @@ export const HeroSection: React.FC = () => {
                 {/* Card 4: Host Event (Organizer Flow) */}
                 <button
                   onClick={() => {
-                    const url = new URL(window.location.href);
-                    url.searchParams.set('portal', 'organizer');
-                    window.location.href = url.toString();
+                    navigate('/organizer');
                   }}
                   className="p-5 rounded-3xl bg-white border border-campus-border shadow-warm-md hover:shadow-warm-xl hover:border-campus-red transition-all duration-300 flex flex-col justify-between group h-full cursor-pointer"
                 >

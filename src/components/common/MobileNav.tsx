@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useApp, NavigationTab } from '../../context/AppContext';
 import { 
   Home, Compass, FolderKanban, Calendar, CalendarPlus, MoreHorizontal, 
@@ -7,6 +8,7 @@ import {
 } from 'lucide-react';
 
 export const MobileNav: React.FC = () => {
+  const navigate = useNavigate();
   const { activeTab, setActiveTab, setIsAIModalOpen, setIsDirectMessagingOpen } = useApp();
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
   const [isEventsMenuOpen, setIsEventsMenuOpen] = useState(false);
@@ -71,9 +73,7 @@ export const MobileNav: React.FC = () => {
 
               <button
                 onClick={() => {
-                  const url = new URL(window.location.href);
-                  url.searchParams.set('portal', 'organizer');
-                  window.location.href = url.toString();
+                  navigate('/organizer');
                   setIsEventsMenuOpen(false);
                 }}
                 className="w-full p-3.5 rounded-2xl bg-red-50 hover:bg-red-100/80 flex items-center justify-between text-left transition-colors border border-red-200"
@@ -200,9 +200,7 @@ export const MobileNav: React.FC = () => {
 
               <button
                 onClick={() => {
-                  const url = new URL(window.location.href);
-                  url.searchParams.set('portal', 'organizer');
-                  window.location.href = url.toString();
+                  navigate('/organizer');
                   setIsMoreMenuOpen(false);
                 }}
                 className="p-3 rounded-2xl bg-red-50 hover:bg-red-100 flex items-center gap-2.5 text-left transition-colors col-span-2 border border-red-200"
