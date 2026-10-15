@@ -29,6 +29,11 @@ export const EventCreationWizard: React.FC<Props> = ({ setActiveSection }) => {
   const [theme, setTheme] = useState('AI, Drone Robotics & Agritech');
   const [bannerUrl, setBannerUrl] = useState('https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=800&auto=format&fit=crop&q=80');
   const [description, setDescription] = useState('');
+  const [language, setLanguage] = useState('English / Regional');
+  const [participationType, setParticipationType] = useState<'team' | 'individual'>('team');
+  const [timezone, setTimezone] = useState('IST (UTC+05:30)');
+  const [onlineMeetingUrl, setOnlineMeetingUrl] = useState('');
+  const [onlineJoiningInstructions, setOnlineJoiningInstructions] = useState('');
 
   // Coordinator Details
   const [coordinatorName, setCoordinatorName] = useState(currentOrganizer?.coordinatorName || 'Dr. Suresh Babu');
@@ -149,6 +154,20 @@ export const EventCreationWizard: React.FC<Props> = ({ setActiveSection }) => {
     return Object.keys(errors).length === 0;
   };
 
+  const validateStep3 = () => {
+    const errors: Record<string, string> = {};
+    if (!startDate) errors.startDate = 'Start date is required';
+    if (!endDate) errors.endDate = 'End date is required';
+    if (startDate && endDate && new Date(startDate) >= new Date(endDate)) {
+      errors.endDate = 'Event end date/time must be strictly after the start date/time.';
+    }
+    if (regOpenDate && regCloseDate && new Date(regOpenDate) >= new Date(regCloseDate)) {
+      errors.regCloseDate = 'Registration deadline must be after registration opening date.';
+    }
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const validateStep4 = () => {
     const errors: Record<string, string> = {};
     if (!institutionProof) {
@@ -164,8 +183,8 @@ export const EventCreationWizard: React.FC<Props> = ({ setActiveSection }) => {
     return Object.keys(errors).length === 0;
   };
 
-  const handleSubmit = (submitForReview: boolean) => {
-    if (submitForReview && !validateStep4()) {
+  const handleSubmit = (action: 'draft' | 'review' | 'publish') => {
+    if ((action === 'review' || action === 'publish') && !validateStep4()) {
       addToast({
         type: 'error',
         title: 'Documents Required',
@@ -177,6 +196,8 @@ export const EventCreationWizard: React.FC<Props> = ({ setActiveSection }) => {
     const uploadedDocs: EventHostingDocument[] = [];
     if (institutionProof) uploadedDocs.push(institutionProof);
     if (formalRequestLetter) uploadedDocs.push(formalRequestLetter);
+
+    const isDirectPublish = action === 'publish' && currentOrganizer?.verificationStatus === 'verified';
 
     const newEvent = createOrganizerEvent({
       title: sanitizeInput(title) || 'National Technical Innovation Challenge',
@@ -193,6 +214,11 @@ export const EventCreationWizard: React.FC<Props> = ({ setActiveSection }) => {
       city: sanitizeInput(city),
       pincode: sanitizeInput(pincode),
       mode,
+      language: sanitizeInput(language),
+      timezone: sanitizeInput(timezone),
+      participationType,
+      onlineMeetingUrl: (mode === 'Online' || mode === 'Hybrid') ? onlineMeetingUrl.trim() : undefined,
+      onlineJoiningInstructions: (mode === 'Online' || mode === 'Hybrid') ? onlineJoiningInstructions.trim() : undefined,
       startDate: new Date(startDate).toISOString(),
       endDate: new Date(endDate).toISOString(),
       registrationOpenDate: new Date(regOpenDate).toISOString(),
@@ -201,8 +227,8 @@ export const EventCreationWizard: React.FC<Props> = ({ setActiveSection }) => {
       deadline: new Date(regCloseDate).toLocaleDateString(),
       eligibility: sanitizeInput(eligibility),
       eligibleDepartments: selectedDepts,
-      minTeamSize,
-      maxTeamSize,
+      minTeamSize: participationType === 'individual' ? 1 : minTeamSize,
+      maxTeamSize: participationType === 'individual' ? 1 : maxTeamSize,
       participantLimit,
       registrationFee: sanitizeInput(registrationFee),
       tracks,
@@ -226,26 +252,45 @@ export const EventCreationWizard: React.FC<Props> = ({ setActiveSection }) => {
       submissionRequirements: ['Project Proposal PDF', 'GitHub Repository', 'Hardware Demonstration Video']
     });
 
-    if (submitForReview) {
+    if (isDirectPublish) {
+      // If directly publishing
       submitEventForApproval(newEvent.id);
+      addToast({
+        type: 'success',
+        title: 'Event Published Live!',
+        message: `"${newEvent.title}" is now published and open for registrations across CampusNet India.`
+      });
+    } else if (action === 'review') {
+      submitEventForApproval(newEvent.id);
+      addToast({
+        type: 'info',
+        title: 'Submitted for Accreditation Review',
+        message: 'Your event proposal has entered the Super Admin review queue.'
+      });
+    } else {
+      addToast({
+        type: 'success',
+        title: 'Event Draft Saved',
+        message: `Draft "${newEvent.title}" saved. You can resume editing anytime.`
+      });
     }
 
     setActiveSection('events');
   };
 
   return (
-    <div className="bg-slate-950 rounded-3xl p-6 sm:p-8 border border-slate-800 shadow-2xl space-y-6">
+    <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-warm-md space-y-6 text-slate-800">
       
       {/* Wizard Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
         <div>
           <div className="flex items-center gap-2">
-            <span className="text-[10px] font-bold uppercase tracking-widest bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded">
+            <span className="text-[10px] font-bold uppercase tracking-widest bg-amber-100 text-amber-900 border border-amber-300 px-2 py-0.5 rounded">
               Step {currentStep} of 4
             </span>
-            <span className="text-xs text-slate-400">Institutional Event Creator & Accreditation Pipeline</span>
+            <span className="text-xs text-slate-500 font-medium">Institutional Event Creator & Accreditation Pipeline</span>
           </div>
-          <h2 className="text-xl sm:text-2xl font-black text-white mt-1">
+          <h2 className="text-xl sm:text-2xl font-black text-slate-900 mt-1">
             Host Event & Request Super Admin Accreditation
           </h2>
         </div>
@@ -260,12 +305,12 @@ export const EventCreationWizard: React.FC<Props> = ({ setActiveSection }) => {
                   setCurrentStep(step);
                 }
               }}
-              className={`w-7 h-7 rounded-full text-xs font-bold transition-all ${
+              className={`w-7 h-7 rounded-full text-xs font-bold transition-all cursor-pointer ${
                 currentStep === step
-                  ? 'bg-amber-500 text-slate-950 font-black scale-110'
+                  ? 'bg-slate-900 text-white font-black scale-110 shadow-warm-xs'
                   : currentStep > step
-                  ? 'bg-green-500/20 text-green-400 border border-green-500/30'
-                  : 'bg-slate-900 text-slate-500 border border-slate-800'
+                  ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                  : 'bg-slate-100 text-slate-500 border border-slate-200'
               }`}
             >
               {step}
@@ -313,7 +358,7 @@ export const EventCreationWizard: React.FC<Props> = ({ setActiveSection }) => {
 
             <div>
               <label className="block text-[11px] font-bold uppercase text-slate-300 mb-1">
-                Event Type *
+                Event Category / Type *
               </label>
               <select
                 value={eventType}
@@ -321,14 +366,49 @@ export const EventCreationWizard: React.FC<Props> = ({ setActiveSection }) => {
                 className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-xs sm:text-sm text-white focus:border-amber-500 outline-none"
               >
                 <option value="Hackathon">Hackathon</option>
+                <option value="Technical Symposium">Technical Symposium</option>
+                <option value="Workshop">Workshop</option>
+                <option value="Conference">Conference</option>
+                <option value="Paper Presentation">Paper Presentation</option>
+                <option value="Project Expo">Project Expo</option>
+                <option value="Coding Competition">Coding Competition</option>
+                <option value="AI/ML Event">AI/ML Event</option>
+                <option value="Research Seminar">Research Seminar</option>
+                <option value="Webinar">Webinar</option>
+                <option value="Cultural Event">Cultural Event</option>
+                <option value="Entrepreneurship Event">Entrepreneurship Event</option>
                 <option value="Ideathon">Ideathon</option>
                 <option value="Government Challenge">Government Challenge</option>
-                <option value="Research Symposium">Research Symposium</option>
-                <option value="Project Expo">Project Expo</option>
                 <option value="Coding Contest">Coding Contest</option>
-                <option value="Workshop">Workshop</option>
-                <option value="Tech Fest">Tech Fest</option>
+                <option value="Other Academic Event">Other Academic Event</option>
               </select>
+            </div>
+
+            <div>
+              <label className="block text-[11px] font-bold uppercase text-slate-300 mb-1">
+                Participation Format *
+              </label>
+              <select
+                value={participationType}
+                onChange={e => setParticipationType(e.target.value as any)}
+                className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-xs sm:text-sm text-white focus:border-amber-500 outline-none"
+              >
+                <option value="team">Team Participation (2 - 6 Members)</option>
+                <option value="individual">Individual Participation</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-[11px] font-bold uppercase text-slate-300 mb-1">
+                Primary Event Language
+              </label>
+              <input
+                type="text"
+                value={language}
+                onChange={e => setLanguage(e.target.value)}
+                placeholder="e.g. English, Hindi, Bilingual"
+                className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-xs sm:text-sm text-white focus:border-amber-500 outline-none"
+              />
             </div>
 
             <div>
@@ -623,6 +703,41 @@ export const EventCreationWizard: React.FC<Props> = ({ setActiveSection }) => {
                 </div>
               </div>
             </div>
+
+            {/* Online Joining Credentials (Confidential) */}
+            {(mode === 'Online' || mode === 'Hybrid') && (
+              <div className="sm:col-span-3 p-4 bg-slate-900 rounded-2xl border border-indigo-900/60 space-y-3">
+                <div className="flex items-center justify-between text-xs text-indigo-300 font-bold">
+                  <span className="flex items-center gap-1.5">
+                    <Lock className="w-4 h-4 text-indigo-400" />
+                    Private Online Meeting / Arena Joining Link
+                  </span>
+                  <span className="text-[11px] text-slate-400">Kept confidential until student registration confirmation</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[10px] text-slate-400 mb-0.5">Meeting / Stream URL (Zoom / Google Meet / Discord)</label>
+                    <input
+                      type="url"
+                      value={onlineMeetingUrl}
+                      onChange={e => setOnlineMeetingUrl(e.target.value)}
+                      placeholder="https://meet.google.com/xyz-abcd-efg"
+                      className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white outline-none focus:border-indigo-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] text-slate-400 mb-0.5">Joining Instructions for Students</label>
+                    <input
+                      type="text"
+                      value={onlineJoiningInstructions}
+                      onChange={e => setOnlineJoiningInstructions(e.target.value)}
+                      placeholder="e.g. Passcode shared 1h prior. Join via registered college email."
+                      className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white outline-none focus:border-indigo-500"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="flex items-center justify-between pt-4">
@@ -782,7 +897,9 @@ export const EventCreationWizard: React.FC<Props> = ({ setActiveSection }) => {
             </button>
             <button
               type="button"
-              onClick={() => setCurrentStep(4)}
+              onClick={() => {
+                if (validateStep3()) setCurrentStep(4);
+              }}
               className="campus-btn-primary px-6 py-2.5 rounded-xl text-xs font-bold flex items-center gap-1.5"
             >
               <span>Next: Mandatory Documents & Review</span>
@@ -873,10 +990,10 @@ export const EventCreationWizard: React.FC<Props> = ({ setActiveSection }) => {
               <span>Back</span>
             </button>
 
-            <div className="flex items-center gap-3 w-full sm:w-auto">
+            <div className="flex items-center gap-3 w-full sm:w-auto flex-wrap">
               <button
                 type="button"
-                onClick={() => handleSubmit(false)}
+                onClick={() => handleSubmit('draft')}
                 className="flex-1 sm:flex-initial px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-slate-200 text-xs font-bold rounded-xl border border-slate-700 transition-colors"
               >
                 Save as Draft
@@ -884,12 +1001,23 @@ export const EventCreationWizard: React.FC<Props> = ({ setActiveSection }) => {
 
               <button
                 type="button"
-                onClick={() => handleSubmit(true)}
-                className="flex-1 sm:flex-initial campus-btn-primary px-6 py-2.5 text-xs font-bold rounded-xl shadow-warm-md flex items-center justify-center gap-2"
+                onClick={() => handleSubmit('review')}
+                className="flex-1 sm:flex-initial campus-btn-primary px-5 py-2.5 text-xs font-bold rounded-xl shadow-warm-md flex items-center justify-center gap-2"
               >
                 <ShieldCheck className="w-4 h-4" />
-                <span>Submit for Super Admin Approval</span>
+                <span>Submit for Accreditation Review</span>
               </button>
+
+              {currentOrganizer?.verificationStatus === 'verified' && (
+                <button
+                  type="button"
+                  onClick={() => handleSubmit('publish')}
+                  className="flex-1 sm:flex-initial px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-black text-xs rounded-xl shadow-warm-md flex items-center justify-center gap-2"
+                >
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>Publish Directly to CampusNet</span>
+                </button>
+              )}
             </div>
           </div>
         </div>

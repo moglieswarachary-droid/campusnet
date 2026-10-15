@@ -20,12 +20,7 @@ export const RoleAuthSidebar: React.FC<RoleAuthSidebarProps> = ({
   const { openAuthModal } = useApp();
 
   const handleOrganizerClick = (action: 'login' | 'register') => {
-    const url = new URL(window.location.href);
-    url.searchParams.set('portal', 'organizer');
-    if (action === 'register') {
-      url.searchParams.set('action', 'register');
-    }
-    window.location.href = url.toString();
+    window.location.href = action === 'register' ? '/organization/register' : '/organization/login';
   };
 
   const roleCards = [

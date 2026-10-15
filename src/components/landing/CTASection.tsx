@@ -1,59 +1,68 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
-import { ArrowRight, ShieldCheck, UserCheck, GraduationCap, Building2 } from 'lucide-react';
+import { ArrowRight, LayoutGrid, Building2, ShieldCheck } from 'lucide-react';
+import { WorkspaceSelectionModal } from './WorkspaceSelectionModal';
 
 export const CTASection: React.FC = () => {
-  const { setAuthModalType, setActiveTab } = useApp();
+  const { setActiveTab } = useApp();
+  const navigate = useNavigate();
+  const [isWorkspaceModalOpen, setIsWorkspaceModalOpen] = useState(false);
 
   return (
-    <section className="py-20 sm:py-28 bg-white border-t border-campus-border text-center">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+    <section className="py-16 sm:py-24 bg-white border-t border-slate-200/80 text-center">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
         
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-campus-soft-blue text-campus-blue text-xs font-bold border border-blue-200">
-          <ShieldCheck className="w-4 h-4 text-campus-red" />
-          Ready to Build the Future of Student Innovation?
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-semibold">
+          <ShieldCheck className="w-3.5 h-3.5 text-indigo-600" />
+          <span>National Innovation Ecosystem</span>
         </div>
 
-        <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-campus-deep-blue tracking-tight">
-          Join Over 50,000+ Students, Mentors <br className="hidden sm:block" />
-          and Researchers on CampusNet.
+        <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+          Ready to Connect, Learn, and Build Together?
         </h2>
 
-        <p className="text-base sm:text-lg text-campus-slate-text/80 max-w-2xl mx-auto leading-relaxed">
-          From first-year prototypes to national government hackathon trophies and published IEEE papers — start your collaborative journey today.
+        <p className="text-sm sm:text-base text-slate-600 max-w-xl mx-auto leading-relaxed">
+          Join students, faculty guides, and research scholars across higher education institutions in India.
         </p>
 
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
           <button
-            onClick={() => setAuthModalType('student_register')}
-            className="campus-btn-red text-base px-8 py-4 rounded-xl shadow-warm-lg w-full sm:w-auto"
+            type="button"
+            onClick={() => setIsWorkspaceModalOpen(true)}
+            className="w-full sm:w-auto px-6 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-2 shadow-sm cursor-pointer"
           >
-            <UserCheck className="w-5 h-5" />
-            Verify Student Account
+            <LayoutGrid className="w-4 h-4 text-indigo-400" />
+            <span>Choose Your Workspace</span>
             <ArrowRight className="w-4 h-4" />
           </button>
 
           <button
-            onClick={() => setAuthModalType('mentor_onboarding')}
-            className="campus-btn-secondary text-base px-7 py-4 rounded-xl w-full sm:w-auto"
+            type="button"
+            onClick={() => {
+              setActiveTab('discover');
+              navigate('/discover');
+            }}
+            className="w-full sm:w-auto px-5 py-3 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs sm:text-sm font-semibold transition-all shadow-sm cursor-pointer"
           >
-            <GraduationCap className="w-5 h-5 text-campus-blue" />
-            Register as Verified Mentor
+            Explore National Directory
           </button>
         </div>
 
-        <div className="pt-8 flex flex-wrap items-center justify-center gap-6 text-xs font-semibold text-campus-muted-text">
-          <span className="flex items-center gap-1.5">
-            <Building2 className="w-4 h-4 text-campus-blue" />
-            150+ Affiliated Institutions
-          </span>
+        <div className="pt-6 flex flex-wrap items-center justify-center gap-4 text-xs font-medium text-slate-400">
+          <span>450+ Accredited Institutions</span>
           <span>•</span>
-          <span>Multi-Disciplinary Team Engine</span>
+          <span>Dual GPS/QR Attendance</span>
           <span>•</span>
-          <span>Zero Public ID Exposure</span>
+          <span>Verifiable Credentials</span>
         </div>
 
       </div>
+
+      <WorkspaceSelectionModal
+        isOpen={isWorkspaceModalOpen}
+        onClose={() => setIsWorkspaceModalOpen(false)}
+      />
     </section>
   );
 };

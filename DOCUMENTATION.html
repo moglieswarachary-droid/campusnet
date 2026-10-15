@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CampusNet+ — Master System Documentation (10 Pages)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #0B2550;
+      --primary-dark: #061530;
+      --accent-red: #D9232D;
+      --accent-blue: #0284C7;
+      --accent-cyan: #06B6D4;
+      --accent-green: #059669;
+      --bg-warm: #F8FAFC;
+      --border-color: #E2E8F0;
+      --text-main: #0F172A;
+      --text-muted: #475569;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: #F1F5F9;
+      color: var(--text-main);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Floating Action / Download Toolbar (Hidden during Print) */
+    .action-bar {
+      position: sticky;
+      top: 0;
+      z-index: 9999;
+      background: rgba(11, 37, 80, 0.95);
+      backdrop-filter: blur(12px);
+      color: white;
+      padding: 12px 24px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+      border-bottom: 2px solid rgba(217, 35, 45, 0.6);
+    }
+
+    .action-title {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-weight: 800;
+      font-size: 15px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .badge-live {
+      background: #10B981;
+      color: white;
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .action-buttons {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      font-size: 13px;
+      font-weight: 700;
+      border-radius: 8px;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border: none;
+    }
+
+    .btn-red {
+      background: linear-gradient(135deg, #D9232D, #B91C1C);
+      color: white;
+      box-shadow: 0 2px 8px rgba(217, 35, 45, 0.35);
+    }
+    .btn-red:hover {
+      background: #B91C1C;
+      transform: translateY(-1px);
+    }
+
+    .btn-outline {
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+    }
+    .btn-outline:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    /* Container */
+    .document-container {
+      max-width: 960px;
+      margin: 32px auto;
+      padding: 0 20px 60px 20px;
+    }
+
+    /* Individual Page Box */
+    .page {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 4px 25px rgba(0, 0, 0, 0.06);
+      border: 1px solid var(--border-color);
+      padding: 48px;
+      margin-bottom: 40px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .page::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 5px;
+      background: linear-gradient(90deg, var(--accent-blue), var(--primary), var(--accent-red));
+    }
+
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 16px;
+      margin-bottom: 28px;
+    }
+
+    .page-tag {
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--accent-red);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .page-number {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-muted);
+      background: #F1F5F9;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Typography */
+    h1 {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--primary);
+      line-height: 1.25;
+      margin-bottom: 12px;
+    }
+
+    h2 {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--primary);
+      margin: 24px 0 12px 0;
+      border-left: 4px solid var(--accent-red);
+      padding-left: 12px;
+    }
+
+    h3 {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-main);
+      margin: 18px 0 8px 0;
+    }
+
+    p {
+      font-size: 13.5px;
+      color: var(--text-main);
+      margin-bottom: 14px;
+      line-height: 1.65;
+    }
+
+    .lead-text {
+      font-size: 15px;
+      font-weight: 500;
+      color: #1E293B;
+      line-height: 1.6;
+    }
+
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+      font-size: 12.5px;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    th {
+      background-color: #F8FAFC;
+      color: var(--primary);
+      text-align: left;
+      padding: 10px 14px;
+      font-weight: 700;
+      border-bottom: 2px solid var(--border-color);
+    }
+
+    td {
+      padding: 9px 14px;
+      border-bottom: 1px solid var(--border-color);
+      color: var(--text-main);
+      vertical-align: top;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tr:nth-child(even) {
+      background-color: #FAFAFA;
+    }
+
+    /* Callout Boxes */
+    .callout {
+      background: #F0FDF4;
+      border: 1px solid #BBF7D0;
+      border-left: 4px solid #16A34A;
+      padding: 14px 16px;
+      border-radius: 8px;
+      margin: 16px 0;
+      font-size: 13px;
+    }
+
+    .callout-blue {
+      background: #F0F9FF;
+      border: 1px solid #BAE6FD;
+      border-left: 4px solid #0284C7;
+    }
+
+    .callout-amber {
+      background: #FFFBEB;
+      border: 1px solid #FDE68A;
+      border-left: 4px solid #D97706;
+    }
+
+    /* Code Blocks */
+    pre {
+      background: #0F172A;
+      color: #E2E8F0;
+      padding: 14px 18px;
+      border-radius: 10px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      overflow-x: auto;
+      margin: 14px 0;
+      line-height: 1.5;
+    }
+
+    code {
+      font-family: 'JetBrains Mono', monospace;
+      background: #F1F5F9;
+      color: var(--accent-red);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    pre code {
+      background: transparent;
+      color: inherit;
+      padding: 0;
+    }
+
+    /* Badges & Tags */
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 700;
+      margin-right: 4px;
+    }
+    .badge-primary { background: #E0E7FF; color: #3730A3; }
+    .badge-red { background: #FEE2E2; color: #991B1B; }
+    .badge-green { background: #DCFCE7; color: #166534; }
+
+    /* Print Styles: Exact 10 A4 Pages */
+    @media print {
+      body {
+        background: white !important;
+        color: black !important;
+      }
+
+      .action-bar {
+        display: none !important;
+      }
+
+      .document-container {
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+
+      .page {
+        box-shadow: none !important;
+        border: none !important;
+        border-radius: 0 !important;
+        padding: 20mm !important;
+        margin: 0 !important;
+        page-break-after: always !important;
+        break-after: page !important;
+        min-height: 297mm; /* Standard A4 Height */
+      }
+
+      .page::before {
+        display: none !important;
+      }
+
+      pre {
+        background: #F8FAFC !important;
+        color: #0F172A !important;
+        border: 1px solid #CBD5E1 !important;
+      }
+
+      .btn {
+        display: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Floating Sticky Action Toolbar -->
+  <div class="action-bar">
+    <div class="action-title">
+      <span>🎓 CampusNet+ Master System Specification</span>
+      <span class="badge-live">10 Pages Complete</span>
+    </div>
+    <div class="action-buttons">
+      <a href="https://campusnet-production.up.railway.app" target="_blank" class="btn btn-outline">
+        🌐 Open Live Platform
+      </a>
+    </div>
+  </div>
+
+  <div class="document-container">
+
+    <!-- ================================================================= -->
+    <!-- PAGE 1 -->
+    <!-- ================================================================= -->
+    <div class="page" id="page-1">
+      <div class="page-header">
+        <span class="page-tag">PAGE 1 OF 10 • EXECUTIVE SUMMARY</span>
+        <span class="page-number">P. 01 / 10</span>
+      </div>
+
+      <h1>CampusNet+ System Specification</h1>
+      <p class="lead-text">
+        <strong>India's Premier National Academic, Innovation & Research Network</strong><br>
+        A unified digital ecosystem connecting higher education institutions, faculty guides, PhD scholars, and students across all 28 States and 8 Union Territories.
+      </p>
+
+      <div class="callout callout-blue">
+        <strong>Executive Mandate:</strong> CampusNet+ serves as an end-to-end national digital backbone for collegiate project incubation, Smart India Hackathons (SIH), geofenced attendance tracking, tamper-proof credential issuance, and inter-university research publication discovery.
+      </div>
+
+      <h2>1. The Problem Space in Indian Higher Education</h2>
+      <p>Innovation in Indian higher education has historically been hindered by systemic fragmentation:</p>
+      <ul>
+        <li><strong>Institutional Isolation:</strong> Talented students in tier-2/tier-3 engineering colleges cannot readily partner with specialists or find research guides at premier institutes (IITs, NITs, IISc).</li>
+        <li><strong>Hackathon Proxy Attendance:</strong> On-campus and inter-college hackathons struggle with manual paperwork, duplicate registration, and proxy check-ins.</li>
+        <li><strong>Unverifiable Paper Certificates:</strong> Physical and standard PDF certificates of merit or participation lack machine-readable, cryptographic authentication.</li>
+        <li><strong>Underutilized Academic Research:</strong> Capstone projects and student publications frequently go unindexed, preventing commercial incubation or cross-disciplinary collaboration.</li>
+      </ul>
+
+      <h2>2. Core Platform Statistics & Pan-India Footprint</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Ecosystem Entity</th>
+            <th>Production Metric</th>
+            <th>Primary Administrative Function</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Student Innovators</strong></td>
+            <td>10,000+ Enrolled</td>
+            <td>Team formation, milestone execution, 1-page Innovation Transcript.</td>
+          </tr>
+          <tr>
+            <td><strong>Faculty Mentors</strong></td>
+            <td>850+ Verified</td>
+            <td>Vidwan profile integration, project guidance, milestone review.</td>
+          </tr>
+          <tr>
+            <td><strong>PhD Research Scholars</strong></td>
+            <td>520+ Active</td>
+            <td>Peer reviews, research paper registry, open lab collaborations.</td>
+          </tr>
+          <tr>
+            <td><strong>Colleges & Universities</strong></td>
+            <td>450+ Campuses</td>
+            <td>AISHE accredited institutions across all 28 Indian States & 8 UTs.</td>
+          </tr>
+          <tr>
+            <td><strong>Hackathons & Fests</strong></td>
+            <td>1,200+ Hosted</td>
+            <td>Nodal GPS/QR check-in terminals, weighted jury rubrics, awards.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- PAGE 2 -->
+    <!-- ================================================================= -->
+    <div class="page" id="page-2">
+      <div class="page-header">
+        <span class="page-tag">PAGE 2 OF 10 • ARCHITECTURE & ROUTING</span>
+        <span class="page-number">P. 02 / 10</span>
+      </div>
+
+      <h1>System Architecture & Multi-Portal Engine</h1>
+      <p class="lead-text">
+        CampusNet+ utilizes a 3-tier enterprise architecture separating public community engagement from event administration and national governance.
+      </p>
+
+      <h2>1. Dedicated 3-Tier Portal Routing Matrix</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Portal Instance</th>
+            <th>Production Domain</th>
+            <th>Local Development Route</th>
+            <th>Target Audience & Access</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>🌐 Public CampusNet</strong></td>
+            <td><code>campusnet.in</code></td>
+            <td><code>http://localhost:3000/</code></td>
+            <td>Students, Faculty Mentors, Researchers, Public Visitors.</td>
+          </tr>
+          <tr>
+            <td><strong>🏢 Organizer Portal</strong></td>
+            <td><code>organizer.campusnet.in</code></td>
+            <td><code>http://localhost:3000/?portal=organizer</code></td>
+            <td>University Event Chairs, Department HODs, Jury Panels.</td>
+          </tr>
+          <tr>
+            <td><strong>🛡️ Super Admin Console</strong></td>
+            <td><code>admin.campusnet.in</code></td>
+            <td><code>http://localhost:3000/?portal=admin</code></td>
+            <td>National Governance, Accreditation Officers (MFA Protected).</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>2. Unified Reactive Core Data Flow</h2>
+      <pre><code>[Client Browser Request] ──▶ [PortalRouter Engine]
+                                      │
+            ┌─────────────────────────┼────────────────────────┐
+            ▼                         ▼                        ▼
+    [Public Hub View]       [Organizer Portal]       [Super Admin Console]
+            │                         │                        │
+            └─────────────────────────┼────────────────────────┘
+                                      ▼
+                        [src/context/AppContext.tsx]
+                       (Unified Reactive State Store)
+                                      ▲
+                                      │
+        [Security Guard] ────── [Haversine GPS] ────── [QR Token Engine]</code></pre>
+
+      <h2>3. Security Isolation Policy</h2>
+      <p>
+        The Public Portal's top navigation bar (<code>Navbar.tsx</code>) and <code>Footer.tsx</code> contain <strong>zero exposed links</strong> to the Organizer Portal or Super Admin Console. Access to administrative tiers is controlled via subdomain DNS routing in production and secure query token fallbacks in development environments.
+      </p>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- PAGE 3 -->
+    <!-- ================================================================= -->
+    <div class="page" id="page-3">
+      <div class="page-header">
+        <span class="page-tag">PAGE 3 OF 10 • TECH STACK & DIRECTORY</span>
+        <span class="page-number">P. 03 / 10</span>
+      </div>
+
+      <h1>Technology Stack & Codebase Map</h1>
+      <p class="lead-text">
+        Modern, ultra-fast frontend and lightweight production server engineered for zero latency and continuous deployment.
+      </p>
+
+      <h2>1. Technology Stack Specifications</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Component Layer</th>
+            <th>Technology & Version</th>
+            <th>Architectural Role</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Core Frontend</strong></td>
+            <td>React 19.0.0</td>
+            <td>Component modularity, concurrent rendering, hooks architecture.</td>
+          </tr>
+          <tr>
+            <td><strong>Language</strong></td>
+            <td>TypeScript 5.7.3</td>
+            <td>Strict typing, data integrity, compile-time contract enforcement.</td>
+          </tr>
+          <tr>
+            <td><strong>Build Tool</strong></td>
+            <td>Vite 6.2.0</td>
+            <td>Sub-second Hot Module Replacement (HMR) and optimized Rollup chunks.</td>
+          </tr>
+          <tr>
+            <td><strong>Styling</strong></td>
+            <td>Tailwind CSS 3.4.17</td>
+            <td>Curated academic theme (Navy Blue, Crimson Red, Slate, Warm White).</td>
+          </tr>
+          <tr>
+            <td><strong>Client Routing</strong></td>
+            <td>React Router DOM 7.18.2</td>
+            <td>Dynamic parameter handling, smooth scroll restoration, nested layouts.</td>
+          </tr>
+          <tr>
+            <td><strong>Production Server</strong></td>
+            <td>Node.js HTTP (server.js)</td>
+            <td>Native SPA fallback server with immutable asset caching policies.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>2. Directory Structure Overview</h2>
+      <pre><code>c:\projects\CampusNet\
+├── server.js               # Node.js production SPA HTTP fallback server
+├── vite.config.ts          # Vite build configuration with chunking rules
+├── src/
+│   ├── App.tsx             # Root application shell & modal overlays
+│   ├── context/            # AppContext.tsx (2,395-line unified reactive store)
+│   ├── types/              # Master TypeScript domain models & interfaces
+│   ├── data/               # Indian academic seed database (colleges, events, certs)
+│   ├── utils/              # 28 States + 8 UTs location data, validation utilities
+│   └── components/
+│       ├── admin/          # National Super Admin Console
+│       ├── organizer/      # Institutional Event Organizer Portal
+│       ├── team/           # Private 6-Member Workspace & Kanban
+│       ├── certificates/   # Tamper-proof certificate generator & QR verify
+│       └── dashboard/      # Student, Mentor & Researcher personal views</code></pre>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- PAGE 4 -->
+    <!-- ================================================================= -->
+    <div class="page" id="page-4">
+      <div class="page-header">
+        <span class="page-tag">PAGE 4 OF 10 • DATA MODELS & TYPESCRIPT</span>
+        <span class="page-number">P. 04 / 10</span>
+      </div>
+
+      <h1>Domain Models & TypeScript Entities</h1>
+      <p class="lead-text">
+        Enterprise-grade data structures declared in <code>src/types/index.ts</code> enforcing strict consistency across all tiers.
+      </p>
+
+      <h2>1. User & Identity Entities</h2>
+      <pre><code>export interface User {
+  id: string;
+  name: string;
+  email: string;
+  mobile: string;
+  studentId?: string;
+  institution: string;
+  department: string;
+  course: string;
+  year: string;
+  verifiedStudent: boolean;
+  innovationScore: number;
+  skills: string[];
+  badges: string[];
+  role: 'student' | 'mentor' | 'researcher' | 'organizer' | 'superadmin';
+}</code></pre>
+
+      <h2>2. Event & Geofencing Model</h2>
+      <pre><code>export interface EventItem {
+  id: string;
+  code?: string;                // e.g. KEC-AI26-HACK
+  title: string;
+  organizer: string;
+  eventType: 'Hackathon' | 'Ideathon' | 'Government Challenge';
+  state: string;
+  city: string;
+  mode: 'Offline' | 'Online' | 'Hybrid';
+  attendanceWindow: {
+    start: string;
+    end: string;
+    targetLat: number;         // GPS Latitude
+    targetLng: number;         // GPS Longitude
+    allowedRadiusMeters: number; // e.g. 500m
+  };
+  prizes: EventPrize[];
+  status: EventStatus;
+}</code></pre>
+
+      <h2>3. Digital Credential & Verification Model</h2>
+      <pre><code>export interface Certificate {
+  id: string;
+  certificateNumber: string;    // e.g. CN-KEC-AI26-PART-000101
+  recipientName: string;
+  recipientRole: 'Participant' | 'Winner' | 'Runner-Up' | 'Mentor';
+  eventTitle: string;
+  eventOrganizer: string;
+  issueDate: string;
+  qrCodeData: string;
+  status: 'valid' | 'revoked';
+  revocationReason?: string;
+}</code></pre>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- PAGE 5 -->
+    <!-- ================================================================= -->
+    <div class="page" id="page-5">
+      <div class="page-header">
+        <span class="page-tag">PAGE 5 OF 10 • PUBLIC PLATFORM</span>
+        <span class="page-number">P. 05 / 10</span>
+      </div>
+
+      <h1>Public Platform Modules & Discovery Engine</h1>
+      <p class="lead-text">
+        National hub for cross-college project incubation, faculty mentor matching, and official competency transcripts.
+      </p>
+
+      <h2>1. Universal Federated Search</h2>
+      <p>
+        The search engine at <code>FederatedSearchDropdown.tsx</code> enables students and faculty to query across five domains simultaneously with keyboard shortcuts (<code>ArrowUp</code>, <code>ArrowDown</code>, <code>Enter</code>):
+      </p>
+      <ul>
+        <li><strong>Students:</strong> Search by university roll number, skills (e.g., ROS2, PyTorch), or state.</li>
+        <li><strong>Projects:</strong> Search by problem statement, required open roles, or domain.</li>
+        <li><strong>Mentors:</strong> Search by research focus, h-index, or Vidwan scholar profile.</li>
+        <li><strong>Events:</strong> Filter national hackathons by prize pool, offline mode, and deadline.</li>
+      </ul>
+
+      <h2>2. Faculty Mentorship Matchmaking Heuristic</h2>
+      <p>
+        The algorithm calculates a 0–100% compatibility score evaluating domain alignment, technology overlap, mentor research publications, and current active team load:
+      </p>
+      <div class="callout callout-blue">
+        <code>CompatibilityScore = (0.35 × DomainMatch) + (0.30 × TechMatch) + (0.20 × ResearchMatch) + (0.15 × SlotAvailability)</code>
+      </div>
+
+      <h2>3. Official 1-Page AI Innovation Transcript</h2>
+      <p>
+        Accessible via <code>/portfolio</code>, students can preview and print an official single-page summary (<code>InnovationTranscriptModal.tsx</code>) designed for job placements and higher studies:
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Section</th>
+            <th>Verified Data Displayed</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Student Header</strong></td>
+            <td>AISHE college name, degree, department, bonafide verification badge.</td>
+          </tr>
+          <tr>
+            <td><strong>Innovation Index</strong></td>
+            <td>Composite score (0–1000) derived from completed milestones and podium finishes.</td>
+          </tr>
+          <tr>
+            <td><strong>Verified Credentials</strong></td>
+            <td>Serial-numbered hackathon certificates and faculty mentorship citations.</td>
+          </tr>
+          <tr>
+            <td><strong>QR Authentication</strong></td>
+            <td>Dynamic QR code linking directly to the live digital verification page.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- PAGE 6 -->
+    <!-- ================================================================= -->
+    <div class="page" id="page-6">
+      <div class="page-header">
+        <span class="page-tag">PAGE 6 OF 10 • COLLABORATIVE WORKSPACE</span>
+        <span class="page-number">P. 06 / 10</span>
+      </div>
+
+      <h1>Team Collaboration Workspace & Real-Time Studio</h1>
+      <p class="lead-text">
+        Private 6-member Team Studio (<code>/workspace/:teamId</code>) providing real-time tools for multi-disciplinary project execution.
+      </p>
+
+      <h2>1. Collaborative Studio Architecture</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Module Name</th>
+            <th>Component Path</th>
+            <th>Core Capabilities</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Kanban Board</strong></td>
+            <td><code>KanbanBoard.tsx</code></td>
+            <td>3 swimlanes (Todo, In Progress, Done), priority flags, milestone sync.</td>
+          </tr>
+          <tr>
+            <td><strong>Team Chat Stream</strong></td>
+            <td><code>TeamChat.tsx</code></td>
+            <td>Persistent chronological messaging, code blocks, schematic uploads.</td>
+          </tr>
+          <tr>
+            <td><strong>WebRTC Video Console</strong></td>
+            <td><code>VideoCallModal.tsx</code></td>
+            <td>Simulated video/mic toggles, screen share, active speaker detector.</td>
+          </tr>
+          <tr>
+            <td><strong>Mentor Guidance</strong></td>
+            <td><code>MentorGuidanceTab.tsx</code></td>
+            <td>Milestone reviews, formal sign-offs, completion certificate issuance.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>2. Project Milestone Review Flow</h2>
+      <pre><code>[Student Team] ──▶ Submits Milestone Deliverables (GitHub, Video Demo)
+                            │
+                            ▼
+[Faculty Guide] ──▶ Reviews Prototype Code & Hardware Schematics
+                            │
+              ┌─────────────┴─────────────┐
+              ▼                           ▼
+      [Approved with Seal]       [Revisions Requested]
+              │                           │
+  Milestone Velocity +25%       Team Chat Action Alert</code></pre>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- PAGE 7 -->
+    <!-- ================================================================= -->
+    <div class="page" id="page-7">
+      <div class="page-header">
+        <span class="page-tag">PAGE 7 OF 10 • ORGANIZER PORTAL</span>
+        <span class="page-number">P. 07 / 10</span>
+      </div>
+
+      <h1>Institutional Event Organizer Portal</h1>
+      <p class="lead-text">
+        Dedicated operations console accessible via <code>?portal=organizer</code> for colleges hosting state and national technical hackathons.
+      </p>
+
+      <h2>1. 30+ Field Event Creation Wizard</h2>
+      <p>
+        The wizard (<code>EventCreationWizard.tsx</code>) guides event chairs through four structured stages:
+      </p>
+      <ul>
+        <li><strong>Step 1: Event & Coordinator Identity:</strong> Title, system code, event tracks, prizes, and coordinator direct contacts.</li>
+        <li><strong>Step 2: Geofencing Coordinates:</strong> State, district, venue address, target latitude/longitude, and permissible check-in radius (meters).</li>
+        <li><strong>Step 3: Eligibility & Rules:</strong> Eligible departments, batch years, team sizes, and schedule milestones.</li>
+        <li><strong>Step 4: Formal College Sanctions:</strong> Mandatory upload of dean approval letters (.pdf, .png, .jpg up to 10 MB).</li>
+      </ul>
+
+      <h2>2. Dual-Mode Attendance Terminal</h2>
+      <p>
+        The check-in scanner terminal (<code>AttendanceQRScannerView.tsx</code>) eliminates attendance fraud during on-campus hackathons:
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Check-In Mode</th>
+            <th>Verification Process</th>
+            <th>Fraud Prevention Mechanism</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Optical QR Scanner</strong></td>
+            <td>Reads participant dynamic QR badge via device camera.</td>
+            <td>Rejects duplicate scans; displays first check-in timestamp.</td>
+          </tr>
+          <tr>
+            <td><strong>Manual Override</strong></td>
+            <td>Search by University Registration Number or Student ID.</td>
+            <td>Logs coordinator name, timestamp, and verification reason.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>3. Weighted Jury Judging & Leaderboard</h2>
+      <p>
+        External judges authenticate using designated keys (e.g. <code>JUDGE-KEC-RAO-99</code>) to grade submissions across Innovation (30%), Technical Complexity (30%), Practical Viability (25%), and Presentation (15%). Total weighted scores dynamically populate the Winner Selection console.
+      </p>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- PAGE 8 -->
+    <!-- ================================================================= -->
+    <div class="page" id="page-8">
+      <div class="page-header">
+        <span class="page-tag">PAGE 8 OF 10 • SUPER ADMIN CONSOLE</span>
+        <span class="page-number">P. 08 / 10</span>
+      </div>
+
+      <h1>National Super Admin & Governance Console</h1>
+      <p class="lead-text">
+        National accreditation and compliance terminal accessible via <code>?portal=admin</code> protected by hardware MFA tokens.
+      </p>
+
+      <h2>1. National Event Moderation Queue</h2>
+      <p>
+        Located at <code>SuperAdminEventModeration.tsx</code>, this queue oversees all collegiate proposals across India:
+      </p>
+      <ul>
+        <li>Inspects college sanction letters and faculty coordinator identities.</li>
+        <li>Super Admins can <strong>Approve & Publish</strong> to the public directory, <strong>Request Changes</strong> with inline reviewer notes, or <strong>Reject with Written Cause</strong>.</li>
+      </ul>
+
+      <h2>2. College Accreditation & User Moderation</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Module Name</th>
+            <th>Governance Responsibility</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Institution Manager</strong></td>
+            <td>Verifies AISHE codes, official .ac.in / .edu.in domain patterns, and grants verified green badges.</td>
+          </tr>
+          <tr>
+            <td><strong>User Moderator</strong></td>
+            <td>Inspects student identity cards, assigns bonafide badges, or suspends violators.</td>
+          </tr>
+          <tr>
+            <td><strong>Audit Trail Log</strong></td>
+            <td>Records immutable audit entries (Actor ID, Target Entity, IP, Action, Timestamp).</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>3. Certificate Fraud Auditor & Instant Revocation</h2>
+      <p>
+        The national certificate index (<code>SuperAdminCertificateAuditor.tsx</code>) enables instant revocation of falsified or disputed credentials. When revoked, the public verification page immediately flags the certificate with a bold red warning displaying the revocation timestamp and auditor justification.
+      </p>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- PAGE 9 -->
+    <!-- ================================================================= -->
+    <div class="page" id="page-9">
+      <div class="page-header">
+        <span class="page-tag">PAGE 9 OF 10 • SECURITY & ANTI-FRAUD</span>
+        <span class="page-number">P. 09 / 10</span>
+      </div>
+
+      <h1>Security Engineering & Anti-Fraud Mechanisms</h1>
+      <p class="lead-text">
+        Mathematical and cryptographic protocols preventing proxy attendance, credential falsification, and injection attacks.
+      </p>
+
+      <h2>1. Geofencing Mathematics: Haversine Distance Formula</h2>
+      <p>
+        To verify that participants are physically present at the venue before marking attendance, the system evaluates the great-circle distance between device GPS coordinates and the venue anchor:
+      </p>
+      <div class="callout callout-amber">
+        <code>a = sin²(Δφ/2) + cos(φ1) × cos(φ2) × sin²(Δλ/2)</code><br>
+        <code>c = 2 × atan2(√a, √(1-a))</code><br>
+        <code>distance = EarthRadius (6,371,000m) × c</code>
+      </div>
+      <p>If <code>distance &gt; allowedRadiusMeters</code>, the check-in is rejected, preventing remote proxy fraud.</p>
+
+      <h2>2. Cryptographic QR Verification & Public Lookup</h2>
+      <p>
+        Every certificate generated on CampusNet+ is assigned a unique, collision-resistant identifier and QR payload:
+      </p>
+      <pre><code>Certificate ID Format: CN-[INSTITUTION]-[EVENT_CODE]-[ROLE]-[SERIAL_HASH]
+Example: CN-KEC-AI26-PART-000101
+
+QR Payload URL: https://campusnet.in/verify/CN-KEC-AI26-PART-000101</code></pre>
+
+      <h2>3. Strict URL Allowlists & File Sanitization (validation.ts)</h2>
+      <ul>
+        <li><strong>Domain Allowlists:</strong> External profile URLs are strictly validated against <code>github.com</code>, <code>linkedin.com</code>, <code>x.com</code>, <code>leetcode.com</code>, and <code>vidwan.inflibnet.ac.in</code>.</li>
+        <li><strong>File Upload Defense:</strong> 10 MB size limit, PDF/image MIME enforcement, path traversal stripping (<code>../</code>), and blocking of executable formats (<code>.exe</code>, <code>.sh</code>, <code>.php</code>, <code>.js</code>).</li>
+      </ul>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- PAGE 10 -->
+    <!-- ================================================================= -->
+    <div class="page" id="page-10">
+      <div class="page-header">
+        <span class="page-tag">PAGE 10 OF 10 • DEPLOYMENT & ROADMAP</span>
+        <span class="page-number">P. 10 / 10</span>
+      </div>
+
+      <h1>Deployment Guide & Strategic Roadmap</h1>
+      <p class="lead-text">
+        Production runtime instructions, master demo credentials, and upcoming technical milestones.
+      </p>
+
+      <h2>1. Local Setup & Execution</h2>
+      <pre><code># 1. Clone repository
+git clone https://github.com/moglieswarachary-droid/campusnet.git
+cd campusnet
+
+# 2. Install dependencies
+npm install
+
+# 3. Start local development server
+npm run dev -- --host
+# Access Public Hub: http://localhost:3000/
+# Access Organizer:  http://localhost:3000/?portal=organizer
+# Access Admin:      http://localhost:3000/?portal=admin
+
+# 4. Compile Production Bundle
+npm run build && npm start</code></pre>
+
+      <h2>2. Master System Demo Credentials</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Role</th>
+            <th>Email / Access Key</th>
+            <th>Password / Token</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>🛡️ Super Admin</strong></td>
+            <td><code>superadmin@campusnet-demo.in</code></td>
+            <td><code>Admin@CampusNet2026</code> (MFA: <code>849201</code>)</td>
+          </tr>
+          <tr>
+            <td><strong>🏢 Organizer (KEC)</strong></td>
+            <td><code>organizer.demo@campusnet-demo.in</code></td>
+            <td><code>CampusNet@Demo2026</code></td>
+          </tr>
+          <tr>
+            <td><strong>⚖️ Jury Judge 1</strong></td>
+            <td>Key: <code>JUDGE-KEC-RAO-99</code></td>
+            <td>Assigned Event: <code>ev-kec-001</code></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>3. Strategic Technical Roadmap</h2>
+      <ol>
+        <li><strong>Academic Bank of Credits (ABC) & DigiLocker:</strong> Synchronizing verified hackathon finishes directly with the Ministry of Education's National Academic Depository.</li>
+        <li><strong>Real-Time WebSocket Canvas:</strong> Upgrading team workspaces with live multi-user whiteboards and cursor synchronization.</li>
+        <li><strong>Polygon L2 Smart Contract Anchoring:</strong> Merkle-root notarization of issued certificates for global cryptographic proof of academic awards.</li>
+      </ol>
+
+      <div class="callout callout-blue" style="margin-top: 24px; text-align: center;">
+        <strong>CampusNet+ National Network</strong> • © 2026 CampusNet Council. All rights reserved.
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>

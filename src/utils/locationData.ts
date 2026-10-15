@@ -1,4 +1,4 @@
-import { StateUTMaster } from '../types';
+import type { StateUTMaster } from '../types/index.ts';
 
 /**
  * Normalized Master Table covering all 28 States and 8 Union Territories of India (36 entities)
@@ -196,9 +196,9 @@ export const INDIA_STATES_AND_UTS: StateUTMaster[] = [
   },
   {
     code: 'DL',
-    name: 'Delhi (NCT)',
+    name: 'Delhi (National Capital Territory)',
     type: 'ut',
-    districts: ['New Delhi', 'Central Delhi', 'North Delhi', 'South Delhi', 'East Delhi', 'West Delhi', 'Dwarka', 'Rohini']
+    districts: ['New Delhi', 'Central Delhi', 'North Delhi', 'South Delhi', 'East Delhi', 'West Delhi', 'Dwarka', 'Rohini', 'North East Delhi', 'South West Delhi']
   },
   {
     code: 'JK',
@@ -232,9 +232,25 @@ export const INDIAN_UNION_TERRITORIES = INDIA_STATES_AND_UTS.filter(s => s.type 
 export const ALL_STATE_AND_UT_NAMES = INDIA_STATES_AND_UTS.map(s => s.name);
 
 export function getDistrictsByStateName(stateName: string): string[] {
-  if (!stateName || stateName === 'All India') return [];
+  if (!stateName || stateName === 'All India' || stateName === 'All') return [];
+  const normalized = stateName.toLowerCase().trim();
   const found = INDIA_STATES_AND_UTS.find(
-    s => s.name.toLowerCase() === stateName.toLowerCase() || s.code.toLowerCase() === stateName.toLowerCase()
+    s => s.name.toLowerCase() === normalized || 
+         s.code.toLowerCase() === normalized ||
+         (normalized.includes('delhi') && s.code === 'DL') ||
+         (normalized.includes('daman') && s.code === 'DN') ||
+         (normalized.includes('andaman') && s.code === 'AN')
   );
   return found ? found.districts : ['Main District / City'];
 }
+
+export function isValidStateOrUT(stateName: string): boolean {
+  if (!stateName) return false;
+  const normalized = stateName.toLowerCase().trim();
+  return INDIA_STATES_AND_UTS.some(
+    s => s.name.toLowerCase() === normalized || 
+         s.code.toLowerCase() === normalized ||
+         (normalized.includes('delhi') && s.code === 'DL')
+  );
+}
+

@@ -1,236 +1,153 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useApp, NavigationTab } from '../../context/AppContext';
 import { 
-  Home, Compass, FolderKanban, Calendar, CalendarPlus, MoreHorizontal, 
-  Sparkles, HelpCircle, Video, Award, Users, BookOpen, 
-  LayoutDashboard, MessageSquare, QrCode, ArrowRight 
+  Home, Compass, FolderKanban, Calendar, Users, 
+  MoreHorizontal, Sparkles, HelpCircle, Video, Award, 
+  ShieldCheck, LayoutDashboard, MessageSquareCode, Building2 
 } from 'lucide-react';
 
 export const MobileNav: React.FC = () => {
-  const { activeTab, setActiveTab, setIsAIModalOpen, setIsDirectMessagingOpen } = useApp();
+  const { activeTab, setActiveTab } = useApp();
+  const navigate = useNavigate();
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
-  const [isEventsMenuOpen, setIsEventsMenuOpen] = useState(false);
 
-  const navItems: { tab: NavigationTab; label: string; icon: any }[] = [
-    { tab: 'home', label: 'Home', icon: Home },
-    { tab: 'discover', label: 'Discover', icon: Compass },
-    { tab: 'projects', label: 'Projects', icon: FolderKanban },
-    { tab: 'events', label: 'Events', icon: Calendar },
-    { tab: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  const handleNav = (tab: NavigationTab, path: string) => {
+    setActiveTab(tab);
+    navigate(path);
+    setIsMoreMenuOpen(false);
+  };
+
+  const navItems: { tab: NavigationTab; label: string; icon: any; path: string }[] = [
+    { tab: 'home', label: 'Home', icon: Home, path: '/' },
+    { tab: 'discover', label: 'Discover', icon: Compass, path: '/discover' },
+    { tab: 'projects', label: 'Projects', icon: FolderKanban, path: '/projects' },
+    { tab: 'events', label: 'Events', icon: Calendar, path: '/events' },
+    { tab: 'mentors', label: 'Mentors', icon: Users, path: '/mentors' },
   ];
 
   return (
     <>
-      {/* Mobile Events Menu Overlay */}
-      {isEventsMenuOpen && (
-        <div 
-          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 lg:hidden animate-in fade-in"
-          onClick={() => setIsEventsMenuOpen(false)}
-        >
-          <div 
-            className="absolute bottom-20 left-4 right-4 bg-white rounded-3xl p-5 shadow-warm-xl border border-campus-border animate-in slide-in-from-bottom-5"
-            onClick={e => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between pb-3 border-b border-campus-border mb-3">
-              <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg bg-campus-soft-blue flex items-center justify-center text-campus-blue">
-                  <Calendar className="w-4 h-4" />
-                </div>
-                <h3 className="font-bold text-sm text-campus-deep-blue">CampusNet Events</h3>
-              </div>
-              <button 
-                onClick={() => setIsEventsMenuOpen(false)}
-                className="text-xs text-campus-muted-text hover:text-campus-slate-text"
-              >
-                Close
-              </button>
-            </div>
-
-            <div className="space-y-2.5">
-              <button
-                onClick={() => { 
-                  setActiveTab('events'); 
-                  setIsEventsMenuOpen(false); 
-                }}
-                className="w-full p-3.5 rounded-2xl bg-campus-soft-blue/60 hover:bg-campus-soft-blue flex items-center justify-between text-left transition-colors border border-blue-100"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-campus-blue text-white flex items-center justify-center shadow-warm-xs">
-                    <Calendar className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <div className="text-xs sm:text-sm font-bold text-campus-slate-text flex items-center gap-1.5">
-                      Discover Events
-                      <span className="w-1.5 h-1.5 rounded-full bg-campus-bright-red pulse-live"></span>
-                    </div>
-                    <div className="text-[11px] text-campus-muted-text">Browse national hackathons & fests</div>
-                  </div>
-                </div>
-                <ArrowRight className="w-4 h-4 text-campus-blue" />
-              </button>
-
-              <button
-                onClick={() => {
-                  const url = new URL(window.location.href);
-                  url.searchParams.set('portal', 'organizer');
-                  window.location.href = url.toString();
-                  setIsEventsMenuOpen(false);
-                }}
-                className="w-full p-3.5 rounded-2xl bg-red-50 hover:bg-red-100/80 flex items-center justify-between text-left transition-colors border border-red-200"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-campus-red text-white flex items-center justify-center shadow-warm-xs">
-                    <CalendarPlus className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <div className="text-xs sm:text-sm font-bold text-campus-red flex items-center gap-1.5">
-                      Host Event
-                      <span className="text-[9px] font-extrabold uppercase bg-red-100 text-campus-red px-1.5 py-0.5 rounded border border-red-200">
-                        Organizer
-                      </span>
-                    </div>
-                    <div className="text-[11px] text-red-700">Submit proposal & college verification</div>
-                  </div>
-                </div>
-                <ArrowRight className="w-4 h-4 text-campus-red" />
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Mobile More Overlay */}
       {isMoreMenuOpen && (
         <div 
-          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 lg:hidden animate-in fade-in"
+          className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 lg:hidden animate-in fade-in"
           onClick={() => setIsMoreMenuOpen(false)}
         >
           <div 
-            className="absolute bottom-20 left-4 right-4 bg-white rounded-3xl p-5 shadow-warm-xl border border-campus-border animate-in slide-in-from-bottom-5"
+            className="absolute bottom-16 left-3 right-3 bg-white rounded-2xl p-4 shadow-xl border border-slate-200 animate-in slide-in-from-bottom-4"
             onClick={e => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between pb-3 border-b border-campus-border mb-3">
-              <h3 className="font-bold text-sm text-campus-deep-blue">More CampusNet Portals</h3>
+            <div className="flex items-center justify-between pb-2.5 border-b border-slate-100 mb-3">
+              <h3 className="font-bold text-xs uppercase tracking-wider text-slate-500">
+                Additional Modules & Tools
+              </h3>
               <button 
+                type="button"
                 onClick={() => setIsMoreMenuOpen(false)}
-                className="text-xs text-campus-muted-text hover:text-campus-slate-text"
+                className="text-xs font-semibold text-slate-400 hover:text-slate-600 px-2 py-0.5 rounded-lg hover:bg-slate-50"
               >
                 Close
               </button>
             </div>
 
-            <div className="grid grid-cols-2 gap-2.5">
+            <div className="grid grid-cols-2 gap-2 text-left">
               <button
-                onClick={() => { setActiveTab('mentors'); setIsMoreMenuOpen(false); }}
-                className="p-3 rounded-2xl bg-campus-warm-white hover:bg-campus-soft-blue flex items-center gap-2.5 text-left transition-colors"
+                type="button"
+                onClick={() => handleNav('research', '/research')}
+                className="p-2.5 rounded-xl border border-slate-100 hover:bg-slate-50 flex items-center gap-2 transition-colors cursor-pointer"
               >
-                <div className="w-8 h-8 rounded-xl bg-campus-blue text-white flex items-center justify-center">
-                  <Users className="w-4 h-4" />
+                <div className="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                  <Sparkles className="w-3.5 h-3.5" />
                 </div>
                 <div>
-                  <div className="text-xs font-bold text-campus-slate-text">Mentors</div>
-                  <div className="text-[10px] text-campus-muted-text">Find faculty</div>
+                  <div className="text-xs font-bold text-slate-800">Research Hub</div>
+                  <div className="text-[10px] text-slate-400">Preprints & Labs</div>
                 </div>
               </button>
 
               <button
-                onClick={() => { setActiveTab('research'); setIsMoreMenuOpen(false); }}
-                className="p-3 rounded-2xl bg-campus-warm-white hover:bg-campus-soft-blue flex items-center gap-2.5 text-left transition-colors"
+                type="button"
+                onClick={() => handleNav('workspace', '/workspace')}
+                className="p-2.5 rounded-xl border border-slate-100 hover:bg-slate-50 flex items-center gap-2 transition-colors cursor-pointer"
               >
-                <div className="w-8 h-8 rounded-xl bg-campus-deep-blue text-white flex items-center justify-center">
-                  <BookOpen className="w-4 h-4" />
+                <div className="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+                  <MessageSquareCode className="w-3.5 h-3.5" />
                 </div>
                 <div>
-                  <div className="text-xs font-bold text-campus-slate-text">Research</div>
-                  <div className="text-[10px] text-campus-muted-text">PhD scholars</div>
+                  <div className="text-xs font-bold text-slate-800">Workspace</div>
+                  <div className="text-[10px] text-slate-400">Team Studio</div>
                 </div>
               </button>
 
               <button
-                onClick={() => { setActiveTab('workspace'); setIsMoreMenuOpen(false); }}
-                className="p-3 rounded-2xl bg-campus-warm-white hover:bg-blue-50 flex items-center gap-2.5 text-left transition-colors"
+                type="button"
+                onClick={() => handleNav('portfolio', '/portfolio')}
+                className="p-2.5 rounded-xl border border-slate-100 hover:bg-slate-50 flex items-center gap-2 transition-colors cursor-pointer"
               >
-                <div className="w-8 h-8 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center">
-                  <Users className="w-4 h-4" />
+                <div className="w-7 h-7 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
+                  <Award className="w-3.5 h-3.5" />
                 </div>
                 <div>
-                  <div className="text-xs font-bold text-campus-slate-text">Workspace</div>
-                  <div className="text-[10px] text-campus-muted-text">6-member studio</div>
+                  <div className="text-xs font-bold text-slate-800">Portfolio</div>
+                  <div className="text-[10px] text-slate-400">Transcript</div>
                 </div>
               </button>
 
               <button
-                onClick={() => { setActiveTab('certificates'); setIsMoreMenuOpen(false); }}
-                className="p-3 rounded-2xl bg-campus-warm-white hover:bg-green-50 flex items-center gap-2.5 text-left transition-colors"
+                type="button"
+                onClick={() => handleNav('certificates', '/certificates')}
+                className="p-2.5 rounded-xl border border-slate-100 hover:bg-slate-50 flex items-center gap-2 transition-colors cursor-pointer"
               >
-                <div className="w-8 h-8 rounded-xl bg-green-100 text-green-700 flex items-center justify-center">
-                  <QrCode className="w-4 h-4" />
+                <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                  <ShieldCheck className="w-3.5 h-3.5" />
                 </div>
                 <div>
-                  <div className="text-xs font-bold text-campus-slate-text">Certificates</div>
-                  <div className="text-[10px] text-campus-muted-text">Verify QR certs</div>
+                  <div className="text-xs font-bold text-slate-800">Certificates</div>
+                  <div className="text-[10px] text-slate-400">Verify QR</div>
                 </div>
               </button>
 
               <button
-                onClick={() => { setActiveTab('ask'); setIsMoreMenuOpen(false); }}
-                className="p-3 rounded-2xl bg-campus-warm-white hover:bg-campus-soft-blue flex items-center gap-2.5 text-left transition-colors"
+                type="button"
+                onClick={() => handleNav('ask', '/ask')}
+                className="p-2.5 rounded-xl border border-slate-100 hover:bg-slate-50 flex items-center gap-2 transition-colors cursor-pointer"
               >
-                <div className="w-8 h-8 rounded-xl bg-blue-100 text-campus-blue flex items-center justify-center">
-                  <HelpCircle className="w-4 h-4" />
+                <div className="w-7 h-7 rounded-lg bg-slate-50 text-slate-700 flex items-center justify-center">
+                  <HelpCircle className="w-3.5 h-3.5" />
                 </div>
                 <div>
-                  <div className="text-xs font-bold text-campus-slate-text">Ask Campus</div>
-                  <div className="text-[10px] text-campus-muted-text">Problem solving</div>
+                  <div className="text-xs font-bold text-slate-800">Ask Campus</div>
+                  <div className="text-[10px] text-slate-400">Community Q&A</div>
                 </div>
               </button>
 
               <button
-                onClick={() => { setActiveTab('stories'); setIsMoreMenuOpen(false); }}
-                className="p-3 rounded-2xl bg-campus-warm-white hover:bg-red-50 flex items-center gap-2.5 text-left transition-colors"
+                type="button"
+                onClick={() => handleNav('stories', '/stories')}
+                className="p-2.5 rounded-xl border border-slate-100 hover:bg-slate-50 flex items-center gap-2 transition-colors cursor-pointer"
               >
-                <div className="w-8 h-8 rounded-xl bg-red-100 text-campus-red flex items-center justify-center">
-                  <Video className="w-4 h-4" />
+                <div className="w-7 h-7 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center">
+                  <Video className="w-3.5 h-3.5" />
                 </div>
                 <div>
-                  <div className="text-xs font-bold text-campus-slate-text">Stories</div>
-                  <div className="text-[10px] text-campus-muted-text">Project demos</div>
-                </div>
-              </button>
-
-              <button
-                onClick={() => {
-                  const url = new URL(window.location.href);
-                  url.searchParams.set('portal', 'organizer');
-                  window.location.href = url.toString();
-                  setIsMoreMenuOpen(false);
-                }}
-                className="p-3 rounded-2xl bg-red-50 hover:bg-red-100 flex items-center gap-2.5 text-left transition-colors col-span-2 border border-red-200"
-              >
-                <div className="w-8 h-8 rounded-xl bg-campus-red text-white flex items-center justify-center">
-                  <Award className="w-4 h-4" />
-                </div>
-                <div>
-                  <div className="text-xs font-bold text-campus-red">Host Event (Organizer Portal)</div>
-                  <div className="text-[10px] text-red-700">Submit hosting proposal & accreditation</div>
+                  <div className="text-xs font-bold text-slate-800">Stories</div>
+                  <div className="text-[10px] text-slate-400">Video Demos</div>
                 </div>
               </button>
             </div>
 
-            <div className="mt-3 pt-3 border-t border-campus-border grid grid-cols-2 gap-2">
+            <div className="mt-3 pt-2.5 border-t border-slate-100">
               <button
-                onClick={() => { setIsDirectMessagingOpen(true); setIsMoreMenuOpen(false); }}
-                className="py-2.5 px-3 bg-campus-soft-blue text-campus-blue rounded-xl text-xs font-bold flex items-center justify-center gap-1.5"
+                type="button"
+                onClick={() => {
+                  window.location.href = '/organization/login';
+                  setIsMoreMenuOpen(false);
+                }}
+                className="w-full py-2 px-3 rounded-xl bg-slate-900 text-white text-xs font-semibold flex items-center justify-center gap-2"
               >
-                <MessageSquare className="w-4 h-4" />
-                Messages
-              </button>
-              <button
-                onClick={() => { setIsAIModalOpen(true); setIsMoreMenuOpen(false); }}
-                className="py-2.5 px-3 bg-campus-deep-blue text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow-warm-sm"
-              >
-                <Sparkles className="w-4 h-4 text-amber-300" />
-                Campus AI
+                <Building2 className="w-3.5 h-3.5 text-indigo-400" />
+                <span>Host Event (Organizer Portal)</span>
               </button>
             </div>
           </div>
@@ -238,7 +155,10 @@ export const MobileNav: React.FC = () => {
       )}
 
       {/* Floating Bottom Navigation Bar */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-campus-border px-2 py-1.5 lg:hidden shadow-lg">
+      <nav 
+        className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/90 px-2 py-1.5 lg:hidden shadow-sm"
+        aria-label="Mobile Navigation"
+      >
         <div className="flex items-center justify-around">
           {navItems.map(item => {
             const Icon = item.icon;
@@ -246,41 +166,34 @@ export const MobileNav: React.FC = () => {
             return (
               <button
                 key={item.tab}
-                onClick={() => {
-                  if (item.tab === 'events') {
-                    setIsEventsMenuOpen(true);
-                    setIsMoreMenuOpen(false);
-                  } else {
-                    setActiveTab(item.tab);
-                    setIsMoreMenuOpen(false);
-                    setIsEventsMenuOpen(false);
-                  }
-                }}
-                className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition-all ${
+                type="button"
+                onClick={() => handleNav(item.tab, item.path)}
+                className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-lg transition-colors cursor-pointer ${
                   isActive 
-                    ? 'text-campus-blue font-bold scale-105' 
-                    : 'text-campus-muted-text hover:text-campus-slate-text'
+                    ? 'text-indigo-600 font-bold' 
+                    : 'text-slate-500 hover:text-slate-800'
                 }`}
               >
-                <Icon className={`w-5 h-5 ${isActive ? 'text-campus-blue stroke-[2.5]' : ''}`} />
-                <span className="text-[10px] mt-0.5">{item.label}</span>
+                <Icon className={`w-5 h-5 ${isActive ? 'text-indigo-600 stroke-[2.2]' : 'stroke-[1.8]'}`} />
+                <span className="text-[10px] mt-0.5 font-medium">{item.label}</span>
               </button>
             );
           })}
 
           <button
-            onClick={() => setIsMoreMenuOpen(!isMoreMenuOpen)}
-            className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition-all ${
-              isMoreMenuOpen || ['mentors', 'research', 'ask', 'stories', 'workspace', 'portfolio', 'certificates'].includes(activeTab)
-                ? 'text-campus-blue font-bold scale-105'
-                : 'text-campus-muted-text hover:text-campus-slate-text'
+            type="button"
+            onClick={() => setIsMoreMenuOpen(prev => !prev)}
+            className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-lg transition-colors cursor-pointer ${
+              isMoreMenuOpen || ['research', 'workspace', 'portfolio', 'certificates', 'ask', 'stories', 'dashboard'].includes(activeTab)
+                ? 'text-indigo-600 font-bold'
+                : 'text-slate-500 hover:text-slate-800'
             }`}
           >
-            <MoreHorizontal className="w-5 h-5" />
-            <span className="text-[10px] mt-0.5">More</span>
+            <MoreHorizontal className="w-5 h-5 stroke-[1.8]" />
+            <span className="text-[10px] mt-0.5 font-medium">More</span>
           </button>
         </div>
-      </div>
+      </nav>
     </>
   );
 };

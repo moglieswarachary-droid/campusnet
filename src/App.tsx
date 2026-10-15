@@ -85,6 +85,8 @@ const MainContent: React.FC = () => {
           
           <Route path="/events" element={<EventsDirectoryView />} />
           <Route path="/events/:id" element={<EventsDirectoryView />} />
+          <Route path="/events/:id/register" element={<EventsDirectoryView />} />
+          <Route path="/events/register" element={<EventsDirectoryView />} />
           
           <Route path="/mentors" element={<MentorDirectoryView />} />
           <Route path="/mentors/:id" element={<MentorDirectoryView />} />

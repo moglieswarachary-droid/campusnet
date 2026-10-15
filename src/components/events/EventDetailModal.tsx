@@ -4,7 +4,7 @@ import {
   X, Calendar, MapPin, Award, Users, ShieldCheck, 
   CheckCircle2, Clock, Share2, Bookmark, BookmarkCheck, 
   Download, ExternalLink, Camera, Mail, Phone, Globe, 
-  AlertCircle, ChevronRight, Navigation 
+  AlertCircle, ChevronRight, Navigation, Lock
 } from 'lucide-react';
 import { EventItem } from '../../types';
 import { VerifiedAttendanceModal } from './VerifiedAttendanceModal';
@@ -72,7 +72,13 @@ export const EventDetailModal: React.FC<Props> = ({ event, onClose }) => {
           </div>
 
           <div className="absolute bottom-4 left-4 right-4 text-white">
-            <p className="text-xs sm:text-sm text-amber-300 font-bold">{event.organizer}</p>
+            <div className="flex items-center gap-2 flex-wrap">
+              <p className="text-xs sm:text-sm text-amber-300 font-bold">{event.organizer}</p>
+              <span className="inline-flex items-center gap-1 text-[10px] bg-emerald-500/90 text-white font-bold px-2 py-0.5 rounded-full">
+                <ShieldCheck className="w-3 h-3" />
+                Verified Institution
+              </span>
+            </div>
             <h2 className="text-lg sm:text-2xl font-black text-white leading-tight mt-0.5">{event.title}</h2>
           </div>
         </div>
@@ -220,11 +226,47 @@ export const EventDetailModal: React.FC<Props> = ({ event, onClose }) => {
             </div>
           )}
 
+          {/* Online Joining Credentials (Confidential until registered) */}
+          {(event.mode === 'Online' || event.mode === 'Hybrid') && (
+            <div className={`p-4 rounded-2xl border ${
+              event.isRegistered 
+                ? 'bg-emerald-50/80 border-emerald-200 text-emerald-900' 
+                : 'bg-slate-50 border-slate-200 text-slate-600'
+            }`}>
+              <div className="flex items-center gap-2 font-bold text-xs mb-1">
+                <Lock className="w-4 h-4 text-campus-blue" />
+                <span>Virtual Arena & Online Joining Instructions</span>
+              </div>
+              {event.isRegistered ? (
+                <div className="space-y-2 text-xs">
+                  <p className="text-emerald-800">
+                    {event.onlineJoiningInstructions || 'Passcode and room access verified for your collegiate registration.'}
+                  </p>
+                  {event.onlineMeetingUrl && (
+                    <a
+                      href={event.onlineMeetingUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 text-white rounded-xl font-bold text-xs shadow-xs hover:bg-emerald-700 transition-colors"
+                    >
+                      <span>Join Live Arena / Webinar</span>
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
+                  )}
+                </div>
+              ) : (
+                <p className="text-xs text-campus-muted-text">
+                  🔒 Private meeting links and room passcodes are protected and revealed directly upon verified registration confirmation.
+                </p>
+              )}
+            </div>
+          )}
+
           {/* Contact Helpline */}
           <div className="p-4 bg-campus-soft-blue/40 rounded-2xl border border-blue-200 flex items-center justify-between flex-wrap gap-2 text-xs">
             <div className="space-y-0.5">
               <div className="font-bold text-campus-deep-blue">Official Organizer Desk</div>
-              <div className="text-campus-muted-text">{event.contactEmail || 'events@campusnet.network'}</div>
+              <div className="text-campus-muted-text">{event.contactEmail || event.coordinatorEmail || 'events@campusnet.network'}</div>
             </div>
             {event.websiteUrl && (
               <a
@@ -252,11 +294,11 @@ export const EventDetailModal: React.FC<Props> = ({ event, onClose }) => {
           {event.isRegistered ? (
             <div className="flex items-center gap-2">
               <span className="text-xs font-bold text-green-700 bg-green-50 py-2 px-3 rounded-xl border border-green-200">
-                ✓ Team Registered (ID: SIH-2026-088)
+                ✓ Confirmed Registration
               </span>
               <button
                 onClick={() => setIsAttendanceOpen(true)}
-                className="campus-btn-red text-xs py-2.5 px-4 rounded-xl flex items-center gap-1.5 shadow-glow-red"
+                className="campus-btn-red text-xs py-2.5 px-4 rounded-xl flex items-center gap-1.5 shadow-glow-red cursor-pointer"
               >
                 <Camera className="w-4 h-4" />
                 Mark Verified GPS Attendance
@@ -267,9 +309,13 @@ export const EventDetailModal: React.FC<Props> = ({ event, onClose }) => {
               onClick={() => {
                 registerForEvent(event.id);
               }}
-              className="campus-btn-primary text-xs sm:text-sm py-2.5 px-6 rounded-xl font-bold shadow-warm-md flex items-center gap-1.5"
+              className="campus-btn-primary text-xs sm:text-sm py-2.5 px-6 rounded-xl font-bold shadow-warm-md flex items-center gap-1.5 cursor-pointer"
             >
-              <span>Register 6-Member Team on CampusNet</span>
+              <span>
+                {event.participationType === 'individual'
+                  ? 'Register as Individual Participant'
+                  : `Register Team (Up to ${event.maxTeamSize} Members)`}
+              </span>
               <ChevronRight className="w-4 h-4" />
             </button>
           )}

@@ -9,7 +9,8 @@ import {
   ResearchConference, OrganizerAccount, SuperAdminAccount, EventRegistrationItem, 
   QRCheckInRecord, EventProjectSubmission, EvaluationCriterion, JudgeAccount, 
   JudgeAssignment, EvaluationScore, EventWinnerRecord, CertificateTemplate, 
-  EventAnnouncement, AuditLogEntry, EventStatus, EventHostingDocument 
+  EventAnnouncement, AuditLogEntry, EventStatus, EventHostingDocument,
+  NewOrganizationPayload, OrganizationVerificationStatus 
 } from '../types';
 import { 
   INITIAL_CURRENT_USER, MOCK_STUDENTS, MOCK_MENTORS, 
@@ -102,8 +103,12 @@ interface AppContextType {
   currentOrganizer: OrganizerAccount | null;
   organizers: OrganizerAccount[];
   organizerLogin: (emailOrId: string, password?: string) => boolean;
+  registerOrganizer: (data: NewOrganizationPayload) => boolean;
+  submitOrganizerVerification: (evidence: { documents: EventHostingDocument[]; notes?: string }) => void;
+  adminReviewOrganizer: (organizerId: string, status: OrganizationVerificationStatus, notes?: string) => void;
   organizerLogout: () => void;
   updateOrganizerProfile: (data: Partial<OrganizerAccount>) => void;
+  cancelStudentRegistration: (registrationId: string) => void;
   
   // Super Admin Portal State & Methods
   currentSuperAdmin: SuperAdminAccount | null;
@@ -329,7 +334,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   });
   const [events, setEvents] = useState<EventItem[]>(() => {
     const saved = localStorage.getItem('campusnet_events');
-    return saved ? JSON.parse(saved) : MOCK_EVENTS;
+    if (!saved) return MOCK_EVENTS;
+    try {
+      const parsed: EventItem[] = JSON.parse(saved);
+      const existingIds = new Set(parsed.map(e => e.id));
+      const merged = [...parsed];
+      for (const mockEvt of MOCK_EVENTS) {
+        if (!existingIds.has(mockEvt.id)) {
+          merged.push(mockEvt);
+        }
+      }
+      return merged;
+    } catch {
+      return MOCK_EVENTS;
+    }
   });
   const [certificates, setCertificates] = useState<Certificate[]>(() => {
     const saved = localStorage.getItem('campusnet_certificates');
@@ -366,14 +384,27 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return saved ? JSON.parse(saved) : [];
   });
   
-  // Organizer Portal State
+  // Organizer Portal State (Merged with Seeded 5 Colleges)
   const [organizers, setOrganizers] = useState<OrganizerAccount[]>(() => {
     const saved = localStorage.getItem('campusnet_organizers');
-    return saved ? JSON.parse(saved) : MOCK_ORGANIZER_ACCOUNTS;
+    if (!saved) return MOCK_ORGANIZER_ACCOUNTS;
+    try {
+      const parsed: OrganizerAccount[] = JSON.parse(saved);
+      const existingIds = new Set(parsed.map(o => o.id));
+      const merged = [...parsed];
+      for (const org of MOCK_ORGANIZER_ACCOUNTS) {
+        if (!existingIds.has(org.id)) {
+          merged.push(org);
+        }
+      }
+      return merged;
+    } catch {
+      return MOCK_ORGANIZER_ACCOUNTS;
+    }
   });
   const [currentOrganizer, setCurrentOrganizer] = useState<OrganizerAccount | null>(() => {
     const saved = localStorage.getItem('campusnet_organizer_session');
-    return saved ? JSON.parse(saved) : MOCK_ORGANIZER_ACCOUNTS[0]; // Seeded default KEC
+    return saved ? JSON.parse(saved) : null;
   });
   
   // Super Admin Portal State
@@ -385,7 +416,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Event Operations & Lifecycle State
   const [eventRegistrations, setEventRegistrations] = useState<EventRegistrationItem[]>(() => {
     const saved = localStorage.getItem('campusnet_event_registrations');
-    return saved ? JSON.parse(saved) : MOCK_EVENT_REGISTRATIONS;
+    if (!saved) return MOCK_EVENT_REGISTRATIONS;
+    try {
+      const parsed: EventRegistrationItem[] = JSON.parse(saved);
+      const existingIds = new Set(parsed.map(r => r.id));
+      const merged = [...parsed];
+      for (const reg of MOCK_EVENT_REGISTRATIONS) {
+        if (!existingIds.has(reg.id)) {
+          merged.push(reg);
+        }
+      }
+      return merged;
+    } catch {
+      return MOCK_EVENT_REGISTRATIONS;
+    }
   });
   const [qrCheckInRecords, setQrCheckInRecords] = useState<QRCheckInRecord[]>(() => {
     const saved = localStorage.getItem('campusnet_qr_checkins');
@@ -586,7 +630,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // UI state
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [isAIModalOpen, setIsAIModalOpen] = useState(false);
-  const [authModalType, setAuthModalType] = useState<'none' | 'login' | 'student_register' | 'mentor_onboarding' | 'scholar_register' | 'organizer_login' | 'organizer_register'>('none');
+  const [authModalType, setAuthModalType] = useState<'none' | 'login' | 'student_register' | 'mentor_onboarding' | 'scholar_register' | 'organizer_login' | 'organizer_register'>(() => {
+    if (typeof window !== 'undefined') {
+      const p = window.location.pathname.toLowerCase();
+      // Do not overlay public modal if accessing dedicated organization or admin subapps
+      if (p.includes('/organization') || p.includes('/admin')) {
+        return 'none';
+      }
+      // Check if user has already entered session during this browser visit
+      const sessionEntered = sessionStorage.getItem('campusnet_session_entered') === 'true';
+      if (!sessionEntered) {
+        return 'login'; // Show login modal (Img 2) before landing page as default
+      }
+    }
+    return 'none';
+  });
   const [authTargetRole, setAuthTargetRole] = useState<'student' | 'mentor' | 'scholar' | 'organizer'>('student');
   const [authTargetMode, setAuthTargetMode] = useState<'login' | 'register'>('login');
 
@@ -693,10 +751,42 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // --- ORGANIZER AUTHENTICATION ---
   const organizerLogin = (emailOrId: string, password?: string): boolean => {
-    const lower = emailOrId.toLowerCase().trim();
-    const found = organizers.find(
-      o => o.officialEmail.toLowerCase() === lower || o.id.toLowerCase() === lower || o.institutionId.toLowerCase() === lower
+    const lower = (emailOrId || '').toLowerCase().trim();
+    if (!lower) {
+      addToast({
+        type: 'error',
+        title: 'Authentication Failed',
+        message: 'Please provide your institutional email or college code.'
+      });
+      return false;
+    }
+
+    // 1. Check current organizers in state
+    let found = organizers.find(
+      o => o.officialEmail.toLowerCase() === lower || 
+           o.id.toLowerCase() === lower || 
+           o.institutionId.toLowerCase() === lower ||
+           o.coordinatorName.toLowerCase().includes(lower) ||
+           o.institutionName.toLowerCase().includes(lower)
     );
+
+    // 2. Direct fallback to MOCK_ORGANIZER_ACCOUNTS to guarantee 100% demo login reliability even with stale localStorage
+    if (!found) {
+      found = MOCK_ORGANIZER_ACCOUNTS.find(
+        o => o.officialEmail.toLowerCase() === lower || 
+             o.id.toLowerCase() === lower || 
+             o.institutionId.toLowerCase() === lower ||
+             o.coordinatorName.toLowerCase().includes(lower) ||
+             o.institutionName.toLowerCase().includes(lower)
+      );
+      if (found) {
+        setOrganizers(prev => {
+          const updated = [...prev.filter(o => o.id !== found!.id), found!];
+          localStorage.setItem('campusnet_organizers', JSON.stringify(updated));
+          return updated;
+        });
+      }
+    }
 
     if (found) {
       setCurrentOrganizer(found);
@@ -707,6 +797,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         title: 'Institution Login Successful',
         message: `Welcome, ${found.coordinatorName} (${found.institutionName})`
       });
+
+      // Seamlessly redirect URL to /organization/events if currently on login/register view
+      if (typeof window !== 'undefined') {
+        const path = window.location.pathname.toLowerCase();
+        if (path.includes('/login') || path.includes('/register') || path === '/organization' || path === '/organization/') {
+          window.history.pushState(null, '', '/organization/events');
+        }
+      }
+
       return true;
     }
 
@@ -741,6 +840,160 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       type: 'success',
       title: 'Profile Updated',
       message: 'Institutional coordinator details saved.'
+    });
+  };
+
+  const registerOrganizer = (data: NewOrganizationPayload): boolean => {
+    const emailLower = data.officialEmail.toLowerCase().trim();
+    const existing = organizers.find(o => o.officialEmail.toLowerCase() === emailLower);
+    if (existing) {
+      addToast({
+        type: 'error',
+        title: 'Email Already Registered',
+        message: 'An organization coordinator account with this institutional email already exists. Please sign in.'
+      });
+      return false;
+    }
+
+    const orgCode = `ORG-${data.institutionName.replace(/[^A-Za-z]/g, '').substring(0, 3).toUpperCase() || 'COL'}-${Date.now().toString(36).substring(3).toUpperCase()}`;
+    const instId = `inst-${Date.now().toString(36)}`;
+
+    // Create InstitutionInfo record
+    const newInst: InstitutionInfo = {
+      id: instId,
+      name: data.institutionName.trim(),
+      shortName: data.institutionName.split(' ').map(w => w[0]).join('').substring(0, 6).toUpperCase(),
+      type: (data.institutionCategory as any) || 'Engineering College',
+      state: data.state,
+      district: data.district,
+      city: data.city,
+      logo: 'https://images.unsplash.com/photo-1562774053-701939374585?w=200&auto=format&fit=crop&q=80',
+      studentCount: 0,
+      mentorCount: 0,
+      projectsCount: 0,
+      eventsCount: 0,
+      verified: false,
+      website: data.website?.trim() || undefined,
+      address: data.address?.trim() || undefined
+    };
+
+    const newOrganizer: OrganizerAccount = {
+      id: orgCode,
+      institutionId: instId,
+      institutionName: data.institutionName.trim(),
+      officialEmail: emailLower,
+      coordinatorName: data.coordinatorName.trim(),
+      designation: data.designation.trim(),
+      mobile: data.mobile.trim(),
+      department: data.department?.trim() || 'Academic Affairs',
+      state: data.state,
+      district: data.district,
+      city: data.city,
+      role: 'institution_admin',
+      verificationStatus: data.documents && data.documents.length > 0 ? 'under_review' : 'submitted',
+      verificationNotes: 'Institutional registration submitted. Platform Reviewer evaluation in progress (24-48h).',
+      verificationDocuments: data.documents || [],
+      institutionCategory: data.institutionCategory,
+      institutionType: data.institutionType,
+      affiliationUniversity: data.affiliationUniversity,
+      accreditationDetails: data.accreditationDetails,
+      address: data.address,
+      website: data.website,
+      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
+      lastLoginAt: new Date().toISOString(),
+      eventsCreatedCount: 0
+    };
+
+    setOrganizers(prev => [newOrganizer, ...prev]);
+    setInstitutions(prev => [newInst, ...prev]);
+    setCurrentOrganizer(newOrganizer);
+    localStorage.setItem('campusnet_organizers', JSON.stringify([newOrganizer, ...organizers]));
+    localStorage.setItem('campusnet_institutions', JSON.stringify([newInst, ...institutions]));
+    localStorage.setItem('campusnet_organizer_session', JSON.stringify(newOrganizer));
+
+    logAuditAction('ORGANIZATION_REGISTER', 'institution', newOrganizer.id, newOrganizer.institutionName, `New institution registered: ${newOrganizer.institutionName} (${newOrganizer.city}, ${newOrganizer.state})`);
+
+    addToast({
+      type: 'success',
+      title: 'Institution Registration Submitted 🎉',
+      message: `Welcome, ${newOrganizer.coordinatorName}! Your organization account is now active.`
+    });
+
+    return true;
+  };
+
+  const submitOrganizerVerification = (evidence: { documents: EventHostingDocument[]; notes?: string }) => {
+    if (!currentOrganizer) return;
+    const updated: OrganizerAccount = {
+      ...currentOrganizer,
+      verificationStatus: 'under_review',
+      verificationDocuments: [...(currentOrganizer.verificationDocuments || []), ...evidence.documents],
+      verificationNotes: evidence.notes ? `Coordinator submission: ${evidence.notes}` : 'Verification evidence submitted for administrative review.'
+    };
+    setCurrentOrganizer(updated);
+    setOrganizers(prev => prev.map(o => o.id === updated.id ? updated : o));
+    localStorage.setItem('campusnet_organizer_session', JSON.stringify(updated));
+    localStorage.setItem('campusnet_organizers', JSON.stringify(organizers.map(o => o.id === updated.id ? updated : o)));
+
+    logAuditAction('ORGANIZATION_VERIFY_EVIDENCE', 'institution', updated.id, updated.institutionName, 'Institutional verification evidence uploaded');
+
+    addToast({
+      type: 'success',
+      title: 'Verification Documents Received',
+      message: 'Your institutional evidence has been queued for administrative review.'
+    });
+  };
+
+  const adminReviewOrganizer = (organizerId: string, status: OrganizationVerificationStatus, notes?: string) => {
+    setOrganizers(prev => prev.map(org => {
+      if (org.id === organizerId) {
+        const updated = {
+          ...org,
+          verificationStatus: status,
+          verificationNotes: notes || `Status updated to ${status} by Platform Administrator.`
+        };
+        if (currentOrganizer?.id === organizerId) {
+          setCurrentOrganizer(updated);
+          localStorage.setItem('campusnet_organizer_session', JSON.stringify(updated));
+        }
+        return updated;
+      }
+      return org;
+    }));
+
+    if (status === 'verified') {
+      const targetOrg = organizers.find(o => o.id === organizerId);
+      if (targetOrg) {
+        setInstitutions(prev => prev.map(inst => 
+          inst.id === targetOrg.institutionId || inst.name.toLowerCase() === targetOrg.institutionName.toLowerCase()
+            ? { ...inst, verified: true }
+            : inst
+        ));
+      }
+    }
+
+    logAuditAction('ORGANIZATION_ADMIN_REVIEW', 'security', organizerId, 'Administration', `Organization review status set to ${status}: ${notes || 'No review notes'}`);
+
+    addToast({
+      type: 'info',
+      title: 'Organization Status Updated',
+      message: `Organization ${organizerId} status set to ${status}.`
+    });
+  };
+
+  const cancelStudentRegistration = (registrationId: string) => {
+    const reg = eventRegistrations.find(r => r.id === registrationId);
+    if (!reg) return;
+
+    setEventRegistrations(prev => prev.filter(r => r.id !== registrationId));
+    setEvents(prev => prev.map(e => e.id === reg.eventId ? { ...e, isRegistered: false, registeredTeamsCount: Math.max(0, e.registeredTeamsCount - 1) } : e));
+
+    logAuditAction('EVENT_REGISTRATION_CANCEL', 'event', currentUser.id, currentUser.name, `Cancelled registration for event: ${reg.eventTitle}`);
+
+    addToast({
+      type: 'info',
+      title: 'Registration Cancelled',
+      message: `Your registration for "${reg.eventTitle}" has been cancelled.`
     });
   };
 
@@ -823,6 +1076,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         targetLng: 78.3496,
         allowedRadiusMeters: 500
       },
+      language: data.language || 'English / Hindi',
+      timezone: data.timezone || 'IST (UTC+05:30)',
+      participationType: data.participationType || 'team',
+      onlineMeetingUrl: data.onlineMeetingUrl,
+      onlineJoiningInstructions: data.onlineJoiningInstructions,
+      registrationFee: data.registrationFee || 'Free',
+      registrationOpenDate: data.registrationOpenDate,
+      registrationCloseDate: data.registrationCloseDate,
+      eligibility: data.eligibility || 'Bonafide students in recognized Indian institutions',
+      eligibleDepartments: data.eligibleDepartments,
+      eligibleYears: data.eligibleYears,
+      documents: data.documents || [],
+      isAcknowledged: data.isAcknowledged ?? false,
+      submittedAt: data.submittedAt,
       submissionRequirements: data.submissionRequirements || ['Project Proposal PDF', 'GitHub Repository', 'Video Demo'],
       isRegistered: false,
       createdAt: new Date().toISOString(),
@@ -2238,8 +2505,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         currentOrganizer,
         organizers,
         organizerLogin,
+        registerOrganizer,
+        submitOrganizerVerification,
+        adminReviewOrganizer,
         organizerLogout,
         updateOrganizerProfile,
+        cancelStudentRegistration,
         
         // Super Admin Portal
         currentSuperAdmin,

@@ -22,15 +22,23 @@ interface Props {
 }
 
 export const SuperAdminLayout: React.FC<Props> = ({ activeSection, setActiveSection, children }) => {
-  const { currentSuperAdmin, superAdminLogout, events } = useApp();
+  const { currentSuperAdmin, superAdminLogout, events, organizers } = useApp();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const pendingReviewEvents = events.filter(e => e.status === 'review');
+  const pendingReviewEvents = events.filter(e => 
+    e.status === 'review' || 
+    e.status === 'pending_admin_approval' || 
+    e.status === 'submitted'
+  );
+  const pendingOrganizers = organizers.filter(o => 
+    o.verificationStatus === 'submitted' || 
+    o.verificationStatus === 'under_review'
+  );
 
   const menuItems: { id: SuperAdminTab; label: string; icon: any; badge?: number | string }[] = [
     { id: 'dashboard', label: 'Ecosystem Overview', icon: LayoutDashboard },
     { id: 'events_moderation', label: 'Event Approval Queue', icon: CheckSquare, badge: pendingReviewEvents.length > 0 ? pendingReviewEvents.length : undefined },
-    { id: 'institutions', label: 'Colleges & Institutions', icon: Building2 },
+    { id: 'institutions', label: 'Organizations & Colleges', icon: Building2, badge: pendingOrganizers.length > 0 ? pendingOrganizers.length : undefined },
     { id: 'users', label: 'National User Moderation', icon: Users },
     { id: 'certificates_audit', label: 'Certificate Registry Audit', icon: Award },
     { id: 'analytics', label: 'National Analytics', icon: BarChart3 },

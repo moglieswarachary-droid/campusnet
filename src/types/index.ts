@@ -195,6 +195,15 @@ export interface InstitutionInfo {
   pincode?: string;
 }
 
+export type OrganizationVerificationStatus = 
+  | 'draft' 
+  | 'submitted' 
+  | 'under_review' 
+  | 'additional_info_required' 
+  | 'verified' 
+  | 'rejected' 
+  | 'suspended';
+
 export interface OrganizerAccount {
   id: string;
   institutionId: string;
@@ -205,13 +214,43 @@ export interface OrganizerAccount {
   mobile: string;
   department: string;
   state: string;
+  district?: string;
   city: string;
   role: OrganizerPermissionRole;
-  verificationStatus: 'verified' | 'pending' | 'rejected' | 'suspended';
+  verificationStatus: OrganizationVerificationStatus;
+  verificationNotes?: string;
+  verificationDocuments?: EventHostingDocument[];
+  institutionCategory?: string;
+  institutionType?: string;
+  affiliationUniversity?: string;
+  accreditationDetails?: string;
+  address?: string;
+  website?: string;
   isDevelopmentDemo?: boolean;
   avatar: string;
   lastLoginAt?: string;
+  registeredAt?: string;
   eventsCreatedCount: number;
+}
+
+export interface NewOrganizationPayload {
+  coordinatorName: string;
+  officialEmail: string;
+  mobile: string;
+  designation: string;
+  department?: string;
+  password?: string;
+  institutionName: string;
+  institutionCategory: string;
+  institutionType: string;
+  state: string;
+  district: string;
+  city: string;
+  address?: string;
+  website?: string;
+  affiliationUniversity?: string;
+  accreditationDetails?: string;
+  documents?: EventHostingDocument[];
 }
 
 export interface SuperAdminAccount {
@@ -390,9 +429,32 @@ export interface EventItem {
   organizer: string;
   organizerId?: string;
   organizerType: 'government' | 'university' | 'college' | 'research' | 'institution';
-  eventType: 'Hackathon' | 'Ideathon' | 'Government Challenge' | 'Research Symposium' | 'Coding Contest' | 'Workshop' | 'Tech Fest' | 'Project Expo';
+  eventType: 
+    | 'Hackathon' 
+    | 'Technical Symposium' 
+    | 'Workshop' 
+    | 'Conference' 
+    | 'Paper Presentation' 
+    | 'Project Expo' 
+    | 'Coding Competition' 
+    | 'AI/ML Event' 
+    | 'Research Seminar' 
+    | 'Webinar' 
+    | 'Cultural Event' 
+    | 'Entrepreneurship Event' 
+    | 'Other Academic Event'
+    | 'Ideathon' 
+    | 'Government Challenge' 
+    | 'Research Symposium' 
+    | 'Coding Contest' 
+    | 'Tech Fest';
   category?: string;
   theme?: string;
+  language?: string;
+  timezone?: string;
+  participationType?: 'individual' | 'team';
+  onlineMeetingUrl?: string;
+  onlineJoiningInstructions?: string;
   date: string;
   startDate?: string;
   endDate?: string;
@@ -794,4 +856,11 @@ export interface AttendanceRecord {
   distanceMeters?: number;
   status?: string;
   notes?: string;
+}
+
+export interface StateUTMaster {
+  code: string;
+  name: string;
+  type: 'state' | 'ut';
+  districts: string[];
 }

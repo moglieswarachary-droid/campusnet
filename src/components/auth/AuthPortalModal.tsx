@@ -111,6 +111,7 @@ export const AuthPortalModal: React.FC = () => {
     }
 
     if (mode === 'login') {
+      sessionStorage.setItem('campusnet_session_entered', 'true');
       switchRole('student');
       setActiveTab('dashboard');
       setAuthModalType('none');
@@ -121,6 +122,7 @@ export const AuthPortalModal: React.FC = () => {
       });
     } else {
       // Register
+      sessionStorage.setItem('campusnet_session_entered', 'true');
       setCurrentUser(prev => ({
         ...prev,
         name: stdName || prev.name,
@@ -153,6 +155,7 @@ export const AuthPortalModal: React.FC = () => {
 
   const handleMentorSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    sessionStorage.setItem('campusnet_session_entered', 'true');
     switchRole('mentor');
     setActiveTab('dashboard');
     setAuthModalType('none');
@@ -165,6 +168,7 @@ export const AuthPortalModal: React.FC = () => {
 
   const handleScholarSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    sessionStorage.setItem('campusnet_session_entered', 'true');
     switchRole('researcher');
     setActiveTab('dashboard');
     setAuthModalType('none');
@@ -177,20 +181,23 @@ export const AuthPortalModal: React.FC = () => {
 
   const handleOrganizerSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    sessionStorage.setItem('campusnet_session_entered', 'true');
+    if (mode === 'register') {
+      setAuthModalType('none');
+      window.location.href = '/organization/register';
+      return;
+    }
     organizerLogin(orgEmail);
     setAuthModalType('none');
-    const url = new URL(window.location.href);
-    url.searchParams.set('portal', 'organizer');
-    window.location.href = url.toString();
+    window.location.href = '/organization/events';
   };
 
   const quickDemoLogin = (role: 'student' | 'mentor' | 'scholar' | 'organizer') => {
+    sessionStorage.setItem('campusnet_session_entered', 'true');
     if (role === 'organizer') {
-      organizerLogin('suresh.babu@kec.ac.in');
+      organizerLogin('organizer.demo@campusnet-demo.in');
       setAuthModalType('none');
-      const url = new URL(window.location.href);
-      url.searchParams.set('portal', 'organizer');
-      window.location.href = url.toString();
+      window.location.href = '/organization/events';
     } else {
       const roleMap: Record<string, RoleType> = {
         student: 'student',
@@ -200,18 +207,35 @@ export const AuthPortalModal: React.FC = () => {
       switchRole(roleMap[role]);
       setActiveTab('dashboard');
       setAuthModalType('none');
+      addToast({
+        type: 'success',
+        title: `${role.toUpperCase()} 1-Click Login Active`,
+        message: `Welcome to your ${role} workspace!`
+      });
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-campus-deep-blue/70 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+    <div 
+      className="fixed inset-0 z-50 bg-campus-deep-blue/70 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          sessionStorage.setItem('campusnet_session_entered', 'true');
+          setAuthModalType('none');
+        }
+      }}
+    >
       <div className="bg-white rounded-3xl max-w-2xl w-full shadow-warm-xl border border-campus-border overflow-hidden my-auto animate-in fade-in zoom-in-95 duration-200">
         
         {/* Modal Top Header */}
         <div className="bg-gradient-to-r from-campus-deep-blue via-campus-blue to-slate-900 text-white p-5 sm:p-6 relative">
           <button
-            onClick={() => setAuthModalType('none')}
-            className="absolute top-4 right-4 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
+            onClick={() => {
+              sessionStorage.setItem('campusnet_session_entered', 'true');
+              setAuthModalType('none');
+            }}
+            className="absolute top-4 right-4 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer"
+            aria-label="Close Authentication Modal"
           >
             <X className="w-5 h-5" />
           </button>
@@ -986,6 +1010,22 @@ export const AuthPortalModal: React.FC = () => {
             </form>
           )}
 
+        </div>
+
+        {/* Guest Access to Landing Page Footer */}
+        <div className="px-6 py-3.5 bg-slate-50 border-t border-campus-border flex items-center justify-between text-xs text-campus-muted-text">
+          <span>First time visiting CampusNet India?</span>
+          <button
+            type="button"
+            onClick={() => {
+              sessionStorage.setItem('campusnet_session_entered', 'true');
+              setAuthModalType('none');
+            }}
+            className="font-bold text-campus-blue hover:text-campus-deep-blue hover:underline flex items-center gap-1 cursor-pointer"
+          >
+            <span>Explore Landing Page as Guest</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
         </div>
 
       </div>

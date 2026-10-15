@@ -19,6 +19,7 @@ export const getPortalFromEnvironment = (pathname: string, search: string): Port
 
   // Path or query param routing in local development / testing / direct URLs
   if (
+    cleanPath.startsWith('/organization') ||
     cleanPath.startsWith('/organizer') || 
     cleanPath.startsWith('/portal/organizer') || 
     cleanSearch.includes('portal=organizer')
