@@ -106,34 +106,109 @@ Switch roles directly via the top navbar dropdown:
 
 ---
 
-## 💻 4. Local Development
+## 🏗️ 4. Monorepo Repository Architecture
 
-### Prerequisites
-- Node.js (v18 or later)
-- npm or yarn
+The CampusNet codebase is structured as a clean, production-oriented monorepo with physically separated frontend and backend workspaces:
 
-### Installation
-```bash
-# Clone the repository
-git clone https://github.com/moglieswarachary-droid/campusnet.git
-cd campusnet
-
-# Install dependencies
-npm install
-
-# Start local development server with network host
-npm run dev -- --host
+```text
+campusnet/
+├── frontend/               # React 19 + Vite client workspace
+│   ├── src/
+│   │   ├── components/     # Portal-specific and shared UI components
+│   │   ├── context/        # AppContext reactive global client state
+│   │   ├── data/           # Mock data and seed structures
+│   │   ├── styles/         # Tailwind CSS design system
+│   │   ├── utils/          # Client utilities & shared re-exports
+│   │   └── types/          # Client types & shared re-exports
+│   ├── tests/              # 168-case portal, rbac, and verification test suite
+│   ├── index.html          # SPA HTML entry point
+│   ├── vite.config.ts      # Vite configuration & proxy to backend
+│   ├── vercel.json         # Standalone Vercel deployment configuration
+│   └── package.json        # Frontend workspace package (@campusnet/frontend)
+│
+├── backend/                # Native Node.js HTTP server workspace
+│   ├── src/
+│   │   ├── server.js       # Native Node.js HTTP server (zero heavy framework overhead)
+│   │   └── database/       # PrismaClient connection pool singleton
+│   ├── prisma/
+│   │   └── schema.prisma   # PostgreSQL canonical relational schema (Task 1.1)
+│   ├── data/               # Persistent file-backed JSON store
+│   ├── tests/              # 41-case backend API, auth & RBAC test suite
+│   ├── railway.json        # Standalone Railway deployment configuration
+│   └── package.json        # Backend workspace package (@campusnet/backend)
+│
+├── shared/                 # Pure browser-safe shared contracts & constants
+│   ├── src/
+│   │   ├── types/          # Core domain models (User, Project, Event, Certificate)
+│   │   ├── constants/      # RBAC canonical roles, permissions matrix, location data
+│   │   └── validation/     # Validation rules and portal routing logic
+│   └── package.json        # Shared workspace package (@campusnet/shared)
+│
+├── docs/                   # PDF, HTML, and Markdown platform documentation
+├── package.json            # Root workspace orchestrator
+├── tsconfig.json           # Solution-level TypeScript references
+└── .gitignore              # Environment, build, and node_modules ignore rules
 ```
 
-### Local URLs:
-- **Public Platform**: `http://localhost:3000/`
-- **Organizer Portal**: `http://localhost:3000/?portal=organizer`
-- **Super Admin Console**: `http://localhost:3000/?portal=admin`
+---
 
-### Build Production Bundle:
+## 💻 5. Development & Workspace Commands
+
+### Root Workspace Commands
 ```bash
+# Run frontend development server (Vite on port 3000):
+npm run dev:frontend
+
+# Run backend API server (Native Node.js HTTP on port 3199):
+npm run dev:backend
+
+# Run complete production build:
 npm run build
+
+# Run all 209 automated regression tests across all workspaces:
+npm test
+
+# Validate Prisma relational database schema:
+npm run prisma:validate
+
+# Generate Prisma client:
+npm run prisma:generate
 ```
+
+### Independent Workspace Execution
+Each workspace can be operated completely independently:
+
+#### Frontend (`frontend/`):
+```bash
+cd frontend
+npm run dev       # Starts Vite dev server on http://localhost:3000
+npm run build     # Runs tsc and compiles production bundle to frontend/dist
+npm run test      # Runs portal route, RBAC, verification, and demo login suites (168 tests)
+```
+
+#### Backend (`backend/`):
+```bash
+cd backend
+npm run dev       # Starts native Node.js HTTP server on http://localhost:3199
+npm run test      # Runs backend API, auth, session, and RBAC suite (41 tests)
+npm run prisma:validate  # Validates backend/prisma/schema.prisma
+```
+
+---
+
+## 🚀 6. Separate Deployment Instructions
+
+### Frontend Deployment (Vercel)
+1. Set the **Root Directory** in Vercel to `frontend` (or deploy from repository root using the included `vercel.json`).
+2. Build command: `npm run build`
+3. Output directory: `dist` (or `frontend/dist` when deploying from root).
+4. Set environment variable: `VITE_API_BASE_URL` pointing to your deployed backend URL.
+
+### Backend Deployment (Railway)
+1. Deploy the backend service from the `backend/` directory or root using `railway.json`.
+2. Start command: `npm start`
+3. Expose port `3199` (or map via `PORT` environment variable).
+4. Set environment variables: `DATABASE_URL`, `JWT_SECRET`, and `CORS_ALLOWED_ORIGINS`.
 
 ---
 

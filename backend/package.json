@@ -1,0 +1,30 @@
+{
+  "name": "@campusnet/backend",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "src/server.js",
+  "scripts": {
+    "dev": "node src/server.js",
+    "start": "node src/server.js",
+    "prisma:generate": "prisma generate",
+    "prisma:validate": "prisma validate",
+    "prisma:seed": "node --env-file=.env prisma/seed.js",
+    "test": "node tests/test-api-rbac.mjs && node tests/test-projects-teams.mjs",
+    "test:projects": "node tests/test-projects-teams.mjs",
+    "test:neon": "node tests/test-neon-persistence.mjs",
+    "test:all": "node tests/test-api-rbac.mjs && node tests/test-projects-teams.mjs && node tests/test-neon-persistence.mjs"
+  },
+  "prisma": {
+    "seed": "node --env-file=.env prisma/seed.js"
+  },
+  "dependencies": {
+    "@campusnet/shared": "*",
+    "@prisma/client": "6.4.1",
+    "argon2": "^0.45.1",
+    "dotenv": "^18.0.8"
+  },
+  "devDependencies": {
+    "prisma": "6.4.1"
+  }
+}

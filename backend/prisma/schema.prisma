@@ -1,0 +1,1175 @@
+// ========================================================
+// CAMPUSNET CANONICAL RELATIONAL PRODUCTION SCHEMA
+// Complete Domain Model for 5 Portals & Full Persistence
+// ========================================================
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// --------------------------------------------------------
+// CANONICAL SYSTEM ENUMS
+// --------------------------------------------------------
+
+enum AppRole {
+  STUDENT
+  MENTOR
+  PHD_RESEARCHER
+  ORGANIZATION_OWNER
+  EVENT_MANAGER
+  PLATFORM_REVIEWER
+  SUPER_ADMIN
+}
+
+enum AccountStatus {
+  ACTIVE
+  SUSPENDED
+  PENDING_VERIFICATION
+}
+
+enum OrgVerificationStatus {
+  DRAFT
+  SUBMITTED
+  UNDER_REVIEW
+  ADDITIONAL_INFO_REQUIRED
+  VERIFIED
+  REJECTED
+  SUSPENDED
+}
+
+enum EventStatus {
+  DRAFT
+  SUBMITTED
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  PUBLISHED
+  LIVE
+  COMPLETED
+  ARCHIVED
+}
+
+enum EventMode {
+  OFFLINE
+  ONLINE
+  HYBRID
+}
+
+enum ProjectStatus {
+  IDEA
+  PLANNING
+  DEVELOPMENT
+  PROTOTYPE
+  TESTING
+  COMPLETED
+  PUBLISHED
+}
+
+enum MilestoneStatus {
+  PENDING
+  IN_PROGRESS
+  APPROVED
+  REJECTED
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  DONE
+}
+
+enum RequestStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  INFO_REQUESTED
+  COMPLETED
+}
+
+// --------------------------------------------------------
+// 1. INSTITUTIONS & ACCREDITATION
+// --------------------------------------------------------
+
+model Institution {
+  id                    String                 @id @default(uuid())
+  code                  String?                @unique
+  name                  String
+  shortName             String
+  type                  String                 // 'IIT' | 'NIT' | 'Engineering College' | etc.
+  state                 String
+  district              String?
+  city                  String
+  address               String?
+  pincode               String?
+  website               String?
+  officialDomain        String?
+  aisheCode             String?                @unique
+  nirfRank              Int?
+  verified              Boolean                @default(false)
+  logoUrl               String?
+  studentCount          Int                    @default(0)
+  mentorCount           Int                    @default(0)
+  projectsCount         Int                    @default(0)
+  eventsCount           Int                    @default(0)
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+
+  users                 User[]
+  organizationAccounts  OrganizationAccount[]
+  events                Event[]                @relation("InstitutionEvents")
+  certificates          Certificate[]
+  templates             CertificateTemplate[]
+  projects              Project[]              @relation("InstitutionProjects")
+
+  @@index([state, city])
+  @@index([verified])
+}
+
+// --------------------------------------------------------
+// 2. USERS & RBAC MULTI-ROLE IDENTITY
+// --------------------------------------------------------
+
+model User {
+  id                               String                     @id @default(uuid())
+  email                            String                     @unique
+  alternateEmail                   String?
+  passwordHash                     String
+  name                             String
+  avatarUrl                        String?
+  mobile                           String?
+  studentId                        String?                    // University roll number
+  institutionId                    String?
+  institutionName                  String?
+  department                       String?
+  course                           String?
+  year                             String?
+  state                            String?
+  district                         String?
+  city                             String?
+  verifiedStudent                  Boolean                    @default(false)
+  verifiedMentor                   Boolean                    @default(false)
+  verifiedResearcher               Boolean                    @default(false)
+  innovationScore                  Int                        @default(500)
+  bio                              String?                    @db.Text
+  skills                           String[]                   @default([])
+  badges                           String[]                   @default([])
+  interests                        String[]                   @default([])
+  savedItemIds                     String[]                   @default([])
+  githubUrl                        String?
+  linkedinUrl                      String?
+  twitterUrl                       String?
+  leetcodeUrl                      String?
+  instagramUrl                     String?
+  portfolioUrl                     String?
+  status                           AccountStatus              @default(ACTIVE)
+  activeRole                       AppRole                    @default(STUDENT)
+  roles                            AppRole[]                  @default([STUDENT])
+  
+  // Active organization tenant boundary (links to OrganizationAccount.id)
+  organizationId                   String?
+  
+  // Non-authoritative cached convenience array for legacy UI compatibility
+  // Authoritative event manager permissions are enforced via EventManagerAssignment
+  managedEventIds                  String[]                   @default([])
+
+  // Prepared fields for future secure auth (OWASP compliant hashed tokens)
+  emailVerifiedAt                  DateTime?
+  emailVerificationTokenHash       String?                    @unique
+  emailVerificationExpiresAt       DateTime?
+  passwordResetTokenHash           String?                    @unique
+  passwordResetExpiresAt           DateTime?
+  lastLoginAt                      DateTime?
+  
+  // Soft deletion timestamp (null for active records)
+  deletedAt                        DateTime?
+  
+  createdAt                        DateTime                   @default(now())
+  updatedAt                        DateTime                   @updatedAt
+
+  institution                      Institution?               @relation(fields: [institutionId], references: [id])
+  organizationBoundary             OrganizationAccount?       @relation("UserOrganizationBoundary", fields: [organizationId], references: [id])
+  coordinatedOrganizations         OrganizationAccount[]      @relation("UserCoordinatedOrganizations")
+  eventManagerAssignments          EventManagerAssignment[]   @relation("UserEventManagerAssignments")
+  createdEventManagerAssignments   EventManagerAssignment[]   @relation("AssignedByEventManagerAssignments")
+  mentorProfile                    MentorProfile?
+  researcherProfile                ResearcherProfile?
+  sessions                         Session[]
+  organizationMemberships          OrganizationMember[]
+  authoredProjects                 Project[]                  @relation("ProjectAuthor")
+  guidedProjects                   Project[]                  @relation("ProjectMentor")
+  teamMemberships                  TeamMember[]
+  ledTeams                         Team[]                     @relation("TeamLeader")
+  guidedTeams                      Team[]                     @relation("TeamMentor")
+  sentMentorships                  MentorshipRequest[]        @relation("StudentMentorshipRequests")
+  receivedMentorships              MentorshipRequest[]        @relation("MentorMentorshipRequests")
+  requestedCollabs                 ResearchCollaboration[]    @relation("RequesterCollabs")
+  receivedCollabs                  ResearchCollaboration[]    @relation("CollaboratorCollabs")
+  eventRegistrations               EventRegistration[]
+  certificates                     Certificate[]
+  issuedMentorshipCerts            MentorshipCertificate[]    @relation("MentorIssuedCerts")
+  auditLogs                        AuditLog[]                 @relation("UserAuditLogs")
+  createdQuestions                 AskQuestion[]              @relation("QuestionAuthor")
+  createdAnswers                   AskAnswer[]                @relation("AnswerAuthor")
+  sentDirectMessages               DirectMessage[]            @relation("SentDMs")
+  receivedDirectMessages           DirectMessage[]            @relation("ReceivedDMs")
+  teamChatMessages                 TeamChatMessage[]
+  notifications                    Notification[]
+  sentConnections                  ConnectionRequest[]        @relation("SentConnections")
+  receivedConnections              ConnectionRequest[]        @relation("ReceivedConnections")
+  createdStories                   CampusStory[]              @relation("StoryCreator")
+  assignedJudgeAccount             JudgeAccount?
+  attendanceRecords                AttendanceRecord[]         @relation("UserAttendanceRecords")
+
+  @@index([email])
+  @@index([institutionId])
+  @@index([organizationId])
+  @@index([activeRole])
+  @@index([deletedAt])
+}
+
+// --------------------------------------------------------
+// 3. SESSIONS & REFRESH TOKENS (PREPARED FOR FUTURE AUTH)
+// --------------------------------------------------------
+
+model Session {
+  id                    String                 @id @default(uuid())
+  userId                String
+  tokenHash             String                 @unique // SHA-256 hash of refresh token
+  ipAddress             String?
+  userAgent             String?
+  expiresAt             DateTime
+  revokedAt             DateTime?
+  createdAt             DateTime               @default(now())
+
+  user                  User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([tokenHash])
+}
+
+// --------------------------------------------------------
+// 4. ORGANIZATION ACCOUNTS, TENANTS & EVENT MANAGERS
+// --------------------------------------------------------
+
+model OrganizationAccount {
+  id                    String                 @id // e.g. 'KEC-DEMO-001'
+  institutionId         String
+  userId                String?                // 1:N - One faculty user can coordinate multiple organization accounts
+  officialEmail         String                 @unique
+  coordinatorName       String
+  designation           String
+  department            String?
+  mobile                String
+  state                 String
+  district              String?
+  city                  String
+  role                  String                 @default("institution_admin")
+  verificationStatus    OrgVerificationStatus  @default(SUBMITTED)
+  verificationNotes     String?                @db.Text
+  institutionCategory   String?
+  institutionType       String?
+  affiliationUniversity String?
+  accreditationDetails  String?
+  address               String?
+  website               String?
+  aisheCode             String?
+  eventsCreatedCount    Int                    @default(0)
+  lastLoginAt           DateTime?
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+
+  institution           Institution            @relation(fields: [institutionId], references: [id])
+  coordinator           User?                  @relation("UserCoordinatedOrganizations", fields: [userId], references: [id])
+  events                Event[]                @relation("OrganizationEvents")
+  members               OrganizationMember[]   @relation("OrganizationAccountMembers")
+  coordinatedUsers      User[]                 @relation("UserOrganizationBoundary")
+  eventManagerAssignments EventManagerAssignment[] @relation("OrgEventManagerAssignments")
+  announcements         EventAnnouncement[]    @relation("OrgAnnouncements")
+  documents             HostingVerificationDocument[]
+
+  @@index([institutionId])
+  @@index([userId])
+  @@index([verificationStatus])
+}
+
+model OrganizationMember {
+  id                    String                 @id @default(uuid())
+  organizationId        String                 // Links to OrganizationAccount.id
+  userId                String
+  name                  String
+  email                 String
+  role                  String                 @default("EVENT_MANAGER")
+  status                String                 @default("active")
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+
+  user                  User                   @relation(fields: [userId], references: [id])
+  organization          OrganizationAccount    @relation("OrganizationAccountMembers", fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, userId])
+  @@index([userId])
+  @@index([organizationId])
+}
+
+model EventManagerAssignment {
+  id                    String                 @id @default(uuid())
+  userId                String
+  eventId               String
+  organizationId        String                 // Enforces organization tenant boundary
+  role                  String                 @default("EVENT_MANAGER") // 'EVENT_MANAGER' | 'ATTENDANCE_MANAGER' | 'CERTIFICATE_MANAGER' | 'JUDGE_MANAGER'
+  status                String                 @default("active") // 'active' | 'suspended' | 'revoked'
+  assignedAt            DateTime               @default(now())
+  assignedById          String?
+
+  user                  User                   @relation("UserEventManagerAssignments", fields: [userId], references: [id], onDelete: Cascade)
+  event                 Event                  @relation("EventManagerAssignments", fields: [eventId, organizationId], references: [id, organizerId], onDelete: Cascade)
+  organization          OrganizationAccount    @relation("OrgEventManagerAssignments", fields: [organizationId], references: [id], onDelete: Cascade)
+  assignedBy            User?                  @relation("AssignedByEventManagerAssignments", fields: [assignedById], references: [id], onDelete: SetNull)
+
+  @@unique([userId, eventId, role])
+  @@index([userId])
+  @@index([eventId])
+  @@index([organizationId])
+  @@index([status])
+}
+
+// --------------------------------------------------------
+// 5. MENTOR & RESEARCHER SCHOLAR PROFILES
+// --------------------------------------------------------
+
+model MentorProfile {
+  id                        String             @id // 1:1 with User.id
+  title                     String             // e.g. 'Professor of Computer Science'
+  designation               String?
+  qualification             String             // 'Ph.D. in Computer Science (IIT Bombay)'
+  specialization            String
+  yearsExperience           Int                @default(0)
+  academicExp               String?
+  industryExp               String?
+  researchAreas             String[]           @default([])
+  expertise                 String[]           @default([])
+  projectsGuided            Int                @default(0)
+  certifications            String[]           @default([])
+  mentoringInterests        String[]           @default([])
+  preferredDomains          String[]           @default([])
+  availability              String             @default("Available")
+  maxTeams                  Int                @default(3)
+  activeTeamsCount          Int                @default(0)
+  mentorshipSlots           Int                @default(2)
+  completedMentorshipsCount Int                @default(0)
+  rating                    Float              @default(5.0)
+  reviewsCount              Int                @default(0)
+  vidwanProfileUrl          String?
+
+  user                      User               @relation(fields: [id], references: [id], onDelete: Cascade)
+}
+
+model ResearcherProfile {
+  id                    String                 @id // 1:1 with User.id
+  scholarId             String                 @unique // e.g. 'IISC-CS-PHD-2022-041'
+  university            String
+  researchArea          String
+  specialization        String?
+  researchTopics        String[]               @default([])
+  domains               String[]               @default([])
+  interests             String[]               @default([])
+  guide                 String
+  publicationsCount     Int                    @default(0)
+  citationsCount        Int                    @default(0)
+  hIndex                Int                    @default(0)
+  datasets              String[]               @default([])
+  openForCollab         Boolean                @default(true)
+  orcidId               String?
+  vidwanProfileUrl      String?
+
+  user                  User                   @relation(fields: [id], references: [id], onDelete: Cascade)
+
+  @@index([scholarId])
+}
+
+// --------------------------------------------------------
+// 6. PROJECTS, TEAMS, MILESTONES & TASKS
+// --------------------------------------------------------
+
+model Project {
+  id                    String                 @id @default(uuid())
+  title                 String
+  problemStatement      String                 @db.Text
+  proposedSolution      String                 @db.Text
+  description           String?                @db.Text
+  category              String?
+  domain                String
+  technologies          String[]               @default([])
+  requiredSkills        String[]               @default([])
+  objectives            String[]               @default([])
+  seekingRoles          String[]               @default([])
+  status                ProjectStatus          @default(IDEA)
+  progressPercent       Int                    @default(0)
+  papersCount           Int                    @default(0)
+  githubUrl             String?
+  demoUrl               String?
+  documentationUrl      String?
+  coverImageUrl         String?
+  authorId              String
+  institutionId         String?
+  mentorId              String?
+  mentorStatus          String                 @default("none") // 'none' | 'pending' | 'accepted' | 'completed'
+  teamMembersCount      Int                    @default(1)
+  likesCount            Int                    @default(0)
+  
+  // Soft deletion timestamp
+  deletedAt             DateTime?
+  
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+
+  author                User                   @relation("ProjectAuthor", fields: [authorId], references: [id])
+  mentor                User?                  @relation("ProjectMentor", fields: [mentorId], references: [id])
+  institution           Institution?           @relation("InstitutionProjects", fields: [institutionId], references: [id])
+  team                  Team?
+  milestones            ProjectMilestone[]
+  tasks                 ProjectTask[]
+
+  @@index([domain])
+  @@index([authorId])
+  @@index([mentorId])
+  @@index([institutionId])
+  @@index([deletedAt])
+}
+
+model Team {
+  id                    String                 @id @default(uuid())
+  name                  String
+  projectId             String?                @unique
+  leaderId              String
+  mentorId              String?
+  mentorStatus          String                 @default("none")
+  domain                String
+  maxMembers            Int                    @default(6)
+  status                String                 @default("forming") // 'forming' | 'active' | 'in_event' | 'completed'
+  requiredRoles         Json?                  // Array of { role, departmentHint, filled, filledBy }
+  eventTitle            String?
+  
+  // Foreign-key link to Event model
+  eventId               String?
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+
+  project               Project?               @relation(fields: [projectId], references: [id])
+  event                 Event?                 @relation("EventTeams", fields: [eventId], references: [id])
+  leader                User                   @relation("TeamLeader", fields: [leaderId], references: [id])
+  mentor                User?                  @relation("TeamMentor", fields: [mentorId], references: [id])
+  members               TeamMember[]
+  eventRegistrations    EventRegistration[]
+  mentorshipCerts       MentorshipCertificate[]
+  projectSubmissions    EventProjectSubmission[]
+  chatMessages          TeamChatMessage[]
+  mentorshipRequests    MentorshipRequest[]
+
+  @@index([leaderId])
+  @@index([mentorId])
+  @@index([eventId])
+}
+
+model TeamMember {
+  id                    String                 @id @default(uuid())
+  teamId                String
+  userId                String
+  roleName              String                 @default("Contributor")
+  department            String?
+  college               String?
+  isLeader              Boolean                @default(false)
+  studentId             String?
+  email                 String?
+  mobile                String?
+  joinedAt              DateTime               @default(now())
+
+  team                  Team                   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user                  User                   @relation(fields: [userId], references: [id])
+
+  @@unique([teamId, userId])
+  @@index([userId])
+}
+
+model ProjectMilestone {
+  id                    String                 @id @default(uuid())
+  projectId             String
+  title                 String
+  description           String                 @db.Text
+  status                MilestoneStatus        @default(PENDING)
+  dueDate               DateTime?
+  mentorFeedback        String?                @db.Text
+  approvedByMentor      Boolean                @default(false)
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+
+  project               Project                @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+}
+
+model ProjectTask {
+  id                    String                 @id @default(uuid())
+  projectId             String
+  title                 String
+  assigneeName          String?
+  status                TaskStatus             @default(TODO)
+  priority              String                 @default("medium")
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+
+  project               Project                @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+}
+
+// --------------------------------------------------------
+// 7. EVENTS, REGISTRATIONS, SUBMISSIONS & JUDGING
+// --------------------------------------------------------
+
+model Event {
+  id                    String                 @id @default(uuid())
+  code                  String?                @unique // e.g. 'KEC-AI26-01'
+  title                 String
+  organizerId           String                 // Foreign key to OrganizationAccount.id (e.g. 'KEC-DEMO-001')
+  organizerName         String
+  organizerType         String                 @default("college")
+  institutionId         String?                // Optional parent Institution foreign key
+  eventType             String                 // 'Hackathon' | 'Workshop' | 'Conference' | 'Paper Presentation'
+  category              String?
+  theme                 String?
+  mode                  EventMode              @default(OFFLINE)
+  state                 String
+  district              String?
+  city                  String
+  venue                 String
+  address               String?
+  pincode               String?
+  description           String                 @db.Text
+  rules                 String[]               @default([])
+  tracks                String[]               @default([])
+  prizes                Json?                  // Array of { rank, amount, description }
+  bannerUrl             String?
+  startDate             DateTime
+  endDate               DateTime
+  deadline              DateTime
+  registrationOpenDate  DateTime?
+  registrationCloseDate DateTime?
+  status                EventStatus            @default(DRAFT)
+  approvalStatus        String                 @default("approved")
+  participantLimit      Int?
+  maxTeamSize           Int                    @default(6)
+  minTeamSize           Int                    @default(1)
+  registeredTeamsCount  Int                    @default(0)
+  registrationFee       String?                @default("Free")
+  coordinatorName       String?
+  coordinatorEmail      String?
+  coordinatorPhone      String?
+  coordinatorDesignation String?
+  eligibility           String?
+  eligibleDepartments   String[]               @default([])
+  eligibleYears         String[]               @default([])
+  schedule              Json?                  // Array of EventScheduleItem
+  requiredSkills        String[]               @default([])
+  submissionRequirements String[]              @default([])
+  targetLat             Float?
+  targetLng             Float?
+  radiusMeters          Int                    @default(500)
+  attendanceWindowStart DateTime?
+  attendanceWindowEnd   DateTime?
+  
+  // Soft deletion timestamp
+  deletedAt             DateTime?
+  
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+
+  organization          OrganizationAccount    @relation("OrganizationEvents", fields: [organizerId], references: [id])
+  institution           Institution?           @relation("InstitutionEvents", fields: [institutionId], references: [id])
+  teams                 Team[]                 @relation("EventTeams")
+  registrations         EventRegistration[]
+  certificates          Certificate[]
+  templates             CertificateTemplate[]  @relation("EventTemplates")
+  submissions           EventProjectSubmission[]
+  criteria              EvaluationCriterion[]
+  judges                JudgeAccount[]
+  scores                EvaluationScore[]
+  winners               EventWinnerRecord[]
+  qrCheckIns            QRCheckInRecord[]
+  attendanceRecords     AttendanceRecord[]
+  announcements         EventAnnouncement[]
+  documents             HostingVerificationDocument[]
+  managerAssignments    EventManagerAssignment[] @relation("EventManagerAssignments")
+
+  @@unique([id, organizerId])
+  @@index([status])
+  @@index([organizerId])
+  @@index([institutionId])
+  @@index([state, city])
+  @@index([deletedAt])
+}
+
+model EventRegistration {
+  id                    String                 @id @default(uuid())
+  eventId               String
+  participantId         String
+  teamId                String?
+  teamName              String?
+  status                String                 @default("confirmed") // 'confirmed' | 'waitlisted' | 'cancelled'
+  paymentStatus         String                 @default("free")
+  attendanceStatus      String                 @default("registered") // 'checked_in' | 'absent' | 'registered'
+  submissionStatus      String                 @default("pending") // 'submitted' | 'pending' | 'reviewed'
+  certificateStatus     String                 @default("pending") // 'generated' | 'pending' | 'revoked' | 'not_eligible'
+  
+  // Relational link to Certificate via unique certificateNumber
+  certificateNumber     String?                @unique
+  checkedInBy           String?
+  checkedInAt           DateTime?
+  checkedInMethod       String?                // 'qr_scanner' | 'manual_override'
+  registeredAt          DateTime               @default(now())
+
+  event                 Event                  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  participant           User                   @relation(fields: [participantId], references: [id])
+  team                  Team?                  @relation(fields: [teamId], references: [id])
+  certificate           Certificate?           @relation("RegistrationCertificate", fields: [certificateNumber], references: [certificateNumber])
+  qrCheckIn             QRCheckInRecord?
+
+  @@unique([eventId, participantId])
+  @@index([eventId])
+  @@index([participantId])
+  @@index([teamId])
+}
+
+model QRCheckInRecord {
+  id                    String                 @id @default(uuid())
+  eventId               String
+  registrationId        String                 @unique
+  participantId         String
+  participantName       String
+  institution           String
+  organizerId           String
+  organizerName         String
+  method                String                 @default("qr_scan") // 'qr_scan' | 'manual_override'
+  deviceInfo            String?
+  latitude              Float?
+  longitude             Float?
+  verified              Boolean                @default(true)
+  timestamp             DateTime               @default(now())
+
+  event                 Event                  @relation(fields: [eventId], references: [id])
+  registration          EventRegistration      @relation(fields: [registrationId], references: [id], onDelete: Cascade)
+
+  @@index([eventId])
+  @@index([participantId])
+}
+
+model AttendanceRecord {
+  id                    String                 @id @default(uuid())
+  eventId               String
+  eventTitle            String
+  userId                String?                // Foreign key to User account if registered
+  studentId             String?                // Preserves student university roll number (e.g. '2023CSB1042')
+  studentName           String
+  institution           String?
+  timestamp             DateTime               @default(now())
+  latitude              Float
+  longitude             Float
+  accuracyMeters        Float?
+  verified              Boolean                @default(true)
+  photoUrl              String?
+  photoHash             String?
+  distanceMeters        Float?
+  status                String?                @default("verified")
+  notes                 String?
+
+  event                 Event                  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user                  User?                  @relation("UserAttendanceRecords", fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([eventId])
+  @@index([userId])
+}
+
+model EventProjectSubmission {
+  id                    String                 @id @default(uuid())
+  eventId               String
+  teamId                String
+  teamName              String
+  projectTitle          String
+  description           String                 @db.Text
+  problemStatement      String                 @db.Text
+  solution              String                 @db.Text
+  techStack             String[]               @default([])
+  githubUrl             String?
+  demoUrl               String?
+  presentationUrl       String?
+  videoUrl              String?
+  screenshots           String[]               @default([])
+  status                String                 @default("submitted") // 'submitted' | 'under_evaluation' | 'shortlisted' | 'winner'
+  finalScore            Float?
+  rank                  String?
+  submittedAt           DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+
+  event                 Event                  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  team                  Team                   @relation(fields: [teamId], references: [id])
+  evaluationScores      EvaluationScore[]
+  judgeAssignments      JudgeAssignment[]
+  winnerRecord          EventWinnerRecord?
+
+  @@unique([eventId, teamId])
+  @@index([eventId])
+}
+
+model EvaluationCriterion {
+  id                    String                 @id @default(uuid())
+  eventId               String
+  name                  String
+  description           String                 @db.Text
+  maxScore              Int                    @default(10)
+  weightagePercent      Int                    @default(20)
+
+  event                 Event                  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@index([eventId])
+}
+
+model JudgeAccount {
+  id                    String                 @id @default(uuid())
+  userId                String?                @unique
+  name                  String
+  email                 String
+  institution           String
+  designation           String
+  assignedEventId       String
+  accessKey             String                 @unique
+
+  event                 Event                  @relation(fields: [assignedEventId], references: [id], onDelete: Cascade)
+  user                  User?                  @relation(fields: [userId], references: [id])
+  assignments           JudgeAssignment[]
+  evaluationScores      EvaluationScore[]
+
+  @@index([assignedEventId])
+}
+
+model JudgeAssignment {
+  id                    String                 @id @default(uuid())
+  judgeId               String
+  submissionId          String
+  status                String                 @default("pending") // 'pending' | 'completed'
+  assignedAt            DateTime               @default(now())
+
+  judge                 JudgeAccount           @relation(fields: [judgeId], references: [id], onDelete: Cascade)
+  submission            EventProjectSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+
+  @@unique([judgeId, submissionId])
+  @@index([judgeId])
+  @@index([submissionId])
+}
+
+model EvaluationScore {
+  id                    String                 @id @default(uuid())
+  eventId               String
+  submissionId          String
+  judgeId               String
+  judgeName             String
+  criteriaScores        Json                   // Array of { criterionId, criterionName, score, maxScore }
+  totalWeightedScore    Float
+  comments              String                 @db.Text
+  recommendation        String                 @default("accept") // 'strong_accept' | 'accept' | 'borderline' | 'reject'
+  submittedAt           DateTime               @default(now())
+
+  event                 Event                  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  submission            EventProjectSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  judge                 JudgeAccount           @relation(fields: [judgeId], references: [id])
+
+  @@unique([submissionId, judgeId])
+  @@index([eventId])
+  @@index([judgeId])
+}
+
+model EventWinnerRecord {
+  id                    String                 @id @default(uuid())
+  eventId               String
+  submissionId          String                 @unique
+  teamId                String
+  teamName              String
+  projectTitle          String
+  members               Json?                  // Array of { name, college, role }
+  category              String                 // 'Winner' | 'Runner-Up' | 'Special Recognition'
+  prizeAmount           String?
+  certificateGenerated  Boolean                @default(false)
+  certificateId         String?
+  finalRank             Int
+  score                 Float
+
+  event                 Event                  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  submission            EventProjectSubmission @relation(fields: [submissionId], references: [id])
+
+  @@index([eventId])
+}
+
+model HostingVerificationDocument {
+  id                    String                 @id @default(uuid())
+  eventId               String?
+  organizationId        String?
+  type                  String                 // 'institution_proof' | 'formal_request_letter' | 'other'
+  title                 String
+  fileName              String
+  fileUrl               String
+  fileSize              String
+  mimeType              String
+  uploadedAt            DateTime               @default(now())
+  verifiedByAdmin       Boolean                @default(false)
+  verificationNotes     String?                @db.Text
+
+  event                 Event?                 @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  organization          OrganizationAccount?   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([eventId])
+  @@index([organizationId])
+}
+
+// --------------------------------------------------------
+// 8. MENTORSHIP REQUESTS & RESEARCH COLLABORATIONS
+// --------------------------------------------------------
+
+model MentorshipRequest {
+  id                    String                 @id @default(uuid())
+  studentId             String
+  mentorId              String
+  teamId                String?
+  projectTitle          String
+  teamName              String
+  domain                String?
+  message               String                 @db.Text
+  matchScore            Float?
+  matchBreakdown        Json?                  // { domainScore, techScore, researchScore, availabilityScore }
+  status                RequestStatus          @default(PENDING)
+  responseNotes         String?                @db.Text
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+
+  student               User                   @relation("StudentMentorshipRequests", fields: [studentId], references: [id])
+  mentor                User                   @relation("MentorMentorshipRequests", fields: [mentorId], references: [id])
+  team                  Team?                  @relation(fields: [teamId], references: [id])
+
+  @@index([mentorId, status])
+  @@index([studentId])
+}
+
+model ResearchCollaboration {
+  id                    String                 @id @default(uuid())
+  requesterId           String
+  collaboratorId        String
+  projectTitle          String
+  status                String                 @default("pending") // 'pending' | 'active' | 'completed' | 'declined'
+  confidentialDraft     String?                @db.Text
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+
+  requester             User                   @relation("RequesterCollabs", fields: [requesterId], references: [id])
+  collaborator          User                   @relation("CollaboratorCollabs", fields: [collaboratorId], references: [id])
+
+  @@index([requesterId])
+  @@index([collaboratorId])
+  @@index([status])
+}
+
+model ResearchPublication {
+  id                    String                 @id @default(uuid())
+  title                 String
+  authors               String[]               @default([])
+  journal               String
+  year                  Int
+  doi                   String                 @unique
+  abstract              String                 @db.Text
+  datasetLink           String?
+  tags                  String[]               @default([])
+  citations             Int                    @default(0)
+  collabOpen            Boolean                @default(true)
+  institution           String?
+  createdAt             DateTime               @default(now())
+
+  @@index([doi])
+}
+
+model ResearchConference {
+  id                    String                 @id @default(uuid())
+  title                 String
+  organizer             String
+  venue                 String
+  city                  String
+  state                 String
+  dates                 String
+  submissionDeadline    String
+  tracks                String[]               @default([])
+  mode                  EventMode              @default(OFFLINE)
+  indexType             String                 @default("Scopus")
+  registrationUrl       String
+  createdAt             DateTime               @default(now())
+}
+
+// --------------------------------------------------------
+// 9. CERTIFICATES & CREDENTIAL VERIFICATION
+// --------------------------------------------------------
+
+model Certificate {
+  id                    String                 @id @default(uuid())
+  certificateNumber     String                 @unique // e.g. 'CN-KEC-AI26-PART-000123'
+  recipientId           String?                // Optional FK to User - allows legacy/external certificates without dummy users
+  recipientName         String
+  recipientRole         String                 // 'Winner' | 'Participant' | 'Mentor' | 'Judge'
+  eventTitle            String
+  eventId               String?
+  eventOrganizer        String
+  institutionId         String?                // Optional FK to Institution - accommodates national consortium / govt events
+  type                  String                 @default("event") // 'event' | 'mentorship' | 'project'
+  issueDate             DateTime               @default(now())
+  qrCodeData            String                 @db.Text
+  signatureHash         String?
+  rank                  String?
+  achievement           String?
+  verified              Boolean                @default(true)
+  status                String                 @default("valid") // 'valid' | 'revoked'
+  revocationReason      String?                @db.Text
+  revokedAt             DateTime?
+  revokedBy             String?
+  createdAt             DateTime               @default(now())
+
+  recipient             User?                  @relation(fields: [recipientId], references: [id], onDelete: SetNull)
+  event                 Event?                 @relation(fields: [eventId], references: [id])
+  institution           Institution?           @relation(fields: [institutionId], references: [id], onDelete: SetNull)
+  registration          EventRegistration?     @relation("RegistrationCertificate")
+
+  @@index([certificateNumber])
+  @@index([recipientId])
+  @@index([institutionId])
+  @@index([status])
+}
+
+model MentorshipCertificate {
+  id                    String                 @id @default(uuid())
+  certificateNumber     String                 @unique // e.g. 'CN-MNT-2026-GUIDE-8821'
+  mentorId              String?                // Optional FK to User - protects against mentor ID format discrepancies
+  mentorDesignation     String?
+  mentorInstitution     String?
+  teamId                String?
+  studentNames          String[]               @default([])
+  studentInstitutions   String[]               @default([])
+  projectTitle          String
+  projectDomain         String?
+  startDate             String?
+  completionDate        String?
+  durationWeeks         Int                    @default(12)
+  milestonesGuided      Int                    @default(0)
+  skillsCovered         String[]               @default([])
+  mentorContribution    String                 @db.Text
+  projectOutcome        String                 @db.Text
+  qrCodeData            String                 @db.Text
+  authorizedSignatures  Json?                  // Array of { name, title, organization }
+  verified              Boolean                @default(true)
+  status                String                 @default("valid") // 'valid' | 'revoked'
+  revocationReason      String?                @db.Text
+  revokedAt             DateTime?
+  revokedBy             String?
+  issuedAt              DateTime               @default(now())
+
+  mentor                User?                  @relation("MentorIssuedCerts", fields: [mentorId], references: [id], onDelete: SetNull)
+  team                  Team?                  @relation(fields: [teamId], references: [id])
+
+  @@index([certificateNumber])
+  @@index([mentorId])
+  @@index([status])
+}
+
+model CertificateTemplate {
+  id                    String                 @id @default(uuid())
+  institutionId         String
+  eventId               String?
+  category              String                 // 'Participation' | 'Winner' | 'Mentor' | etc.
+  title                 String
+  bannerTitle           String?
+  subTitle              String?
+  accentColor           String                 @default("#1E3A8A")
+  bodyTemplate          String                 @db.Text
+  authorizedSignatories Json?                  // Array of { name, title, organization }
+  isActive              Boolean                @default(true)
+
+  institution           Institution            @relation(fields: [institutionId], references: [id])
+  event                 Event?                 @relation("EventTemplates", fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@index([institutionId])
+  @@index([eventId])
+}
+
+// --------------------------------------------------------
+// 10. COMMUNICATIONS, COMMUNITY & NOTIFICATIONS
+// --------------------------------------------------------
+
+model DirectMessage {
+  id                    String                 @id @default(uuid())
+  senderId              String
+  receiverId            String
+  text                  String                 @db.Text
+  read                  Boolean                @default(false)
+  createdAt             DateTime               @default(now())
+
+  sender                User                   @relation("SentDMs", fields: [senderId], references: [id])
+  receiver              User                   @relation("ReceivedDMs", fields: [receiverId], references: [id])
+
+  @@index([senderId])
+  @@index([receiverId])
+}
+
+model TeamChatMessage {
+  id                    String                 @id @default(uuid())
+  teamId                String
+  senderId              String
+  text                  String                 @db.Text
+  fileAttachment        Json?                  // { name, size, type, url }
+  createdAt             DateTime               @default(now())
+
+  team                  Team                   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  sender                User                   @relation(fields: [senderId], references: [id])
+
+  @@index([teamId])
+  @@index([senderId])
+}
+
+model ConnectionRequest {
+  id                    String                 @id @default(uuid())
+  senderId              String
+  receiverId            String
+  status                String                 @default("pending") // 'pending' | 'accepted' | 'rejected'
+  note                  String?
+  createdAt             DateTime               @default(now())
+
+  sender                User                   @relation("SentConnections", fields: [senderId], references: [id])
+  receiver              User                   @relation("ReceivedConnections", fields: [receiverId], references: [id])
+
+  @@unique([senderId, receiverId])
+  @@index([receiverId])
+}
+
+model Notification {
+  id                    String                 @id @default(uuid())
+  userId                String
+  title                 String
+  description           String                 @db.Text
+  type                  String                 // 'mentor' | 'team' | 'event' | 'certificate' | 'system'
+  read                  Boolean                @default(false)
+  linkAction            String?
+  createdAt             DateTime               @default(now())
+
+  user                  User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read])
+}
+
+model EventAnnouncement {
+  id                    String                 @id @default(uuid())
+  eventId               String
+  eventTitle            String
+  organizerId           String                 // FK to OrganizationAccount.id
+  title                 String
+  message               String                 @db.Text
+  audience              String                 @default("all") // 'all' | 'teams' | 'mentors' | 'judges'
+  createdAt             DateTime               @default(now())
+
+  event                 Event                  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  organizer             OrganizationAccount    @relation("OrgAnnouncements", fields: [organizerId], references: [id], onDelete: Cascade)
+
+  @@index([eventId])
+  @@index([organizerId])
+}
+
+model CampusStory {
+  id                    String                 @id @default(uuid())
+  creatorId             String
+  title                 String
+  creatorName           String?
+  creatorAvatar         String?
+  creatorDept           String
+  creatorCollege        String
+  videoUrl              String
+  thumbnailUrl          String
+  category              String                 @default("Project") // 'Project' | 'Hackathon' | 'Research'
+  likesCount            Int                    @default(0)
+  commentsCount         Int                    @default(0)
+  duration              String                 @default("0:45")
+  tags                  String[]               @default([])
+  createdAt             DateTime               @default(now())
+
+  creator               User                   @relation("StoryCreator", fields: [creatorId], references: [id])
+
+  @@index([category])
+}
+
+model AskQuestion {
+  id                    String                 @id @default(uuid())
+  authorId              String
+  title                 String
+  body                  String                 @db.Text
+  authorName            String?
+  authorAvatar          String?
+  authorRole            String
+  authorCollege         String
+  tags                  String[]               @default([])
+  upvotes               Int                    @default(0)
+  answersCount          Int                    @default(0)
+  hasAcceptedAnswer     Boolean                @default(false)
+  createdAt             DateTime               @default(now())
+
+  author                User                   @relation("QuestionAuthor", fields: [authorId], references: [id])
+  answers               AskAnswer[]
+
+  @@index([authorId])
+}
+
+model AskAnswer {
+  id                    String                 @id @default(uuid())
+  questionId            String
+  authorId              String
+  authorName            String?
+  authorAvatar          String?
+  body                  String                 @db.Text
+  authorRole            String
+  authorBadge           String
+  upvotes               Int                    @default(0)
+  isAccepted            Boolean                @default(false)
+  createdAt             DateTime               @default(now())
+
+  question              AskQuestion            @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  author                User                   @relation("AnswerAuthor", fields: [authorId], references: [id])
+
+  @@index([questionId])
+}
+
+// --------------------------------------------------------
+// 11. AUDIT TRAILS & COMPLIANCE
+// --------------------------------------------------------
+
+model AuditLog {
+  id                    String                 @id @default(uuid())
+  actorId               String?
+  actorName             String?
+  actorRole             String
+  action                String
+  targetType            String
+  targetId              String
+  targetName            String?
+  ipAddress             String?
+  details               String?                @db.Text
+  timestamp             DateTime               @default(now())
+
+  actor                 User?                  @relation("UserAuditLogs", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([action])
+  @@index([timestamp])
+  @@index([targetType, targetId])
+}
