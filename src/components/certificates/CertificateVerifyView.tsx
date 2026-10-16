@@ -129,20 +129,42 @@ export const CertificateVerifyView: React.FC = () => {
       {/* Verification Result Card */}
       {hasSearched && isFound ? (
         <div className="space-y-6 animate-in fade-in">
-          <div className="p-4 rounded-2xl bg-green-50 border border-green-200 flex items-center justify-between flex-wrap gap-2">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-xl bg-green-600 text-white flex items-center justify-center font-bold">
-                <CheckCircle2 className="w-5 h-5" />
+          {((searchedEventCert && searchedEventCert.status === 'revoked') || (searchedMentorCert && searchedMentorCert.status === 'revoked')) ? (
+            <div className="p-4 rounded-2xl bg-red-50 border border-red-300 flex items-center justify-between flex-wrap gap-2">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-xl bg-red-600 text-white flex items-center justify-center font-bold">
+                  <XCircle className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-sm text-red-950">REVOKED / INVALID CREDENTIAL</h4>
+                  <p className="text-xs text-red-800">
+                    This certificate has been formally revoked by the issuing authority and is no longer valid.
+                    {(searchedEventCert?.revocationReason || searchedMentorCert?.revocationReason) && (
+                      <span className="block mt-1 font-medium">Reason: {searchedEventCert?.revocationReason || searchedMentorCert?.revocationReason}</span>
+                    )}
+                  </p>
+                </div>
               </div>
-              <div>
-                <h4 className="font-bold text-sm text-green-950">Valid & Authenticated Digital Credential</h4>
-                <p className="text-xs text-green-800">Verified by CampusNet National Academic & Innovation Registry</p>
-              </div>
+              <span className="text-xs font-mono font-bold text-red-900 bg-white px-2.5 py-1 rounded-lg border border-red-300">
+                STATUS: REVOKED / VOID
+              </span>
             </div>
-            <span className="text-xs font-mono font-bold text-green-900 bg-white px-2.5 py-1 rounded-lg border border-green-200">
-              STATUS: BONAFIDE & TAMPER-PROOF
-            </span>
-          </div>
+          ) : (
+            <div className="p-4 rounded-2xl bg-green-50 border border-green-200 flex items-center justify-between flex-wrap gap-2">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-xl bg-green-600 text-white flex items-center justify-center font-bold">
+                  <CheckCircle2 className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-sm text-green-950">Valid & Authenticated Digital Credential</h4>
+                  <p className="text-xs text-green-800">Verified by CampusNet National Academic & Innovation Registry</p>
+                </div>
+              </div>
+              <span className="text-xs font-mono font-bold text-green-900 bg-white px-2.5 py-1 rounded-lg border border-green-200">
+                STATUS: BONAFIDE & TAMPER-PROOF
+              </span>
+            </div>
+          )}
 
           {searchedEventCert && <CertificateCard certificate={searchedEventCert} />}
           {searchedMentorCert && <MentorshipCertificateCard cert={searchedMentorCert} />}

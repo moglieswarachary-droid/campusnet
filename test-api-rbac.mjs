@@ -273,6 +273,23 @@ async function runTests() {
     const unauthStudentRes = await makeRequest('GET', '/api/students/usr-std-001');
     assert(unauthStudentRes.status === 401, 'Unauthenticated student profile access rejected with 401 Unauthorized');
 
+    console.log('\n--- 13. Cross-Organization Boundary & Certificate Lifecycle Verification ---');
+    // Test: Event manager assigned to KEC attempting to access registrations for IIT Bombay event ev-iitb-001 -> BLOCKED with 403
+    const crossOrgManagerRes = await makeRequest('GET', '/api/events/ev-iitb-001/registrations', null, multiToken);
+    assert(crossOrgManagerRes.status === 403, 'Cross-organization boundary enforced: KEC event manager cannot access IIT Bombay event registrations (403)');
+
+    // Test: Public certificate verification on valid credential -> 200 OK & valid: true
+    const validCertRes = await makeRequest('GET', '/api/certificates/verify/CN-2025-WIN-7841-9021');
+    assert(validCertRes.status === 200 && validCertRes.data.valid === true, 'Certificate verification endpoint confirms valid credential (200 OK)');
+
+    // Test: Public certificate verification on revoked credential -> 422 Unprocessable & valid: false
+    const revokedCertRes = await makeRequest('GET', '/api/certificates/verify/CN-REVOKED-TEST-000999');
+    assert(revokedCertRes.status === 422 && revokedCertRes.data.valid === false && revokedCertRes.data.status === 'revoked', 'Certificate verification endpoint strictly rejects revoked credential (422 Unprocessable Entity)');
+
+    // Test: Public certificate verification on non-existent credential -> 404 Not Found
+    const fakeCertRes = await makeRequest('GET', '/api/certificates/verify/CN-NONEXISTENT-999');
+    assert(fakeCertRes.status === 404 && fakeCertRes.data.valid === false, 'Certificate verification endpoint rejects non-existent credential (404 Not Found)');
+
   } catch (err) {
     console.error('Test execution error:', err);
     failed++;

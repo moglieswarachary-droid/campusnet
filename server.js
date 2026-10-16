@@ -309,6 +309,49 @@ let EVENT_REGISTRATIONS_DB = [
   }
 ];
 
+let EVENT_MANAGER_ASSIGNMENTS_DB = [
+  {
+    id: 'ema-001',
+    userId: 'usr-multi-001',
+    eventId: 'ev-001',
+    organizationId: 'KEC-DEMO-001',
+    role: 'EVENT_MANAGER',
+    status: 'active',
+    assignedAt: '2026-03-01T10:00:00Z',
+    assignedById: 'KEC-DEMO-001'
+  }
+];
+
+let CERTIFICATES_DB = [
+  {
+    id: 'cert-001',
+    certificateNumber: 'CN-2025-WIN-7841-9021',
+    recipientId: 'usr-std-001',
+    recipientName: 'Aarav Sharma',
+    recipientRole: 'Winner',
+    eventTitle: 'Smart India Ideathon 2025 — National Finale',
+    eventId: 'ev-001',
+    eventOrganizer: 'Ministry of Education Innovation Cell & AICTE',
+    issueDate: '2025-12-12',
+    status: 'valid'
+  },
+  {
+    id: 'cert-revoked-001',
+    certificateNumber: 'CN-REVOKED-TEST-000999',
+    recipientId: 'usr-disq-001',
+    recipientName: 'Disqualified Candidate',
+    recipientRole: 'Participant',
+    eventTitle: 'National Code Sprint 2025',
+    eventId: 'ev-001',
+    eventOrganizer: 'Kuppam Engineering College',
+    issueDate: '2025-11-10',
+    status: 'revoked',
+    revocationReason: 'Academic integrity violation / Plagiarism confirmed by jury',
+    revokedAt: '2025-11-15T14:30:00Z',
+    revokedBy: 'KEC-DEMO-001'
+  }
+];
+
 // Audit Logs Store
 let AUDIT_LOGS = [
   {
@@ -1187,9 +1230,24 @@ const server = http.createServer(async (req, res) => {
 
         if (req.method === 'GET') {
           const isSuperAdmin = auth.user.activeRole === 'SUPER_ADMIN';
-          const isOrganizerForEvent = auth.user.organizationId === 'KEC-DEMO-001' || (auth.user.managedEventIds && auth.user.managedEventIds.includes(eventId));
+          // Resolve event organizer boundary dynamically
+          const eventOwnerOrgId = (eventId === 'ev-001' || eventId.startsWith('ev-kec')) ? 'KEC-DEMO-001' : 
+                                  (eventId.startsWith('ev-iitb') ? 'IITB-ORG-002' : 
+                                  (eventId.startsWith('ev-nitw') ? 'NITW-DEMO-004' : 
+                                  (eventId.startsWith('ev-anna') ? 'ANNA-DEMO-005' : 'KEC-DEMO-001')));
 
-          if (isSuperAdmin || isOrganizerForEvent) {
+          const isOrgOwner = auth.user.activeRole === 'ORGANIZATION_OWNER' && 
+                             auth.user.organizationId === eventOwnerOrgId;
+          const isAssignedManager = auth.user.activeRole === 'EVENT_MANAGER' && 
+                                    auth.user.organizationId === eventOwnerOrgId && 
+                                    EVENT_MANAGER_ASSIGNMENTS_DB.some(ema => 
+                                      ema.userId === auth.user.id && 
+                                      ema.eventId === eventId && 
+                                      ema.organizationId === eventOwnerOrgId && 
+                                      ema.status === 'active'
+                                    );
+
+          if (isSuperAdmin || isOrgOwner || isAssignedManager) {
             const registrations = EVENT_REGISTRATIONS_DB.filter(r => r.eventId === eventId);
             sendJson(res, 200, { registrations });
             return;
@@ -1253,6 +1311,44 @@ const server = http.createServer(async (req, res) => {
           return;
         }
         sendJson(res, 200, { auditLogs: AUDIT_LOGS });
+        return;
+      }
+
+      // ----------------------------------------------------
+      // CERTIFICATE VERIFICATION & LIFECYCLE AUDIT ENDPOINT
+      // ----------------------------------------------------
+      if (pathname.match(/^\/api\/certificates\/verify\/[a-zA-Z0-9_-]+$/) && req.method === 'GET') {
+        const certNumber = pathname.split('/')[4];
+        const cert = CERTIFICATES_DB.find(c => c.certificateNumber.toLowerCase() === certNumber.toLowerCase());
+
+        if (!cert) {
+          sendJson(res, 404, { 
+            valid: false, 
+            error: `Certificate with credential ID "${certNumber}" was not found on CampusNet registry.` 
+          });
+          return;
+        }
+
+        if (cert.status === 'revoked') {
+          sendJson(res, 422, {
+            valid: false,
+            status: 'revoked',
+            error: 'Certificate has been revoked and is no longer valid.',
+            certificateNumber: cert.certificateNumber,
+            recipientName: cert.recipientName,
+            eventTitle: cert.eventTitle,
+            revocationReason: cert.revocationReason,
+            revokedAt: cert.revokedAt,
+            revokedBy: cert.revokedBy
+          });
+          return;
+        }
+
+        sendJson(res, 200, {
+          valid: true,
+          status: 'valid',
+          certificate: cert
+        });
         return;
       }
 
