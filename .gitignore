@@ -9,12 +9,13 @@ lerna-debug.log*
 
 # Node modules & build artifacts
 node_modules
+**/node_modules/
 dist
+**/dist/
 dist-ssr
 *.local
 .vite
-.vite/
-
+**/.vite/
 
 # Editor directories and files
 .vscode/*
@@ -31,8 +32,10 @@ dist-ssr
 .env
 .env.*
 !.env.example
+!**/.env.example
 
 # Runtime database store
 data/*.json
 !data/.gitkeep
-
+backend/data/*.json
+!backend/data/.gitkeep

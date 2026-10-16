@@ -1,5 +1,5 @@
 // Test suite to validate All-India State/UT coverage, district resolution, event validation, and security rules
-import { ALL_STATE_AND_UT_NAMES, INDIAN_STATES, INDIAN_UNION_TERRITORIES, getDistrictsByStateName, isValidStateOrUT } from './src/utils/locationData.ts';
+import { ALL_STATE_AND_UT_NAMES, INDIAN_STATES, INDIAN_UNION_TERRITORIES, getDistrictsByStateName, isValidStateOrUT } from '../src/utils/locationData.ts';
 
 console.log('=== RUNNING CAMPUSNET+ ARCHITECTURE AND LOGIC TESTS ===\n');
 

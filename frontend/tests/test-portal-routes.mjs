@@ -1,5 +1,5 @@
-import { getPortalFromEnvironment } from './src/utils/portalRouting.ts';
-import { resolvePostLoginRoute, isValidRedirectDestination } from './src/utils/rbac.ts';
+import { getPortalFromEnvironment } from '../src/utils/portalRouting.ts';
+import { resolvePostLoginRoute, isValidRedirectDestination } from '../src/utils/rbac.ts';
 
 console.log('====================================================');
 console.log('CAMPUSNET+ PORTAL ROUTE & GATEWAY SPECIFICATION TEST');

@@ -1,6 +1,11 @@
 import { spawn } from 'child_process';
 import http from 'http';
 import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 console.log('====================================================');
 console.log('CAMPUSNET+ BACKEND API & RESOURCE-LEVEL RBAC TEST');
@@ -238,10 +243,15 @@ async function runTests() {
     assert(postReg.status === 201 && postReg.data.registration, 'Student successfully registers for collegiate event');
 
     console.log('\n--- 11. Persistent File-Backed Database Integrity ---');
-    const storeExists = fs.existsSync('data/campusnet_store.json');
+    const resolvedStorePath = fs.existsSync('data/campusnet_store.json')
+      ? 'data/campusnet_store.json'
+      : (fs.existsSync('backend/data/campusnet_store.json')
+          ? 'backend/data/campusnet_store.json'
+          : path.join(__dirname, '../data/campusnet_store.json'));
+    const storeExists = fs.existsSync(resolvedStorePath);
     assert(storeExists, 'Database store data/campusnet_store.json persists on disk');
     if (storeExists) {
-      const storeData = JSON.parse(fs.readFileSync('data/campusnet_store.json', 'utf-8'));
+      const storeData = JSON.parse(fs.readFileSync(resolvedStorePath, 'utf-8'));
       assert(Array.isArray(storeData.users) && storeData.users.length > 0, 'Persistent store contains hydrated user entities');
       assert(Array.isArray(storeData.eventRegistrations), 'Persistent store contains event registrations');
       assert(Array.isArray(storeData.revokedTokens) && storeData.revokedTokens.length > 0, 'Persistent store contains revoked token blacklists');
@@ -305,7 +315,13 @@ async function runTests() {
 }
 
 // Start test server process
-serverProcess = spawn('node', ['server.js'], {
+const serverPath = fs.existsSync(path.join(__dirname, '../src/server.js')) 
+  ? path.join(__dirname, '../src/server.js')
+  : (fs.existsSync(path.join(__dirname, 'src/server.js')) 
+      ? path.join(__dirname, 'src/server.js') 
+      : 'server.js');
+
+serverProcess = spawn('node', [serverPath], {
   env: { ...process.env, PORT: TEST_PORT.toString() },
   stdio: 'inherit'
 });

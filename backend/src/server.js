@@ -6,7 +6,11 @@ import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const DIST_DIR = path.join(__dirname, 'dist');
+const DIST_DIR = fs.existsSync(path.join(__dirname, 'dist'))
+  ? path.join(__dirname, 'dist')
+  : (fs.existsSync(path.join(__dirname, '../../frontend/dist'))
+      ? path.join(__dirname, '../../frontend/dist')
+      : path.join(__dirname, '../dist'));
 const PORT = process.env.PORT || 3199;
 
 const MIME_TYPES = {
@@ -251,7 +255,9 @@ let USERS_DB = [
 const SESSIONS = new Map();
 
 // Persistent File Database & Session Infrastructure
-const DATA_DIR = path.join(__dirname, 'data');
+const DATA_DIR = fs.existsSync(path.join(__dirname, 'data'))
+  ? path.join(__dirname, 'data')
+  : path.join(__dirname, '../data');
 const STORE_PATH = path.join(DATA_DIR, 'campusnet_store.json');
 const REVOKED_TOKENS = new Set();
 const SSE_CLIENTS = new Set();

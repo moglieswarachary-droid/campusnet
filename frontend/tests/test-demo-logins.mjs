@@ -1,4 +1,4 @@
-import { MOCK_ORGANIZER_ACCOUNTS, MOCK_EVENTS } from './src/data/mockData.ts';
+import { MOCK_ORGANIZER_ACCOUNTS, MOCK_EVENTS } from '../src/data/mockData.ts';
 
 console.log('=== VERIFYING 5 DEMO COLLEGE 1-CLICK AUTHENTICATION ===\n');
 

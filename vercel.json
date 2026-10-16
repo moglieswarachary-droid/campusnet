@@ -1,4 +1,6 @@
 {
+  "buildCommand": "npm run build --workspace=@campusnet/frontend",
+  "outputDirectory": "frontend/dist",
   "rewrites": [
     {
       "source": "/(.*)",

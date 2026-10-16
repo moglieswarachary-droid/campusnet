@@ -10,7 +10,7 @@ import {
   resolvePostLoginRoute, 
   ROLE_PERMISSIONS,
   getRoleDisplayName
-} from './src/utils/rbac.ts';
+} from '../src/utils/rbac.ts';
 
 console.log('=== RUNNING CAMPUSNET+ PRODUCTION RBAC VERIFICATION SUITE ===\n');
 

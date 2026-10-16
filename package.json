@@ -1,42 +1,24 @@
 {
   "name": "campusnet",
   "version": "1.0.0",
-  "description": "CampusLink — The Student Innovation & Research Network",
-  "main": "index.js",
+  "private": true,
   "type": "module",
+  "workspaces": [
+    "shared",
+    "backend",
+    "frontend"
+  ],
   "scripts": {
-    "dev": "vite",
-    "build": "tsc && vite build",
-    "preview": "vite preview",
-    "start": "node server.js",
-    "prisma:generate": "prisma generate",
-    "prisma:validate": "prisma validate",
-    "test": "node test-portal-routes.mjs && node test-rbac.mjs && node test-verification.mjs && node test-demo-logins.mjs && node test-api-rbac.mjs"
-  },
-  "dependencies": {
-    "@prisma/client": "6.4.1",
-    "canvas-confetti": "^1.9.4",
-    "clsx": "^2.1.1",
-    "lucide-react": "^1.16.0",
-    "qrcode": "^1.5.4",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "react-router-dom": "^7.18.2",
-    "tailwind-merge": "^3.0.2"
-  },
-  "devDependencies": {
-    "@tailwindcss/postcss": "^4.3.3",
-    "@tailwindcss/vite": "^4.3.3",
-    "@types/canvas-confetti": "^1.9.0",
-    "@types/qrcode": "^1.5.5",
-    "@types/react": "^19.0.10",
-    "@types/react-dom": "^19.0.4",
-    "@vitejs/plugin-react": "^4.3.4",
-    "autoprefixer": "^10.4.21",
-    "postcss": "^8.5.3",
-    "prisma": "6.4.1",
-    "tailwindcss": "^3.4.17",
-    "typescript": "^5.7.3",
-    "vite": "^6.2.0"
+    "dev": "npm run dev:frontend",
+    "dev:frontend": "npm run dev --workspace=@campusnet/frontend",
+    "dev:backend": "npm run dev --workspace=@campusnet/backend",
+    "build": "npm run build --workspace=@campusnet/frontend",
+    "build:backend": "npm run prisma:generate --workspace=@campusnet/backend",
+    "start": "npm run start --workspace=@campusnet/backend",
+    "test": "npm run test:frontend && npm run test:backend",
+    "test:frontend": "npm run test --workspace=@campusnet/frontend",
+    "test:backend": "npm run test --workspace=@campusnet/backend",
+    "prisma:validate": "npm run prisma:validate --workspace=@campusnet/backend",
+    "prisma:generate": "npm run prisma:generate --workspace=@campusnet/backend"
   }
 }
