@@ -39,3 +39,4 @@ data/*.json
 !data/.gitkeep
 backend/data/*.json
 !backend/data/.gitkeep
+.neon

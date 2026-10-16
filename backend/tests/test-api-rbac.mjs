@@ -3,6 +3,7 @@ import http from 'http';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { verifyPassword, hashPassword, isArgon2Hash, validatePasswordStrength } from '../src/utils/password.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -253,6 +254,8 @@ async function runTests() {
     if (storeExists) {
       const storeData = JSON.parse(fs.readFileSync(resolvedStorePath, 'utf-8'));
       assert(Array.isArray(storeData.users) && storeData.users.length > 0, 'Persistent store contains hydrated user entities');
+      const allHashed = storeData.users.every(u => u.passwordHash && isArgon2Hash(u.passwordHash));
+      assert(allHashed, 'All user accounts in persistent store are migrated to Argon2id hashes (no plaintext)');
       assert(Array.isArray(storeData.eventRegistrations), 'Persistent store contains event registrations');
       assert(Array.isArray(storeData.revokedTokens) && storeData.revokedTokens.length > 0, 'Persistent store contains revoked token blacklists');
     }
@@ -261,6 +264,10 @@ async function runTests() {
     // Test: Empty password must be strictly rejected with 401
     const emptyPassRes = await makeRequest('POST', '/api/auth/login', { emailOrId: 'aarav.sharma@nitk.edu.in', password: '' });
     assert(emptyPassRes.status === 401, 'Empty password request is rejected with 401 Unauthorized');
+
+    // Test: Missing password field must be strictly rejected with 401
+    const missingPassRes = await makeRequest('POST', '/api/auth/login', { emailOrId: 'aarav.sharma@nitk.edu.in' });
+    assert(missingPassRes.status === 401, 'Missing password field is rejected with 401 Unauthorized');
 
     // Test: Wrong password must be rejected with 401
     const wrongPassRes = await makeRequest('POST', '/api/auth/login', { emailOrId: 'aarav.sharma@nitk.edu.in', password: 'IncorrectPassword!2026' });
@@ -276,12 +283,84 @@ async function runTests() {
       password: 'CampusNet@Demo2026'
     });
     const regressionStudentToken = freshStudentLogin.data.token;
+    assert(!freshStudentLogin.data.user.password && !freshStudentLogin.data.user.passwordHash, 'Login response strictly does not expose password or passwordHash');
     const studentBroadcastRes = await makeRequest('POST', '/api/realtime/broadcast', { title: 'Student Alert', message: 'Unauthorized announcement' }, regressionStudentToken);
     assert(studentBroadcastRes.status === 403, 'Student attempting administrative broadcast is rejected with 403 Forbidden');
 
     // Test: Unauthenticated request to /api/students/:id rejected with 401
     const unauthStudentRes = await makeRequest('GET', '/api/students/usr-std-001');
     assert(unauthStudentRes.status === 401, 'Unauthenticated student profile access rejected with 401 Unauthorized');
+
+    // Test: Registration rejects weak password (< 8 chars)
+    const weakRegRes = await makeRequest('POST', '/api/auth/register', {
+      role: 'STUDENT',
+      email: `weak.test.${Date.now()}@nitk.edu.in`,
+      name: 'Weak Password Tester',
+      password: 'short'
+    });
+    assert(weakRegRes.status === 400 && weakRegRes.data.error.includes('8 characters'), 'Registration with short password rejected with 400 Bad Request');
+
+    // Test: Registration with strong password creates account with Argon2id hash
+    const customUserEmail = `custom.auth.${Date.now()}@nitk.edu.in`;
+    const customRegRes = await makeRequest('POST', '/api/auth/register', {
+      role: 'STUDENT',
+      email: customUserEmail,
+      name: 'Custom Auth Tester',
+      password: 'CustomStrongPassword#2026'
+    });
+    assert(customRegRes.status === 201 && customRegRes.data.user, 'Registration with strong password succeeds with 201 Created');
+    assert(!customRegRes.data.user.password && !customRegRes.data.user.passwordHash, 'Registration response strictly does not expose password or passwordHash');
+
+    // Test: Universal fallback elimination (custom account cannot be logged into with CampusNet@Demo2026)
+    const backdoorAttemptRes = await makeRequest('POST', '/api/auth/login', {
+      emailOrId: customUserEmail,
+      password: 'CampusNet@Demo2026'
+    });
+    assert(backdoorAttemptRes.status === 401, 'Universal fallback backdoor eliminated: arbitrary accounts cannot be accessed via CampusNet@Demo2026 (401)');
+
+    // Test: Login with newly registered custom password succeeds
+    const customLoginRes = await makeRequest('POST', '/api/auth/login', {
+      emailOrId: customUserEmail,
+      password: 'CustomStrongPassword#2026'
+    });
+    assert(customLoginRes.status === 200 && customLoginRes.data.token, 'Login with custom strong password succeeds with 200 OK');
+
+    // Test: Password recovery with invalid OTP rejected
+    const badOtpRes = await makeRequest('POST', '/api/auth/recover-password', {
+      email: customUserEmail,
+      otp: '000000',
+      newPassword: 'BrandNewPassword#2026'
+    });
+    assert(badOtpRes.status === 400, 'Password recovery with invalid OTP rejected with 400 Bad Request');
+
+    // Test: Password recovery with valid OTP and strong new password succeeds
+    const resetRes = await makeRequest('POST', '/api/auth/recover-password', {
+      email: customUserEmail,
+      otp: '123456',
+      newPassword: 'BrandNewPassword#2026'
+    });
+    assert(resetRes.status === 200, 'Password recovery with valid OTP and new password succeeds with 200 OK');
+
+    // Test: Old password no longer valid after reset
+    const oldPassLoginRes = await makeRequest('POST', '/api/auth/login', {
+      emailOrId: customUserEmail,
+      password: 'CustomStrongPassword#2026'
+    });
+    assert(oldPassLoginRes.status === 401, 'Old password rejected following password reset (401)');
+
+    // Test: New reset password logs in successfully
+    const newPassLoginRes = await makeRequest('POST', '/api/auth/login', {
+      emailOrId: customUserEmail,
+      password: 'BrandNewPassword#2026'
+    });
+    assert(newPassLoginRes.status === 200 && newPassLoginRes.data.token, 'Login with newly reset password succeeds with 200 OK');
+
+    // Test: Legacy account handling and constant-time upgrade
+    const legacyValidTest = await verifyPassword('LegacyPlaintextSecret#2026', 'LegacyPlaintextSecret#2026');
+    assert(legacyValidTest.valid === true && legacyValidTest.needsRehash === true, 'Legacy plaintext account verified safely and flagged for rehash without silent hash misinterpretation');
+
+    const legacyWrongTest = await verifyPassword('LegacyPlaintextSecret#2026', 'WrongPassword');
+    assert(legacyWrongTest.valid === false && legacyWrongTest.needsRehash === false, 'Legacy account wrong password strictly rejected');
 
     console.log('\n--- 13. Cross-Organization Boundary & Certificate Lifecycle Verification ---');
     // Test: Event manager assigned to KEC attempting to access registrations for IIT Bombay event ev-iitb-001 -> BLOCKED with 403

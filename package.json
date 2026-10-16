@@ -20,5 +20,9 @@
     "test:backend": "npm run test --workspace=@campusnet/backend",
     "prisma:validate": "npm run prisma:validate --workspace=@campusnet/backend",
     "prisma:generate": "npm run prisma:generate --workspace=@campusnet/backend"
+  },
+  "dependencies": {
+    "@neon/config": "^1.9.2",
+    "@neon/env": "^1.6.3"
   }
 }

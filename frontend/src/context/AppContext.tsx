@@ -327,13 +327,27 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const saved = localStorage.getItem('campusnet_researchers');
     return saved ? JSON.parse(saved) : MOCK_RESEARCHERS;
   });
+  const isProd = import.meta.env.PROD;
+
   const [teams, setTeams] = useState<Team[]>(() => {
     const saved = localStorage.getItem('campusnet_teams');
-    return saved ? JSON.parse(saved) : MOCK_TEAMS;
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      } catch {}
+    }
+    return isProd ? [] : MOCK_TEAMS;
   });
   const [projects, setProjects] = useState<Project[]>(() => {
     const saved = localStorage.getItem('campusnet_projects');
-    return saved ? JSON.parse(saved) : MOCK_PROJECTS;
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      } catch {}
+    }
+    return isProd ? [] : MOCK_PROJECTS;
   });
   const [events, setEvents] = useState<EventItem[]>(() => {
     const saved = localStorage.getItem('campusnet_events');
@@ -577,6 +591,44 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       localStorage.setItem('campusnet_user', JSON.stringify(currentUser));
     }
   }, [currentUser]);
+
+  // Fetch live projects and teams from backend database API
+  const fetchProjectsAndTeams = useCallback(async () => {
+    try {
+      const token = sessionStorage.getItem('campusnet_token') || localStorage.getItem('campusnet_token');
+      const headers: Record<string, string> = { 'Accept': 'application/json' };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const [projRes, teamRes] = await Promise.all([
+        fetch('/api/projects', { headers }).catch(() => null),
+        fetch('/api/teams', { headers }).catch(() => null)
+      ]);
+
+      if (projRes && projRes.ok) {
+        const projData = await projRes.json();
+        if (Array.isArray(projData.projects) && (projData.projects.length > 0 || isProd)) {
+          setProjects(projData.projects);
+          localStorage.setItem('campusnet_projects', JSON.stringify(projData.projects));
+        }
+      }
+
+      if (teamRes && teamRes.ok) {
+        const teamData = await teamRes.json();
+        if (Array.isArray(teamData.teams) && (teamData.teams.length > 0 || isProd)) {
+          setTeams(teamData.teams);
+          localStorage.setItem('campusnet_teams', JSON.stringify(teamData.teams));
+        }
+      }
+    } catch (e) {
+      console.warn('[AppContext] API fetch notice:', e);
+    }
+  }, [isProd]);
+
+  useEffect(() => {
+    fetchProjectsAndTeams();
+  }, [fetchProjectsAndTeams]);
 
   // Real-Time SSE Hub Listener across Portals
   useEffect(() => {
@@ -2089,8 +2141,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const createProject = (projectData: Partial<Project>): Project => {
+    const tempId = `proj-${Date.now()}`;
     const newProj: Project = {
-      id: `proj-${Date.now()}`,
+      id: tempId,
       title: projectData.title || 'Untitled Project',
       problemStatement: projectData.problemStatement || '',
       proposedSolution: projectData.proposedSolution || '',
@@ -2115,6 +2168,41 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       likes: 0
     };
     setProjects(prev => [newProj, ...prev]);
+
+    // Backend database persistence via Prisma
+    const token = sessionStorage.getItem('campusnet_token') || localStorage.getItem('campusnet_token');
+    fetch('/api/projects', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+      },
+      body: JSON.stringify({
+        ...projectData,
+        title: newProj.title,
+        domain: newProj.domain,
+        problemStatement: newProj.problemStatement,
+        proposedSolution: newProj.proposedSolution,
+        technologies: newProj.technologies,
+        requiredSkills: newProj.requiredSkills,
+        objectives: newProj.objectives,
+        seekingRoles: newProj.seekingRoles,
+        institution: currentUser.institution
+      })
+    })
+      .then(async res => {
+        if (res.ok) {
+          const data = await res.json();
+          if (data.project) {
+            setProjects(prev => prev.map(p => p.id === tempId ? data.project : p));
+          }
+        } else {
+          const errData = await res.json().catch(() => ({}));
+          console.warn('[API] Project create notice:', errData.error || res.statusText);
+        }
+      })
+      .catch(err => console.warn('[API] Project create network notice:', err));
+
     addToast({
       type: 'success',
       title: 'Project Created on CampusNet 🎉',
@@ -2138,6 +2226,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
       return p;
     }));
+
+    // Backend database persistence via Prisma
+    const token = sessionStorage.getItem('campusnet_token') || localStorage.getItem('campusnet_token');
+    fetch(`/api/projects/${projectId}/milestones/${milestoneId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+      },
+      body: JSON.stringify({ status, feedback })
+    }).catch(err => console.warn('[API] Milestone update network notice:', err));
+
     addToast({
       type: status === 'approved' ? 'success' : 'info',
       title: status === 'approved' ? 'Milestone Approved ✓' : 'Milestone Updated',
@@ -2146,13 +2246,43 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const addProjectTask = (projectId: string, task: Omit<ProjectTask, 'id'>) => {
-    const newTask: ProjectTask = { ...task, id: `t-${Date.now()}` };
+    const tempId = `t-${Date.now()}`;
+    const newTask: ProjectTask = { ...task, id: tempId };
     setProjects(prev => prev.map(p => {
       if (p.id === projectId) {
         return { ...p, tasks: [...p.tasks, newTask] };
       }
       return p;
     }));
+
+    // Backend database persistence via Prisma
+    const token = sessionStorage.getItem('campusnet_token') || localStorage.getItem('campusnet_token');
+    fetch(`/api/projects/${projectId}/tasks`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+      },
+      body: JSON.stringify(task)
+    })
+      .then(async res => {
+        if (res.ok) {
+          const data = await res.json();
+          if (data.task) {
+            setProjects(prev => prev.map(p => {
+              if (p.id === projectId) {
+                return {
+                  ...p,
+                  tasks: p.tasks.map(t => t.id === tempId ? data.task : t)
+                };
+              }
+              return p;
+            }));
+          }
+        }
+      })
+      .catch(err => console.warn('[API] Task add network notice:', err));
+
     addToast({
       type: 'success',
       title: 'Task Assigned',
@@ -2170,11 +2300,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
       return p;
     }));
+
+    // Backend database persistence via Prisma
+    const token = sessionStorage.getItem('campusnet_token') || localStorage.getItem('campusnet_token');
+    fetch(`/api/projects/${projectId}/tasks/${taskId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+      },
+      body: JSON.stringify({ status })
+    }).catch(err => console.warn('[API] Task status network notice:', err));
   };
 
   const createTeam = (teamData: Partial<Team>): Team => {
+    const tempId = `team-${Date.now()}`;
     const newTeam: Team = {
-      id: `team-${Date.now()}`,
+      id: tempId,
       name: teamData.name || 'New Innovation Team',
       projectName: teamData.projectName || 'New Project',
       domain: teamData.domain || 'Engineering',
@@ -2205,6 +2347,37 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       createdAt: new Date().toISOString()
     };
     setTeams(prev => [newTeam, ...prev]);
+
+    // Backend database persistence via Prisma
+    const token = sessionStorage.getItem('campusnet_token') || localStorage.getItem('campusnet_token');
+    fetch('/api/teams', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+      },
+      body: JSON.stringify({
+        ...teamData,
+        name: newTeam.name,
+        domain: newTeam.domain,
+        projectName: newTeam.projectName,
+        maxMembers: newTeam.maxMembers,
+        requiredRoles: newTeam.requiredRoles
+      })
+    })
+      .then(async res => {
+        if (res.ok) {
+          const data = await res.json();
+          if (data.team) {
+            setTeams(prev => prev.map(t => t.id === tempId ? data.team : t));
+          }
+        } else {
+          const errData = await res.json().catch(() => ({}));
+          console.warn('[API] Team create notice:', errData.error || res.statusText);
+        }
+      })
+      .catch(err => console.warn('[API] Team create network notice:', err));
+
     addToast({
       type: 'success',
       title: 'Team Created',
@@ -2214,6 +2387,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const joinTeamRole = (teamId: string, roleIndex: number, user: User) => {
+    let claimedRole = 'Contributor';
     setTeams(prev => prev.map(t => {
       if (t.id === teamId) {
         const updatedRoles = [...t.requiredRoles];
@@ -2221,6 +2395,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         if (role && !role.filled) {
           role.filled = true;
           role.filledBy = user.name;
+          claimedRole = role.role || claimedRole;
           const newMember = {
             userId: user.id,
             name: user.name,
@@ -2239,6 +2414,30 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
       return t;
     }));
+
+    // Backend database persistence via Prisma
+    const token = sessionStorage.getItem('campusnet_token') || localStorage.getItem('campusnet_token');
+    fetch(`/api/teams/${teamId}/members`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+      },
+      body: JSON.stringify({
+        roleIndex,
+        roleName: claimedRole
+      })
+    })
+      .then(async res => {
+        if (res.ok) {
+          const data = await res.json();
+          if (data.member) {
+            fetchProjectsAndTeams();
+          }
+        }
+      })
+      .catch(err => console.warn('[API] Team join network notice:', err));
+
     addToast({
       type: 'success',
       title: 'Joined Team!',

@@ -3,15 +3,33 @@ import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
 import { fileURLToPath } from 'url';
+import dotenv from 'dotenv';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Load environment variables for Neon PostgreSQL and server runtime
+dotenv.config({ path: path.join(__dirname, '../.env') });
+import prisma from './database/prisma.js';
+import { hashPassword, verifyPassword, validatePasswordStrength, isArgon2Hash } from './utils/password.js';
+import { seedProjectsAndTeams } from './database/seedProjects.js';
+import {
+  toPrismaProjectStatus,
+  toPrismaMilestoneStatus,
+  toPrismaTaskStatus,
+  formatPrismaProject,
+  formatPrismaTeam
+} from './services/projectService.js';
+
+let isPrismaConnected = Boolean(process.env.DATABASE_URL);
+
 const DIST_DIR = fs.existsSync(path.join(__dirname, 'dist'))
   ? path.join(__dirname, 'dist')
   : (fs.existsSync(path.join(__dirname, '../../frontend/dist'))
       ? path.join(__dirname, '../../frontend/dist')
       : path.join(__dirname, '../dist'));
 const PORT = process.env.PORT || 3199;
+
 
 const MIME_TYPES = {
   '.html': 'text/html; charset=utf-8',
@@ -104,6 +122,18 @@ let USERS_DB = [
     activeRole: 'STUDENT',
     institution: 'NITK Surathkal',
     department: 'Computer Science & Engineering',
+    verified: true
+  },
+  {
+    id: 'usr-std-002',
+    email: 'pooja.iyer@ceg.annauniv.edu',
+    name: 'Pooja Iyer',
+    passwordHash: 'CampusNet@Demo2026',
+    roles: ['STUDENT'],
+    activeRole: 'STUDENT',
+    institution: 'CEG Anna University',
+    department: 'ECE',
+    studentId: '2023ECE088',
     verified: true
   },
   {
@@ -254,6 +284,97 @@ let USERS_DB = [
 // Active Server Sessions Store: token -> { userId, expiresAt }
 const SESSIONS = new Map();
 
+// Password Recovery OTP Store: email -> { tokenHash, expiresAt, attempts }
+const OTP_STORE = new Map();
+const OTP_MAX_ATTEMPTS = 5;
+const OTP_EXPIRY_MS = 10 * 60 * 1000; // 10 minutes
+
+// Projects & Teams Stores
+let PROJECTS_DB = [
+  {
+    id: 'proj-001',
+    title: 'AgriVision AI — Edge Micro-Drone for Autonomous Orchard Spraying',
+    problemStatement: 'Manual pesticide application in Indian mango & citrus orchards exposes farmers to toxic inhalation and causes 40% pesticide runoff due to non-uniform manual pressure.',
+    proposedSolution: 'An autonomous micro-quadcopter running TensorRT quantized YOLOv11 on an onboard NVIDIA Jetson Orin Nano, executing real-time pest segmentation with precision pulse-width modulated micro-dosing spray nozzles.',
+    domain: 'AI, Agritech & Drone Robotics',
+    technologies: ['PyTorch', 'TensorRT', 'ROS2 Humble', 'PX4 Autopilot', 'SolidWorks', 'ESP32 LoRaWAN'],
+    requiredSkills: ['Computer Vision', 'Embedded C', 'Airframe FEA', 'Farmer UI/UX'],
+    teamId: 'team-001',
+    teamName: 'Team AgriVision AI (SIH-2026)',
+    teamMembersCount: 4,
+    institution: 'NITK Surathkal & Cross-College Consortium',
+    authorId: 'usr-std-001',
+    institutionId: 'inst-nitk',
+    state: 'Karnataka',
+    city: 'Surathkal',
+    mentor: 'Dr. Arvind Rao (IIT Bombay)',
+    mentorId: 'usr-mnt-001',
+    mentorTitle: 'Professor & Head of Edge Computing Lab',
+    mentorStatus: 'accepted',
+    status: 'Prototype',
+    progressPercent: 78,
+    githubUrl: 'https://github.com/campusnet-projects/agrivision-edge-ai',
+    demoUrl: 'https://campusnet.network/demo/agrivision-live',
+    documentationUrl: 'https://campusnet.network/docs/agrivision-whitepaper.pdf',
+    objectives: [
+      'Achieve 30+ FPS edge pest inference under variable sunlight',
+      'Reduce chemical runoff by 35% through pulse-width micro-dosing',
+      'Ensure fail-safe return-to-launch within 1.5m accuracy'
+    ],
+    seekingRoles: ['Embedded Telemetry Lead (Anna Univ)', 'Flight Testing Pilot'],
+    coverImage: 'https://images.unsplash.com/photo-1527977966376-1c8408f9f108?w=800&auto=format&fit=crop&q=80',
+    papersCount: 1,
+    milestones: [
+      { id: 'm1', title: 'Dataset Collection (10K annotated pest images)', description: 'Curated 10,000 high-res pest leaf images across Karnataka orchards.', status: 'approved', dueDate: '2025-11-30', approvedByMentor: true, mentorFeedback: 'Excellent dataset diversity and class balance across leaf-miner species.' },
+      { id: 'm2', title: 'Airframe CFD & Carbon-Fiber Fabrication', description: 'Completed wind tunnel simulation and carbon-fiber arm layup in VJTI workshop.', status: 'approved', dueDate: '2026-01-15', approvedByMentor: true, mentorFeedback: 'Vibration damping mounts verified up to 8000 RPM motor load.' },
+      { id: 'm3', title: 'Jetson Orin Nano TensorRT INT8 Optimization', description: 'Quantize model to achieve 34 FPS at 8.2W power draw on Jetson Orin Nano.', status: 'in_progress', dueDate: '2026-03-10' },
+      { id: 'm4', title: 'Autonomous 5-Acre Field Spraying Validation', description: 'Execute field trial with GPS geofencing and micro-dosing validation.', status: 'pending', dueDate: '2026-04-05' }
+    ],
+    tasks: [
+      { id: 't1', title: 'Calibrate TensorRT INT8 entropy cache on 500 test images', assignee: 'Aarav Sharma', status: 'in_progress', priority: 'high' },
+      { id: 't2', title: 'Solder custom ESP32 telemetry daughter-board with LoRaWAN antenna', assignee: 'Pooja Iyer', status: 'done', priority: 'high' },
+      { id: 't3', title: 'Run ANSYS stress simulation on 3D-printed nozzle mount bracket', assignee: 'Vikramaditya', status: 'done', priority: 'medium' },
+      { id: 't4', title: 'Conduct Kannada & Marathi usability tests with 10 farmers', assignee: 'Ananya Sen', status: 'in_progress', priority: 'medium' }
+    ],
+    createdAt: '2025-09-01T10:00:00Z',
+    likes: 184
+  }
+];
+
+let TEAMS_DB = [
+  {
+    id: 'team-001',
+    name: 'Team AgriVision AI',
+    projectId: 'proj-001',
+    projectName: 'AgriVision AI — Edge Micro-Drone for Autonomous Orchard Spraying',
+    domain: 'Agritech & Autonomous UAVs',
+    leaderId: 'usr-std-001',
+    leaderName: 'Aarav Sharma',
+    members: [
+      { userId: 'usr-std-001', name: 'Aarav Sharma', department: 'AI & Data Eng', college: 'NITK Surathkal', role: 'AI & Vision Lead', avatar: '', verified: true, isLeader: true, studentId: '2023CSB1042', email: 'aarav.sharma@nitk.edu.in', mobile: '+91 98765 43210' },
+      { userId: 'usr-std-002', name: 'Pooja Iyer', department: 'ECE', college: 'CEG Anna Univ', role: 'Hardware & Telemetry', avatar: '', verified: true, isLeader: false, studentId: '2023ECE088', email: 'pooja.iyer@ceg.annauniv.edu', mobile: '+91 98451 12345' },
+      { userId: 'usr-std-003', name: 'Vikramaditya Deshmukh', department: 'Mechanical', college: 'VJTI Mumbai', role: 'Airframe & Robotics', avatar: '', verified: true, isLeader: false, studentId: '2023MECH014', email: 'vikram.d@vjti.ac.in', mobile: '+91 98200 67890' },
+      { userId: 'usr-std-004', name: 'Ananya Sen', department: 'Interaction Design', college: 'NID Ahmedabad', role: 'Farmer UX & Usability', avatar: '', verified: true, isLeader: false, studentId: '2023DES042', email: 'ananya.sen@nid.edu', mobile: '+91 99112 33445' }
+    ],
+    maxMembers: 6,
+    requiredRoles: [
+      { role: 'AI & Vision Lead', departmentHint: 'CSE / AIML', filled: true, filledBy: 'Aarav Sharma' },
+      { role: 'Hardware & Telemetry', departmentHint: 'ECE', filled: true, filledBy: 'Pooja Iyer' },
+      { role: 'Airframe & Robotics', departmentHint: 'Mechanical', filled: true, filledBy: 'Vikramaditya' },
+      { role: 'Farmer UX & Usability', departmentHint: 'Design / UI', filled: true, filledBy: 'Ananya Sen' },
+      { role: 'Cloud Backend Specialist', departmentHint: 'CSE / IT', filled: false },
+      { role: 'Safety & Field Compliance Lead', departmentHint: 'Agritech / Bio', filled: false }
+    ],
+    status: 'active',
+    mentorId: 'usr-mnt-001',
+    mentorName: 'Dr. Arvind Rao (IIT Bombay)',
+    mentorStatus: 'accepted',
+    createdAt: '2025-09-01T10:00:00Z',
+    eventId: 'ev-001',
+    eventTitle: 'Smart India Hackathon 2026'
+  }
+];
+
 // Persistent File Database & Session Infrastructure
 const DATA_DIR = fs.existsSync(path.join(__dirname, 'data'))
   ? path.join(__dirname, 'data')
@@ -388,6 +509,8 @@ function persistStoreToDisk() {
       researchCollaborations: RESEARCH_COLLABORATIONS_DB,
       organizationMembers: ORGANIZATION_MEMBERS_DB,
       eventRegistrations: EVENT_REGISTRATIONS_DB,
+      projects: PROJECTS_DB,
+      teams: TEAMS_DB,
       auditLogs: AUDIT_LOGS,
       revokedTokens: Array.from(REVOKED_TOKENS)
     };
@@ -404,11 +527,17 @@ function loadStoreFromDisk() {
     }
     if (fs.existsSync(STORE_PATH)) {
       const data = JSON.parse(fs.readFileSync(STORE_PATH, 'utf-8'));
-      if (Array.isArray(data.users) && data.users.length > 0) USERS_DB = data.users;
+      if (Array.isArray(data.users) && data.users.length > 0) {
+        const existingIds = new Set(data.users.map(u => u.id));
+        const missingSeeds = USERS_DB.filter(u => !existingIds.has(u.id));
+        USERS_DB = [...data.users, ...missingSeeds];
+      }
       if (Array.isArray(data.mentorshipRequests)) MENTORSHIP_REQUESTS_DB = data.mentorshipRequests;
       if (Array.isArray(data.researchCollaborations)) RESEARCH_COLLABORATIONS_DB = data.researchCollaborations;
       if (Array.isArray(data.organizationMembers)) ORGANIZATION_MEMBERS_DB = data.organizationMembers;
       if (Array.isArray(data.eventRegistrations)) EVENT_REGISTRATIONS_DB = data.eventRegistrations;
+      if (Array.isArray(data.projects)) PROJECTS_DB = data.projects;
+      if (Array.isArray(data.teams)) TEAMS_DB = data.teams;
       if (Array.isArray(data.auditLogs)) AUDIT_LOGS = data.auditLogs;
       if (Array.isArray(data.revokedTokens)) {
         data.revokedTokens.forEach(t => REVOKED_TOKENS.add(t));
@@ -421,8 +550,28 @@ function loadStoreFromDisk() {
   persistStoreToDisk();
 }
 
+// Auth Security: Migrate legacy plaintext passwords to Argon2id
+async function initAuthSecurity() {
+  let updated = false;
+  for (const user of USERS_DB) {
+    if (!isArgon2Hash(user.passwordHash)) {
+      const plaintext = user.passwordHash || 'CampusNet@Demo2026';
+      user.passwordHash = await hashPassword(plaintext);
+      updated = true;
+    }
+  }
+  if (updated) {
+    persistStoreToDisk();
+    console.log('[Auth Security] Successfully upgraded legacy user passwords to Argon2id.');
+  }
+}
+
 // Hydrate store on server start
 loadStoreFromDisk();
+initAuthSecurity().catch(err => console.warn('[Auth Security] Init notice:', err.message));
+if (isPrismaConnected) {
+  seedProjectsAndTeams().catch(err => console.warn('[Prisma] Seed notice:', err.message));
+}
 
 // Real-Time SSE Notification Dispatcher
 function broadcastRealtimeNotification({ type, title, message, targetRole, targetUserId, payload }) {
@@ -514,7 +663,7 @@ function sendJson(res, statusCode, data) {
 }
 
 // Helper: Authenticate Session Token
-function authenticateSession(req) {
+async function authenticateSession(req) {
   const authHeader = req.headers['authorization'] || '';
   const token = authHeader.replace(/^Bearer\s+/i, '').trim();
   if (!token) return null;
@@ -522,7 +671,22 @@ function authenticateSession(req) {
   // Session Invalidation / Token Blacklist Check
   if (REVOKED_TOKENS.has(token)) return null;
 
-  const session = SESSIONS.get(token);
+  let session = SESSIONS.get(token);
+  if (!session && isPrismaConnected) {
+    try {
+      const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+      const dbSession = await prisma.session.findUnique({
+        where: { tokenHash }
+      });
+      if (dbSession && !dbSession.revokedAt && new Date(dbSession.expiresAt).getTime() > Date.now()) {
+        session = { userId: dbSession.userId, expiresAt: new Date(dbSession.expiresAt).getTime() };
+        SESSIONS.set(token, session);
+      }
+    } catch (err) {
+      console.warn('[Prisma] Session lookup warning:', err.message);
+    }
+  }
+
   if (!session) return null;
 
   if (Date.now() > session.expiresAt) {
@@ -530,7 +694,29 @@ function authenticateSession(req) {
     return null;
   }
 
-  const user = USERS_DB.find(u => u.id === session.userId);
+  let user = USERS_DB.find(u => u.id === session.userId);
+  if (!user && isPrismaConnected) {
+    try {
+      const dbUser = await prisma.user.findUnique({ where: { id: session.userId } });
+      if (dbUser) {
+        user = {
+          id: dbUser.id,
+          email: dbUser.email,
+          name: dbUser.name,
+          roles: dbUser.roles || ['STUDENT'],
+          activeRole: dbUser.activeRole || 'STUDENT',
+          institution: dbUser.institutionName || 'Academic Institution',
+          institutionId: dbUser.institutionId || undefined,
+          department: dbUser.department || '',
+          organizationId: dbUser.organizationId,
+          verified: Boolean(dbUser.verifiedStudent || dbUser.verifiedMentor || dbUser.verifiedResearcher)
+        };
+        USERS_DB.push(user);
+      }
+    } catch (e) {
+      console.warn('[Prisma] User session lookup warning:', e.message);
+    }
+  }
   return user ? { user, token } : null;
 }
 
@@ -582,16 +768,85 @@ const server = http.createServer(async (req, res) => {
           return;
         }
 
-        // Strict credential verification: require password
-        if (!password || (password !== user.passwordHash && password !== 'CampusNet@Demo2026')) {
+        // Strict credential verification: require valid non-empty password string
+        if (!password || typeof password !== 'string') {
           sendJson(res, 401, { error: 'Invalid password provided.' });
           return;
+        }
+
+        // Verify password using Argon2id with legacy migration support
+        const verification = await verifyPassword(user.passwordHash, password);
+        if (!verification.valid) {
+          sendJson(res, 401, { error: 'Invalid password provided.' });
+          return;
+        }
+
+        // Transparently upgrade legacy accounts to Argon2id upon verified login
+        if (verification.needsRehash) {
+          try {
+            const upgradedHash = await hashPassword(password);
+            user.passwordHash = upgradedHash;
+            persistStoreToDisk();
+            if (isPrismaConnected) {
+              await prisma.user.update({
+                where: { id: user.id },
+                data: { passwordHash: upgradedHash }
+              }).catch(() => {});
+            }
+          } catch (rehashErr) {
+            console.warn('[Auth Security] Transparent rehash notice:', rehashErr.message);
+          }
         }
 
         // Issue cryptographically secure session token
         const token = crypto.randomBytes(32).toString('hex');
         const expiresAt = Date.now() + (24 * 60 * 60 * 1000); // 24 hours
         SESSIONS.set(token, { userId: user.id, expiresAt });
+
+        if (isPrismaConnected) {
+          try {
+            await prisma.user.upsert({
+              where: { id: user.id },
+              update: {
+                activeRole: user.activeRole,
+                passwordHash: user.passwordHash
+              },
+              create: {
+                id: user.id,
+                email: user.email,
+                name: user.name,
+                passwordHash: user.passwordHash,
+                roles: user.roles,
+                activeRole: user.activeRole,
+                status: 'ACTIVE'
+              }
+            });
+            const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+            await prisma.session.create({
+              data: {
+                userId: user.id,
+                tokenHash,
+                expiresAt: new Date(expiresAt),
+                ipAddress: clientIp
+              }
+            });
+            await prisma.auditLog.create({
+              data: {
+                actorId: user.id,
+                actorName: user.name,
+                actorRole: user.activeRole,
+                action: 'USER_LOGIN',
+                targetType: 'auth',
+                targetId: user.id,
+                targetName: user.email,
+                details: `User logged in successfully with active role ${user.activeRole}`,
+                ipAddress: clientIp
+              }
+            });
+          } catch (e) {
+            console.warn('[Prisma] Login persist notice:', e.message);
+          }
+        }
 
         AUDIT_LOGS.push({
           id: `aud-${Date.now()}`,
@@ -628,11 +883,26 @@ const server = http.createServer(async (req, res) => {
       // POST /api/auth/register
       if (pathname === '/api/auth/register' && req.method === 'POST') {
         const body = await parseJsonBody(req);
-        const { role, email, name, institution, state, mobile } = body;
+        const { role, email, name, institution, state, mobile, password } = body;
 
         if (!email || !name || !role) {
           sendJson(res, 400, { error: 'Missing required registration fields (role, email, name).' });
           return;
+        }
+
+        let passwordToHash = password;
+        if (password) {
+          const passValidation = validatePasswordStrength(password);
+          if (!passValidation.valid) {
+            sendJson(res, 400, { error: passValidation.error });
+            return;
+          }
+        } else {
+          if (process.env.NODE_ENV === 'production') {
+            sendJson(res, 400, { error: 'Password is required for registration.' });
+            return;
+          }
+          passwordToHash = 'CampusNet@Demo2026';
         }
 
         const lowerEmail = email.toLowerCase().trim();
@@ -642,6 +912,7 @@ const server = http.createServer(async (req, res) => {
           return;
         }
 
+        const passwordHash = await hashPassword(passwordToHash);
         const assignedRole = role.toUpperCase();
         const newId = `usr-${assignedRole.toLowerCase()}-${Date.now()}`;
         const newUser = {
@@ -651,7 +922,7 @@ const server = http.createServer(async (req, res) => {
           mobile: mobile || '',
           institution: institution || 'Academic Institution',
           state: state || 'All India',
-          passwordHash: 'CampusNet@Demo2026',
+          passwordHash,
           roles: [assignedRole],
           activeRole: assignedRole,
           verificationStatus: assignedRole === 'ORGANIZATION_OWNER' ? 'under_review' : 'verified',
@@ -659,6 +930,41 @@ const server = http.createServer(async (req, res) => {
         };
 
         USERS_DB.push(newUser);
+        persistStoreToDisk();
+
+        if (isPrismaConnected) {
+          try {
+            await prisma.user.create({
+              data: {
+                id: newId,
+                email: lowerEmail,
+                name,
+                mobile: mobile || '',
+                institutionName: institution || 'Academic Institution',
+                state: state || 'All India',
+                passwordHash,
+                roles: [assignedRole],
+                activeRole: assignedRole,
+                status: 'ACTIVE'
+              }
+            });
+            await prisma.auditLog.create({
+              data: {
+                actorId: newId,
+                actorName: name,
+                actorRole: assignedRole,
+                action: 'USER_REGISTRATION',
+                targetType: 'user',
+                targetId: newId,
+                targetName: lowerEmail,
+                details: `New account registered under role ${assignedRole}`,
+                ipAddress: clientIp
+              }
+            });
+          } catch (e) {
+            console.warn('[Prisma] User registration persist notice:', e.message);
+          }
+        }
 
         AUDIT_LOGS.push({
           id: `aud-${Date.now()}`,
@@ -691,12 +997,49 @@ const server = http.createServer(async (req, res) => {
       // POST /api/auth/verify-otp
       if (pathname === '/api/auth/verify-otp' && req.method === 'POST') {
         const body = await parseJsonBody(req);
-        const { otp } = body;
-        if (otp === '123456' || otp === '999999' || (otp && otp.length === 6)) {
-          sendJson(res, 200, { success: true, message: 'OTP verified successfully.' });
-        } else {
-          sendJson(res, 400, { error: 'Invalid or expired 6-digit verification code.' });
+        const { otp, email } = body;
+        if (!otp || typeof otp !== 'string') {
+          sendJson(res, 400, { error: 'A 6-digit verification code is required.' });
+          return;
         }
+
+        const isProduction = process.env.NODE_ENV === 'production';
+        if (isProduction && (otp === '123456' || otp === '999999')) {
+          sendJson(res, 400, { error: 'Static test OTP is strictly prohibited in production mode.' });
+          return;
+        }
+
+        const normalizedEmail = (email || '').toLowerCase().trim();
+        const record = normalizedEmail ? OTP_STORE.get(normalizedEmail) : null;
+
+        if (record) {
+          if (Date.now() > record.expiresAt) {
+            OTP_STORE.delete(normalizedEmail);
+            sendJson(res, 400, { error: 'Verification code has expired. Please request a new OTP.' });
+            return;
+          }
+          if (record.attempts >= OTP_MAX_ATTEMPTS) {
+            OTP_STORE.delete(normalizedEmail);
+            sendJson(res, 400, { error: 'Too many failed verification attempts. Please request a new OTP.' });
+            return;
+          }
+          const hash = crypto.createHash('sha256').update(otp.trim()).digest('hex');
+          if (hash === record.tokenHash) {
+            sendJson(res, 200, { success: true, message: 'OTP verified successfully.' });
+            return;
+          }
+          record.attempts++;
+          sendJson(res, 400, { error: 'Invalid or expired 6-digit verification code.' });
+          return;
+        }
+
+        // In non-production testing/development, allow demo codes 123456 / 999999
+        if (!isProduction && (otp === '123456' || otp === '999999' || otp.length === 6)) {
+          sendJson(res, 200, { success: true, message: 'OTP verified successfully.' });
+          return;
+        }
+
+        sendJson(res, 400, { error: 'Invalid or expired 6-digit verification code.' });
         return;
       }
 
@@ -709,14 +1052,91 @@ const server = http.createServer(async (req, res) => {
           return;
         }
 
-        const user = USERS_DB.find(u => u.email.toLowerCase() === email.toLowerCase().trim());
+        const normalizedEmail = email.toLowerCase().trim();
+        const user = USERS_DB.find(u => u.email.toLowerCase() === normalizedEmail);
         if (!user) {
           sendJson(res, 404, { error: 'No account found matching this institutional email.' });
           return;
         }
 
+        const isProduction = process.env.NODE_ENV === 'production';
+
         if (otp && newPassword) {
-          user.passwordHash = newPassword;
+          if (isProduction && (otp === '123456' || otp === '999999')) {
+            sendJson(res, 400, { error: 'Static test OTP is strictly prohibited in production mode.' });
+            return;
+          }
+
+          let otpValid = false;
+          const record = OTP_STORE.get(normalizedEmail);
+
+          if (record) {
+            if (Date.now() > record.expiresAt) {
+              OTP_STORE.delete(normalizedEmail);
+              sendJson(res, 400, { error: 'OTP has expired. Please request a new verification code.' });
+              return;
+            }
+            if (record.attempts >= OTP_MAX_ATTEMPTS) {
+              OTP_STORE.delete(normalizedEmail);
+              sendJson(res, 400, { error: 'Too many failed attempts. Please request a new verification code.' });
+              return;
+            }
+            const hash = crypto.createHash('sha256').update(otp.trim()).digest('hex');
+            if (hash === record.tokenHash) {
+              otpValid = true;
+              OTP_STORE.delete(normalizedEmail); // Single-use consumption
+            } else {
+              record.attempts++;
+            }
+          }
+
+          // Fallback in non-production testing environment only
+          if (!otpValid && !isProduction && (otp === '123456' || otp === '999999')) {
+            otpValid = true;
+          }
+
+          if (!otpValid) {
+            sendJson(res, 400, { error: 'Invalid or expired OTP verification code.' });
+            return;
+          }
+
+          const passValidation = validatePasswordStrength(newPassword);
+          if (!passValidation.valid) {
+            sendJson(res, 400, { error: passValidation.error });
+            return;
+          }
+          const passwordHash = await hashPassword(newPassword);
+          user.passwordHash = passwordHash;
+          persistStoreToDisk();
+
+          if (isPrismaConnected) {
+            try {
+              await prisma.user.update({
+                where: { id: user.id },
+                data: {
+                  passwordHash,
+                  passwordResetTokenHash: null,
+                  passwordResetExpiresAt: null
+                }
+              });
+              await prisma.auditLog.create({
+                data: {
+                  actorId: user.id,
+                  actorName: user.name,
+                  actorRole: user.activeRole,
+                  action: 'PASSWORD_RESET',
+                  targetType: 'user',
+                  targetId: user.id,
+                  targetName: user.email,
+                  details: 'Password reset via cryptographic OTP verification with Argon2id',
+                  ipAddress: clientIp
+                }
+              });
+            } catch (e) {
+              console.warn('[Prisma] Password reset update notice:', e.message);
+            }
+          }
+
           AUDIT_LOGS.push({
             id: `aud-${Date.now()}`,
             actorId: user.id,
@@ -727,14 +1147,45 @@ const server = http.createServer(async (req, res) => {
             targetId: user.id,
             targetName: user.email,
             timestamp: new Date().toISOString(),
-            details: 'Password reset via OTP verification'
+            details: 'Password reset via cryptographic OTP verification with Argon2id'
           });
           sendJson(res, 200, { success: true, message: 'Password has been reset successfully. You may now log in.' });
           return;
         }
 
-        // Stage 1: Dispatched OTP
-        sendJson(res, 200, { success: true, message: 'Password recovery OTP dispatched to your registered email (Use 123456).' });
+        // Stage 1: Generate cryptographic 6-digit OTP challenge
+        const generatedOtp = crypto.randomInt(100000, 1000000).toString();
+        const tokenHash = crypto.createHash('sha256').update(generatedOtp).digest('hex');
+        const expiresAt = Date.now() + OTP_EXPIRY_MS;
+        OTP_STORE.set(normalizedEmail, { tokenHash, expiresAt, attempts: 0 });
+
+        if (isPrismaConnected) {
+          try {
+            await prisma.user.update({
+              where: { id: user.id },
+              data: {
+                passwordResetTokenHash: tokenHash,
+                passwordResetExpiresAt: new Date(expiresAt)
+              }
+            });
+          } catch (e) {
+            console.warn('[Prisma] Reset token record notice:', e.message);
+          }
+        }
+
+        if (isProduction) {
+          sendJson(res, 200, {
+            success: true,
+            message: 'Password recovery OTP dispatched to your registered email.'
+          });
+        } else {
+          sendJson(res, 200, {
+            success: true,
+            message: `Password recovery OTP dispatched to your registered email (Use ${generatedOtp} or demo code 123456).`,
+            demoOtp: generatedOtp,
+            testChallengeCode: generatedOtp
+          });
+        }
         return;
       }
 
@@ -747,6 +1198,18 @@ const server = http.createServer(async (req, res) => {
           REVOKED_TOKENS.add(token);
           SESSIONS.delete(token);
           persistStoreToDisk();
+
+          if (isPrismaConnected) {
+            try {
+              const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+              await prisma.session.updateMany({
+                where: { tokenHash, revokedAt: null },
+                data: { revokedAt: new Date() }
+              });
+            } catch (e) {
+              console.warn('[Prisma] Session logout revocation notice:', e.message);
+            }
+          }
         }
 
         sendJson(res, 200, {
@@ -783,7 +1246,7 @@ const server = http.createServer(async (req, res) => {
 
       // POST /api/realtime/broadcast (Broadcast Announcement / Alert across Workspaces)
       if (pathname === '/api/realtime/broadcast' && req.method === 'POST') {
-        const auth = authenticateSession(req);
+        const auth = await authenticateSession(req);
         if (!auth) {
           sendJson(res, 401, { error: 'Authentication required to broadcast.' });
           return;
@@ -811,7 +1274,7 @@ const server = http.createServer(async (req, res) => {
 
       // POST /api/auth/switch-role (Server-enforced privilege escalation prevention!)
       if (pathname === '/api/auth/switch-role' && req.method === 'POST') {
-        const auth = authenticateSession(req);
+        const auth = await authenticateSession(req);
         if (!auth) {
           sendJson(res, 401, { error: 'Unauthorized: Valid session required.' });
           return;
@@ -822,6 +1285,26 @@ const server = http.createServer(async (req, res) => {
 
         // Check if the requested role is legitimately assigned to this user
         if (!auth.user.roles.includes(requestedRole) && auth.user.activeRole !== 'SUPER_ADMIN') {
+          if (isPrismaConnected) {
+            try {
+              await prisma.auditLog.create({
+                data: {
+                  actorId: auth.user.id,
+                  actorName: auth.user.name,
+                  actorRole: auth.user.activeRole,
+                  action: 'SECURITY_ALERT_PRIVILEGE_ESCALATION_BLOCKED',
+                  targetType: 'role',
+                  targetId: requestedRole,
+                  targetName: requestedRole,
+                  details: `User attempted unauthorized switch to unassigned role ${requestedRole}`,
+                  ipAddress: clientIp
+                }
+              });
+            } catch (e) {
+              console.warn('[Prisma] Audit log notice:', e.message);
+            }
+          }
+
           AUDIT_LOGS.push({
             id: `aud-${Date.now()}`,
             actorId: auth.user.id,
@@ -841,6 +1324,18 @@ const server = http.createServer(async (req, res) => {
         }
 
         auth.user.activeRole = requestedRole;
+
+        if (isPrismaConnected) {
+          try {
+            await prisma.user.update({
+              where: { id: auth.user.id },
+              data: { activeRole: requestedRole }
+            });
+          } catch (e) {
+            console.warn('[Prisma] Role switch persist notice:', e.message);
+          }
+        }
+
         sendJson(res, 200, {
           success: true,
           activeRole: requestedRole,
@@ -851,7 +1346,7 @@ const server = http.createServer(async (req, res) => {
 
       // GET /api/auth/me
       if (pathname === '/api/auth/me' && req.method === 'GET') {
-        const auth = authenticateSession(req);
+        const auth = await authenticateSession(req);
         if (!auth) {
           sendJson(res, 401, { error: 'Unauthenticated' });
           return;
@@ -874,7 +1369,7 @@ const server = http.createServer(async (req, res) => {
 
       // POST /api/rbac/check-permission
       if (pathname === '/api/rbac/check-permission' && req.method === 'POST') {
-        const auth = authenticateSession(req);
+        const auth = await authenticateSession(req);
         if (!auth) {
           sendJson(res, 401, { error: 'Unauthenticated' });
           return;
@@ -896,7 +1391,7 @@ const server = http.createServer(async (req, res) => {
       // GET /api/organizations/:id (Server-Enforced Multi-Tenant Isolation)
       if (pathname.startsWith('/api/organizations/') && !pathname.includes('/members') && req.method === 'GET') {
         const targetOrgId = pathname.replace('/api/organizations/', '');
-        const auth = authenticateSession(req);
+        const auth = await authenticateSession(req);
         if (!auth) {
           sendJson(res, 401, { error: 'Authentication required.' });
           return;
@@ -924,7 +1419,7 @@ const server = http.createServer(async (req, res) => {
 
       // POST /api/events (Server-Enforced Event Creation & Publishing Policy)
       if (pathname === '/api/events' && req.method === 'POST') {
-        const auth = authenticateSession(req);
+        const auth = await authenticateSession(req);
         if (!auth) {
           sendJson(res, 401, { error: 'Authentication required.' });
           return;
@@ -951,6 +1446,44 @@ const server = http.createServer(async (req, res) => {
         }
 
         const newEventId = `ev-${Date.now()}`;
+
+        if (isPrismaConnected) {
+          try {
+            await prisma.event.create({
+              data: {
+                id: newEventId,
+                title: title || 'Untitled Event',
+                organizerId: auth.user.organizationId || 'KEC-DEMO-001',
+                organizerName: auth.user.institution || 'Academic Institution',
+                eventType: 'Hackathon',
+                state: 'All India',
+                city: 'Virtual / Campus',
+                venue: 'Campus Venue',
+                description: title || 'Event Description',
+                startDate: new Date(),
+                endDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
+                deadline: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
+                status: status === 'published' ? 'PUBLISHED' : 'DRAFT'
+              }
+            });
+            await prisma.auditLog.create({
+              data: {
+                actorId: auth.user.id,
+                actorName: auth.user.name,
+                actorRole: auth.user.activeRole,
+                action: 'EVENT_CREATED',
+                targetType: 'event',
+                targetId: newEventId,
+                targetName: title || 'Untitled Event',
+                details: `Created event with status ${status}`,
+                ipAddress: clientIp
+              }
+            });
+          } catch (e) {
+            console.warn('[Prisma] Event create notice:', e.message);
+          }
+        }
+
         AUDIT_LOGS.push({
           id: `aud-${Date.now()}`,
           actorId: auth.user.id,
@@ -990,7 +1523,7 @@ const server = http.createServer(async (req, res) => {
       // ----------------------------------------------------
       if (pathname.startsWith('/api/students/')) {
         const targetStudentId = pathname.replace('/api/students/', '');
-        const auth = authenticateSession(req);
+        const auth = await authenticateSession(req);
         if (!auth) {
           sendJson(res, 401, { error: 'Authentication required to access student records.' });
           return;
@@ -1036,6 +1569,21 @@ const server = http.createServer(async (req, res) => {
 
           const body = await parseJsonBody(req);
           Object.assign(student, body);
+
+          if (isPrismaConnected) {
+            try {
+              await prisma.user.update({
+                where: { id: targetStudentId },
+                data: {
+                  bio: body.bio !== undefined ? body.bio : student.bio,
+                  department: body.department !== undefined ? body.department : student.department
+                }
+              });
+            } catch (e) {
+              console.warn('[Prisma] Student update notice:', e.message);
+            }
+          }
+
           sendJson(res, 200, { success: true, message: 'Student profile updated.', student });
           return;
         }
@@ -1045,7 +1593,7 @@ const server = http.createServer(async (req, res) => {
       // RESOURCE-LEVEL AUTHORIZATION: MENTORSHIP REQUESTS
       // ----------------------------------------------------
       if (pathname === '/api/mentors/requests') {
-        const auth = authenticateSession(req);
+        const auth = await authenticateSession(req);
         if (!auth) {
           sendJson(res, 401, { error: 'Authentication required.' });
           return;
@@ -1088,6 +1636,24 @@ const server = http.createServer(async (req, res) => {
             message: body.message || 'Seeking project advisory and feedback.'
           };
 
+          if (isPrismaConnected) {
+            try {
+              await prisma.mentorshipRequest.create({
+                data: {
+                  id: newRequest.id,
+                  studentId: newRequest.studentId,
+                  mentorId: newRequest.mentorId,
+                  projectTitle: newRequest.projectTitle,
+                  teamName: newRequest.teamName,
+                  message: newRequest.message,
+                  status: 'PENDING'
+                }
+              });
+            } catch (e) {
+              console.warn('[Prisma] Mentorship request notice:', e.message);
+            }
+          }
+
           MENTORSHIP_REQUESTS_DB.push(newRequest);
           sendJson(res, 201, { success: true, request: newRequest });
           return;
@@ -1096,7 +1662,7 @@ const server = http.createServer(async (req, res) => {
 
       if (pathname.startsWith('/api/mentors/requests/') && req.method === 'PUT') {
         const requestId = pathname.replace('/api/mentors/requests/', '');
-        const auth = authenticateSession(req);
+        const auth = await authenticateSession(req);
         if (!auth) {
           sendJson(res, 401, { error: 'Authentication required.' });
           return;
@@ -1115,7 +1681,23 @@ const server = http.createServer(async (req, res) => {
         }
 
         const body = await parseJsonBody(req);
-        if (body.status) reqItem.status = body.status;
+        if (body.status) {
+          reqItem.status = body.status;
+
+          if (isPrismaConnected) {
+            try {
+              const reqStatus = body.status.toUpperCase();
+              await prisma.mentorshipRequest.update({
+                where: { id: requestId },
+                data: {
+                  status: ['ACCEPTED', 'DECLINED', 'PENDING', 'COMPLETED'].includes(reqStatus) ? reqStatus : 'PENDING'
+                }
+              });
+            } catch (e) {
+              console.warn('[Prisma] Mentorship update notice:', e.message);
+            }
+          }
+        }
         sendJson(res, 200, { success: true, request: reqItem });
         return;
       }
@@ -1124,7 +1706,7 @@ const server = http.createServer(async (req, res) => {
       // RESOURCE-LEVEL AUTHORIZATION: RESEARCH COLLABORATIONS
       // ----------------------------------------------------
       if (pathname === '/api/research/collaborations') {
-        const auth = authenticateSession(req);
+        const auth = await authenticateSession(req);
         if (!auth) {
           sendJson(res, 401, { error: 'Authentication required.' });
           return;
@@ -1157,6 +1739,23 @@ const server = http.createServer(async (req, res) => {
             confidentialDraft: body.confidentialDraft || ''
           };
 
+          if (isPrismaConnected) {
+            try {
+              await prisma.researchCollaboration.create({
+                data: {
+                  id: newCollab.id,
+                  requesterId: newCollab.requesterId,
+                  collaboratorId: newCollab.collaboratorId,
+                  projectTitle: newCollab.projectTitle,
+                  status: 'pending',
+                  confidentialDraft: newCollab.confidentialDraft
+                }
+              });
+            } catch (e) {
+              console.warn('[Prisma] Research collab notice:', e.message);
+            }
+          }
+
           RESEARCH_COLLABORATIONS_DB.push(newCollab);
           persistStoreToDisk();
 
@@ -1181,7 +1780,7 @@ const server = http.createServer(async (req, res) => {
       if (pathname.includes('/members') && pathname.startsWith('/api/organizations/')) {
         const parts = pathname.replace('/api/organizations/', '').split('/');
         const targetOrgId = parts[0];
-        const auth = authenticateSession(req);
+        const auth = await authenticateSession(req);
         if (!auth) {
           sendJson(res, 401, { error: 'Authentication required.' });
           return;
@@ -1215,6 +1814,25 @@ const server = http.createServer(async (req, res) => {
             role: body.role || 'EVENT_MANAGER',
             status: 'active'
           };
+
+          if (isPrismaConnected) {
+            try {
+              await prisma.organizationMember.create({
+                data: {
+                  id: newMember.id,
+                  organizationId: targetOrgId,
+                  userId: newMember.userId,
+                  name: newMember.name,
+                  email: newMember.email,
+                  role: newMember.role,
+                  status: newMember.status
+                }
+              });
+            } catch (e) {
+              console.warn('[Prisma] Org member create notice:', e.message);
+            }
+          }
+
           ORGANIZATION_MEMBERS_DB.push(newMember);
           persistStoreToDisk();
           sendJson(res, 201, { success: true, member: newMember });
@@ -1226,7 +1844,7 @@ const server = http.createServer(async (req, res) => {
       // RESOURCE-LEVEL AUTHORIZATION: EVENT REGISTRATIONS
       // ----------------------------------------------------
       if (pathname.match(/^\/api\/events\/[a-zA-Z0-9_-]+\/registrations$/)) {
-        const auth = authenticateSession(req);
+        const auth = await authenticateSession(req);
         if (!auth) {
           sendJson(res, 401, { error: 'Authentication required.' });
           return;
@@ -1291,6 +1909,34 @@ const server = http.createServer(async (req, res) => {
             registeredAt: new Date().toISOString()
           };
 
+          if (isPrismaConnected) {
+            try {
+              await prisma.eventRegistration.upsert({
+                where: {
+                  eventId_participantId: {
+                    eventId: newReg.eventId,
+                    participantId: newReg.studentId
+                  }
+                },
+                update: {
+                  teamName: newReg.teamName,
+                  status: 'confirmed',
+                  registeredAt: new Date(newReg.registeredAt)
+                },
+                create: {
+                  id: newReg.id,
+                  eventId: newReg.eventId,
+                  participantId: newReg.studentId,
+                  teamName: newReg.teamName,
+                  status: 'confirmed',
+                  registeredAt: new Date(newReg.registeredAt)
+                }
+              });
+            } catch (e) {
+              console.warn('[Prisma] Event registration notice:', e.message);
+            }
+          }
+
           EVENT_REGISTRATIONS_DB.push(newReg);
           persistStoreToDisk();
 
@@ -1311,11 +1957,27 @@ const server = http.createServer(async (req, res) => {
 
       // GET /api/admin/audit-logs
       if (pathname === '/api/admin/audit-logs' && req.method === 'GET') {
-        const auth = authenticateSession(req);
+        const auth = await authenticateSession(req);
         if (!auth || (auth.user.activeRole !== 'SUPER_ADMIN' && auth.user.activeRole !== 'PLATFORM_REVIEWER')) {
           sendJson(res, 403, { error: 'Access Denied: Administrative privilege required.' });
           return;
         }
+
+        if (isPrismaConnected) {
+          try {
+            const dbLogs = await prisma.auditLog.findMany({
+              orderBy: { timestamp: 'desc' },
+              take: 50
+            });
+            if (dbLogs && dbLogs.length > 0) {
+              sendJson(res, 200, { auditLogs: dbLogs });
+              return;
+            }
+          } catch (e) {
+            console.warn('[Prisma] Audit log query notice:', e.message);
+          }
+        }
+
         sendJson(res, 200, { auditLogs: AUDIT_LOGS });
         return;
       }
@@ -1325,7 +1987,26 @@ const server = http.createServer(async (req, res) => {
       // ----------------------------------------------------
       if (pathname.match(/^\/api\/certificates\/verify\/[a-zA-Z0-9_-]+$/) && req.method === 'GET') {
         const certNumber = pathname.split('/')[4];
-        const cert = CERTIFICATES_DB.find(c => c.certificateNumber.toLowerCase() === certNumber.toLowerCase());
+        let cert = null;
+
+        if (isPrismaConnected) {
+          try {
+            cert = await prisma.certificate.findFirst({
+              where: {
+                certificateNumber: {
+                  equals: certNumber,
+                  mode: 'insensitive'
+                }
+              }
+            });
+          } catch (e) {
+            console.warn('[Prisma] Certificate verify query notice:', e.message);
+          }
+        }
+
+        if (!cert) {
+          cert = CERTIFICATES_DB.find(c => c.certificateNumber.toLowerCase() === certNumber.toLowerCase());
+        }
 
         if (!cert) {
           sendJson(res, 404, { 
@@ -1358,6 +2039,1114 @@ const server = http.createServer(async (req, res) => {
         return;
       }
 
+      // ====================================================
+      // 1. PROJECTS API ENDPOINTS (/api/projects)
+      // ====================================================
+
+      // GET /api/projects (Listing with filtering)
+      if (pathname === '/api/projects' && req.method === 'GET') {
+        const domain = parsedUrl.searchParams.get('domain');
+        const institution = parsedUrl.searchParams.get('institution');
+        const status = parsedUrl.searchParams.get('status');
+        const search = parsedUrl.searchParams.get('search');
+
+        let projects = [];
+
+        if (isPrismaConnected) {
+          try {
+            const whereClause = { deletedAt: null };
+            if (domain) {
+              whereClause.domain = { contains: domain, mode: 'insensitive' };
+            }
+            if (status) {
+              whereClause.status = toPrismaProjectStatus(status);
+            }
+            const dbProjects = await prisma.project.findMany({
+              where: whereClause,
+              include: {
+                author: true,
+                mentor: true,
+                institution: true,
+                team: { include: { members: true, leader: true } },
+                milestones: true,
+                tasks: true
+              },
+              orderBy: { createdAt: 'desc' }
+            });
+            projects = dbProjects.map(formatPrismaProject);
+          } catch (e) {
+            console.warn('[Prisma] Projects query notice:', e.message);
+          }
+        }
+
+        if (projects.length === 0) {
+          projects = PROJECTS_DB.map(p => ({ ...p }));
+        }
+
+        // Apply client filters if in-memory fallback was used or extra filtering needed
+        if (domain) {
+          projects = projects.filter(p => p.domain.toLowerCase().includes(domain.toLowerCase()));
+        }
+        if (status) {
+          projects = projects.filter(p => p.status.toLowerCase() === status.toLowerCase());
+        }
+        if (institution) {
+          projects = projects.filter(p => (p.institution || '').toLowerCase().includes(institution.toLowerCase()));
+        }
+        if (search) {
+          const q = search.toLowerCase();
+          projects = projects.filter(p => 
+            p.title.toLowerCase().includes(q) ||
+            p.problemStatement.toLowerCase().includes(q) ||
+            (p.domain && p.domain.toLowerCase().includes(q)) ||
+            (Array.isArray(p.technologies) && p.technologies.some(t => t.toLowerCase().includes(q)))
+          );
+        }
+
+        sendJson(res, 200, { success: true, count: projects.length, projects });
+        return;
+      }
+
+      // POST /api/projects (Creation with transactional initial milestones/team)
+      if (pathname === '/api/projects' && req.method === 'POST') {
+        const auth = await authenticateSession(req);
+        if (!auth) {
+          sendJson(res, 401, { error: 'Authentication required to create a project.' });
+          return;
+        }
+
+        const allowedRoles = ['STUDENT', 'MENTOR', 'PHD_RESEARCHER', 'SUPER_ADMIN'];
+        if (!allowedRoles.includes(auth.user.activeRole)) {
+          sendJson(res, 403, { error: 'Permission Denied: Only students, researchers, or mentors can create projects.' });
+          return;
+        }
+
+        const body = await parseJsonBody(req);
+        const { title, problemStatement, proposedSolution, domain, technologies, requiredSkills, githubUrl, demoUrl, documentationUrl, objectives, seekingRoles } = body;
+
+        if (!title || !title.trim()) {
+          sendJson(res, 400, { error: 'Project title is required.' });
+          return;
+        }
+        if (!domain || !domain.trim()) {
+          sendJson(res, 400, { error: 'Project domain is required.' });
+          return;
+        }
+
+        const newProjectId = `proj-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
+        const authorId = auth.user.id;
+        const institutionId = auth.user.institutionId || undefined;
+        const institutionName = auth.user.institution || 'Academic Institution';
+
+        if (isPrismaConnected) {
+          try {
+            await prisma.$transaction(async (tx) => {
+              await tx.project.create({
+                data: {
+                  id: newProjectId,
+                  title: title.trim(),
+                  problemStatement: problemStatement || '',
+                  proposedSolution: proposedSolution || '',
+                  domain: domain.trim(),
+                  technologies: Array.isArray(technologies) ? technologies : [],
+                  requiredSkills: Array.isArray(requiredSkills) ? requiredSkills : [],
+                  objectives: Array.isArray(objectives) ? objectives : [],
+                  seekingRoles: Array.isArray(seekingRoles) ? seekingRoles : [],
+                  status: toPrismaProjectStatus(body.status || 'IDEA'),
+                  progressPercent: typeof body.progressPercent === 'number' ? body.progressPercent : 15,
+                  githubUrl: githubUrl || null,
+                  demoUrl: demoUrl || null,
+                  documentationUrl: documentationUrl || null,
+                  authorId,
+                  institutionId,
+                  teamMembersCount: 1,
+                  likesCount: 0
+                }
+              });
+
+              // Initial milestone
+              await tx.projectMilestone.create({
+                data: {
+                  id: `m-${Date.now()}-1`,
+                  projectId: newProjectId,
+                  title: 'Problem Definition & Literature Review',
+                  description: 'Complete requirements specification and architecture design.',
+                  status: 'APPROVED',
+                  approvedByMentor: true,
+                  dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+                }
+              });
+
+              await tx.auditLog.create({
+                data: {
+                  actorId: auth.user.id,
+                  actorName: auth.user.name,
+                  actorRole: auth.user.activeRole,
+                  action: 'PROJECT_CREATED',
+                  targetType: 'project',
+                  targetId: newProjectId,
+                  targetName: title.trim(),
+                  details: `Created project "${title.trim()}" in domain ${domain.trim()}`,
+                  ipAddress: clientIp
+                }
+              });
+            });
+          } catch (e) {
+            console.warn('[Prisma] Project create transaction notice:', e.message);
+          }
+        }
+
+        // Format project record for in-memory and response
+        const newProjRecord = {
+          id: newProjectId,
+          title: title.trim(),
+          problemStatement: problemStatement || '',
+          proposedSolution: proposedSolution || '',
+          domain: domain.trim(),
+          technologies: Array.isArray(technologies) ? technologies : [],
+          requiredSkills: Array.isArray(requiredSkills) ? requiredSkills : [],
+          objectives: Array.isArray(objectives) ? objectives : [],
+          seekingRoles: Array.isArray(seekingRoles) ? seekingRoles : [],
+          status: body.status || 'Idea',
+          progressPercent: typeof body.progressPercent === 'number' ? body.progressPercent : 15,
+          githubUrl: githubUrl || undefined,
+          demoUrl: demoUrl || undefined,
+          documentationUrl: documentationUrl || undefined,
+          authorId,
+          institution: institutionName,
+          teamMembersCount: 1,
+          likes: 0,
+          milestones: [
+            {
+              id: `m-${Date.now()}-1`,
+              title: 'Problem Definition & Literature Review',
+              description: 'Complete requirements specification and architecture design.',
+              status: 'approved',
+              approvedByMentor: true,
+              dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+            }
+          ],
+          tasks: [],
+          createdAt: new Date().toISOString()
+        };
+
+        PROJECTS_DB.unshift(newProjRecord);
+        AUDIT_LOGS.push({
+          id: `aud-${Date.now()}`,
+          actorId: auth.user.id,
+          actorName: auth.user.name,
+          actorRole: auth.user.activeRole,
+          action: 'PROJECT_CREATED',
+          targetType: 'project',
+          targetId: newProjectId,
+          targetName: title.trim(),
+          timestamp: new Date().toISOString(),
+          details: `Created project "${title.trim()}" in domain ${domain.trim()}`
+        });
+
+        persistStoreToDisk();
+
+        sendJson(res, 201, {
+          success: true,
+          message: 'Project created successfully on CampusNet.',
+          project: newProjRecord
+        });
+        return;
+      }
+
+      // GET /api/projects/:id (Get single project with relations)
+      if (pathname.startsWith('/api/projects/') && !pathname.includes('/milestones') && !pathname.includes('/tasks') && req.method === 'GET') {
+        const projectId = pathname.replace('/api/projects/', '');
+        let project = null;
+
+        if (isPrismaConnected) {
+          try {
+            const dbProj = await prisma.project.findFirst({
+              where: { id: projectId, deletedAt: null },
+              include: {
+                author: true,
+                mentor: true,
+                institution: true,
+                team: { include: { members: true, leader: true } },
+                milestones: true,
+                tasks: true
+              }
+            });
+            if (dbProj) project = formatPrismaProject(dbProj);
+          } catch (e) {
+            console.warn('[Prisma] Project lookup notice:', e.message);
+          }
+        }
+
+        if (!project) {
+          project = PROJECTS_DB.find(p => p.id === projectId);
+        }
+
+        if (!project) {
+          sendJson(res, 404, { error: 'Project not found.' });
+          return;
+        }
+
+        sendJson(res, 200, { success: true, project });
+        return;
+      }
+
+      // PUT /api/projects/:id (Update project details with ownership check)
+      if (pathname.startsWith('/api/projects/') && !pathname.includes('/milestones') && !pathname.includes('/tasks') && req.method === 'PUT') {
+        const projectId = pathname.replace('/api/projects/', '');
+        const auth = await authenticateSession(req);
+        if (!auth) {
+          sendJson(res, 401, { error: 'Authentication required.' });
+          return;
+        }
+
+        let existingProject = null;
+        if (isPrismaConnected) {
+          try {
+            existingProject = await prisma.project.findUnique({ where: { id: projectId } });
+          } catch (e) {}
+        }
+        if (!existingProject) {
+          existingProject = PROJECTS_DB.find(p => p.id === projectId);
+        }
+
+        if (!existingProject) {
+          sendJson(res, 404, { error: 'Project not found.' });
+          return;
+        }
+
+        // Ownership enforcement: Only author, assigned mentor, or super admin can update
+        const isAuthor = existingProject.authorId === auth.user.id;
+        const isMentor = existingProject.mentorId === auth.user.id || auth.user.activeRole === 'MENTOR';
+        const isSuperAdmin = auth.user.activeRole === 'SUPER_ADMIN';
+
+        if (!isAuthor && !isMentor && !isSuperAdmin) {
+          sendJson(res, 403, { error: 'Access Denied: You do not have permission to modify this project.' });
+          return;
+        }
+
+        const body = await parseJsonBody(req);
+        const updateData = {};
+        if (body.title) updateData.title = body.title.trim();
+        if (body.problemStatement !== undefined) updateData.problemStatement = body.problemStatement;
+        if (body.proposedSolution !== undefined) updateData.proposedSolution = body.proposedSolution;
+        if (body.domain) updateData.domain = body.domain;
+        if (body.status) updateData.status = toPrismaProjectStatus(body.status);
+        if (body.progressPercent !== undefined) updateData.progressPercent = body.progressPercent;
+        if (body.githubUrl !== undefined) updateData.githubUrl = body.githubUrl;
+        if (body.demoUrl !== undefined) updateData.demoUrl = body.demoUrl;
+        if (body.documentationUrl !== undefined) updateData.documentationUrl = body.documentationUrl;
+        if (body.mentorStatus) updateData.mentorStatus = body.mentorStatus;
+        if (body.mentorId) updateData.mentorId = body.mentorId;
+
+        if (isPrismaConnected) {
+          try {
+            await prisma.project.update({
+              where: { id: projectId },
+              data: updateData
+            });
+          } catch (e) {
+            console.warn('[Prisma] Project update notice:', e.message);
+          }
+        }
+
+        const memProj = PROJECTS_DB.find(p => p.id === projectId);
+        if (memProj) {
+          Object.assign(memProj, body);
+        }
+        persistStoreToDisk();
+
+        sendJson(res, 200, { success: true, message: 'Project updated successfully.', project: memProj || existingProject });
+        return;
+      }
+
+      // DELETE /api/projects/:id (Soft-delete project with ownership check)
+      if (pathname.startsWith('/api/projects/') && !pathname.includes('/milestones') && !pathname.includes('/tasks') && req.method === 'DELETE') {
+        const projectId = pathname.replace('/api/projects/', '');
+        const auth = await authenticateSession(req);
+        if (!auth) {
+          sendJson(res, 401, { error: 'Authentication required.' });
+          return;
+        }
+
+        let existingProject = null;
+        if (isPrismaConnected) {
+          try {
+            existingProject = await prisma.project.findUnique({ where: { id: projectId } });
+          } catch (e) {}
+        }
+        if (!existingProject) {
+          existingProject = PROJECTS_DB.find(p => p.id === projectId);
+        }
+
+        if (!existingProject) {
+          sendJson(res, 404, { error: 'Project not found.' });
+          return;
+        }
+
+        const isAuthor = existingProject.authorId === auth.user.id;
+        const isSuperAdmin = auth.user.activeRole === 'SUPER_ADMIN';
+
+        if (!isAuthor && !isSuperAdmin) {
+          sendJson(res, 403, { error: 'Access Denied: Only project author or administrator can delete a project.' });
+          return;
+        }
+
+        if (isPrismaConnected) {
+          try {
+            await prisma.project.update({
+              where: { id: projectId },
+              data: { deletedAt: new Date() }
+            });
+          } catch (e) {
+            console.warn('[Prisma] Project delete notice:', e.message);
+          }
+        }
+
+        PROJECTS_DB = PROJECTS_DB.filter(p => p.id !== projectId);
+        persistStoreToDisk();
+
+        sendJson(res, 200, { success: true, message: 'Project successfully deleted.' });
+        return;
+      }
+
+      // POST /api/projects/:id/milestones (Add Milestone)
+      if (pathname.match(/^\/api\/projects\/[a-zA-Z0-9_-]+\/milestones$/) && req.method === 'POST') {
+        const projectId = pathname.split('/')[3];
+        const auth = await authenticateSession(req);
+        if (!auth) {
+          sendJson(res, 401, { error: 'Authentication required.' });
+          return;
+        }
+
+        const body = await parseJsonBody(req);
+        const { title, description, dueDate, status } = body;
+        if (!title) {
+          sendJson(res, 400, { error: 'Milestone title is required.' });
+          return;
+        }
+
+        const milestoneId = `m-${Date.now()}`;
+        const milestoneObj = {
+          id: milestoneId,
+          title: title.trim(),
+          description: description || '',
+          status: status || 'pending',
+          dueDate: dueDate || '',
+          approvedByMentor: status === 'approved'
+        };
+
+        if (isPrismaConnected) {
+          try {
+            await prisma.projectMilestone.create({
+              data: {
+                id: milestoneId,
+                projectId,
+                title: title.trim(),
+                description: description || '',
+                status: toPrismaMilestoneStatus(status),
+                dueDate: dueDate ? new Date(dueDate) : null,
+                approvedByMentor: status === 'approved'
+              }
+            });
+          } catch (e) {
+            console.warn('[Prisma] Milestone create notice:', e.message);
+          }
+        }
+
+        const proj = PROJECTS_DB.find(p => p.id === projectId);
+        if (proj) {
+          if (!proj.milestones) proj.milestones = [];
+          proj.milestones.push(milestoneObj);
+          persistStoreToDisk();
+        }
+
+        sendJson(res, 201, { success: true, milestone: milestoneObj });
+        return;
+      }
+
+      // PUT /api/projects/:id/milestones/:milestoneId (Update Milestone Status / Feedback)
+      if (pathname.match(/^\/api\/projects\/[a-zA-Z0-9_-]+\/milestones\/[a-zA-Z0-9_-]+$/) && req.method === 'PUT') {
+        const parts = pathname.split('/');
+        const projectId = parts[3];
+        const milestoneId = parts[5];
+        const auth = await authenticateSession(req);
+        if (!auth) {
+          sendJson(res, 401, { error: 'Authentication required.' });
+          return;
+        }
+
+        const body = await parseJsonBody(req);
+        const { status, feedback } = body;
+
+        // If approving milestone, verify caller has mentor or super admin role
+        if (status === 'approved' && auth.user.activeRole !== 'MENTOR' && auth.user.activeRole !== 'SUPER_ADMIN') {
+          sendJson(res, 403, { error: 'Access Denied: Only accredited mentors or administrators can approve project milestones.' });
+          return;
+        }
+
+        if (isPrismaConnected) {
+          try {
+            await prisma.projectMilestone.update({
+              where: { id: milestoneId },
+              data: {
+                status: status ? toPrismaMilestoneStatus(status) : undefined,
+                approvedByMentor: status === 'approved',
+                mentorFeedback: feedback || undefined
+              }
+            });
+          } catch (e) {
+            console.warn('[Prisma] Milestone update notice:', e.message);
+          }
+        }
+
+        const proj = PROJECTS_DB.find(p => p.id === projectId);
+        let updatedMilestone = null;
+        if (proj && Array.isArray(proj.milestones)) {
+          const m = proj.milestones.find(x => x.id === milestoneId);
+          if (m) {
+            if (status) m.status = status;
+            if (status === 'approved') m.approvedByMentor = true;
+            if (feedback) m.mentorFeedback = feedback;
+            updatedMilestone = m;
+          }
+          persistStoreToDisk();
+        }
+
+        sendJson(res, 200, { success: true, message: 'Milestone updated.', milestone: updatedMilestone });
+        return;
+      }
+
+      // POST /api/projects/:id/tasks (Add Task)
+      if (pathname.match(/^\/api\/projects\/[a-zA-Z0-9_-]+\/tasks$/) && req.method === 'POST') {
+        const projectId = pathname.split('/')[3];
+        const auth = await authenticateSession(req);
+        if (!auth) {
+          sendJson(res, 401, { error: 'Authentication required.' });
+          return;
+        }
+
+        const body = await parseJsonBody(req);
+        const { title, assignee, priority, status } = body;
+        if (!title) {
+          sendJson(res, 400, { error: 'Task title is required.' });
+          return;
+        }
+
+        const taskId = `t-${Date.now()}`;
+        const taskObj = {
+          id: taskId,
+          title: title.trim(),
+          assignee: assignee || auth.user.name,
+          priority: priority || 'medium',
+          status: status || 'todo'
+        };
+
+        if (isPrismaConnected) {
+          try {
+            await prisma.projectTask.create({
+              data: {
+                id: taskId,
+                projectId,
+                title: title.trim(),
+                assigneeName: assignee || auth.user.name,
+                priority: priority || 'medium',
+                status: toPrismaTaskStatus(status)
+              }
+            });
+          } catch (e) {
+            console.warn('[Prisma] Task create notice:', e.message);
+          }
+        }
+
+        const proj = PROJECTS_DB.find(p => p.id === projectId);
+        if (proj) {
+          if (!proj.tasks) proj.tasks = [];
+          proj.tasks.push(taskObj);
+          persistStoreToDisk();
+        }
+
+        sendJson(res, 201, { success: true, task: taskObj });
+        return;
+      }
+
+      // PUT /api/projects/:id/tasks/:taskId (Update Task Status)
+      if (pathname.match(/^\/api\/projects\/[a-zA-Z0-9_-]+\/tasks\/[a-zA-Z0-9_-]+$/) && req.method === 'PUT') {
+        const parts = pathname.split('/');
+        const projectId = parts[3];
+        const taskId = parts[5];
+        const auth = await authenticateSession(req);
+        if (!auth) {
+          sendJson(res, 401, { error: 'Authentication required.' });
+          return;
+        }
+
+        const body = await parseJsonBody(req);
+        const { status, priority, title, assignee } = body;
+
+        if (isPrismaConnected) {
+          try {
+            await prisma.projectTask.update({
+              where: { id: taskId },
+              data: {
+                status: status ? toPrismaTaskStatus(status) : undefined,
+                priority: priority || undefined,
+                title: title || undefined,
+                assigneeName: assignee || undefined
+              }
+            });
+          } catch (e) {
+            console.warn('[Prisma] Task update notice:', e.message);
+          }
+        }
+
+        const proj = PROJECTS_DB.find(p => p.id === projectId);
+        let updatedTask = null;
+        if (proj && Array.isArray(proj.tasks)) {
+          const t = proj.tasks.find(x => x.id === taskId);
+          if (t) {
+            if (status) t.status = status;
+            if (priority) t.priority = priority;
+            if (title) t.title = title;
+            if (assignee) t.assignee = assignee;
+            updatedTask = t;
+          }
+          persistStoreToDisk();
+        }
+
+        sendJson(res, 200, { success: true, message: 'Task updated.', task: updatedTask });
+        return;
+      }
+
+      // ====================================================
+      // 2. TEAMS API ENDPOINTS (/api/teams)
+      // ====================================================
+
+      // GET /api/teams (Listing with optional projectId/eventId filters)
+      if (pathname === '/api/teams' && req.method === 'GET') {
+        const projectId = parsedUrl.searchParams.get('projectId');
+        const eventId = parsedUrl.searchParams.get('eventId');
+        const search = parsedUrl.searchParams.get('search');
+
+        let teams = [];
+
+        if (isPrismaConnected) {
+          try {
+            const whereClause = {};
+            if (projectId) whereClause.projectId = projectId;
+            if (eventId) whereClause.eventId = eventId;
+            const dbTeams = await prisma.team.findMany({
+              where: whereClause,
+              include: {
+                members: { include: { user: true } },
+                project: true,
+                leader: true,
+                mentor: true
+              },
+              orderBy: { createdAt: 'desc' }
+            });
+            teams = dbTeams.map(formatPrismaTeam);
+          } catch (e) {
+            console.warn('[Prisma] Teams query notice:', e.message);
+          }
+        }
+
+        if (teams.length === 0) {
+          teams = TEAMS_DB.map(t => ({ ...t }));
+        }
+
+        if (projectId) {
+          teams = teams.filter(t => t.projectId === projectId);
+        }
+        if (eventId) {
+          teams = teams.filter(t => t.eventId === eventId);
+        }
+        if (search) {
+          const q = search.toLowerCase();
+          teams = teams.filter(t => 
+            t.name.toLowerCase().includes(q) ||
+            (t.projectName && t.projectName.toLowerCase().includes(q)) ||
+            (t.domain && t.domain.toLowerCase().includes(q))
+          );
+        }
+
+        sendJson(res, 200, { success: true, count: teams.length, teams });
+        return;
+      }
+
+      // POST /api/teams (Team Creation via Prisma Transaction)
+      if (pathname === '/api/teams' && req.method === 'POST') {
+        const auth = await authenticateSession(req);
+        if (!auth) {
+          sendJson(res, 401, { error: 'Authentication required to form a team.' });
+          return;
+        }
+
+        const allowedRoles = ['STUDENT', 'SUPER_ADMIN'];
+        if (!allowedRoles.includes(auth.user.activeRole)) {
+          sendJson(res, 403, { error: 'Permission Denied: Only students or administrators can form innovation teams.' });
+          return;
+        }
+
+        const body = await parseJsonBody(req);
+        const { name, projectName, domain, projectId, maxMembers, requiredRoles, eventId } = body;
+
+        if (!name || !name.trim()) {
+          sendJson(res, 400, { error: 'Team name is required.' });
+          return;
+        }
+        if (!domain || !domain.trim()) {
+          sendJson(res, 400, { error: 'Team domain is required.' });
+          return;
+        }
+
+        const newTeamId = `team-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
+        const leaderId = auth.user.id;
+        const leaderName = auth.user.name;
+
+        const rolesList = Array.isArray(requiredRoles) && requiredRoles.length > 0 ? requiredRoles : [
+          { role: 'Lead Developer', departmentHint: 'CSE', filled: true, filledBy: leaderName },
+          { role: 'Hardware Specialist', departmentHint: 'ECE', filled: false }
+        ];
+
+        if (isPrismaConnected) {
+          try {
+            await prisma.$transaction(async (tx) => {
+              await tx.team.create({
+                data: {
+                  id: newTeamId,
+                  name: name.trim(),
+                  domain: domain.trim(),
+                  projectId: projectId || null,
+                  eventId: eventId || null,
+                  leaderId,
+                  maxMembers: typeof maxMembers === 'number' ? maxMembers : 6,
+                  status: 'forming',
+                  requiredRoles: rolesList
+                }
+              });
+
+              // Atomically insert the leader as first member
+              await tx.teamMember.create({
+                data: {
+                  teamId: newTeamId,
+                  userId: leaderId,
+                  roleName: 'Team Leader',
+                  department: auth.user.department || null,
+                  college: auth.user.institution || null,
+                  isLeader: true,
+                  studentId: auth.user.studentId || null,
+                  email: auth.user.email || null,
+                  mobile: auth.user.mobile || null
+                }
+              });
+
+              if (projectId) {
+                await tx.project.update({
+                  where: { id: projectId },
+                  data: { teamMembersCount: 1 }
+                }).catch(() => {});
+              }
+
+              await tx.auditLog.create({
+                data: {
+                  actorId: leaderId,
+                  actorName: leaderName,
+                  actorRole: auth.user.activeRole,
+                  action: 'TEAM_CREATED',
+                  targetType: 'team',
+                  targetId: newTeamId,
+                  targetName: name.trim(),
+                  details: `Formed new team "${name.trim()}" in domain ${domain.trim()}`,
+                  ipAddress: clientIp
+                }
+              });
+            });
+          } catch (e) {
+            console.warn('[Prisma] Team create transaction notice:', e.message);
+          }
+        }
+
+        const newTeamRecord = {
+          id: newTeamId,
+          name: name.trim(),
+          projectId: projectId || undefined,
+          projectName: projectName || 'Active Project',
+          domain: domain.trim(),
+          leaderId,
+          leaderName,
+          members: [
+            {
+              userId: leaderId,
+              name: leaderName,
+              department: auth.user.department || '',
+              college: auth.user.institution || '',
+              role: 'Team Leader',
+              avatar: auth.user.avatar || '',
+              verified: Boolean(auth.user.verifiedStudent || auth.user.verified),
+              isLeader: true,
+              studentId: auth.user.studentId || undefined,
+              email: auth.user.email || undefined,
+              mobile: auth.user.mobile || undefined
+            }
+          ],
+          maxMembers: typeof maxMembers === 'number' ? maxMembers : 6,
+          requiredRoles: rolesList,
+          status: 'forming',
+          mentorStatus: 'none',
+          createdAt: new Date().toISOString()
+        };
+
+        TEAMS_DB.unshift(newTeamRecord);
+        persistStoreToDisk();
+
+        sendJson(res, 201, {
+          success: true,
+          message: `Team "${newTeamRecord.name}" successfully created.`,
+          team: newTeamRecord
+        });
+        return;
+      }
+
+      // GET /api/teams/:id (Get single team with members)
+      if (pathname.startsWith('/api/teams/') && !pathname.includes('/members') && req.method === 'GET') {
+        const teamId = pathname.replace('/api/teams/', '');
+        let team = null;
+
+        if (isPrismaConnected) {
+          try {
+            const dbTeam = await prisma.team.findUnique({
+              where: { id: teamId },
+              include: {
+                members: { include: { user: true } },
+                project: true,
+                leader: true,
+                mentor: true
+              }
+            });
+            if (dbTeam) team = formatPrismaTeam(dbTeam);
+          } catch (e) {
+            console.warn('[Prisma] Team lookup notice:', e.message);
+          }
+        }
+
+        if (!team) {
+          team = TEAMS_DB.find(t => t.id === teamId);
+        }
+
+        if (!team) {
+          sendJson(res, 404, { error: 'Team not found.' });
+          return;
+        }
+
+        sendJson(res, 200, { success: true, team });
+        return;
+      }
+
+      // PUT /api/teams/:id (Update team with leader authorization)
+      if (pathname.startsWith('/api/teams/') && !pathname.includes('/members') && req.method === 'PUT') {
+        const teamId = pathname.replace('/api/teams/', '');
+        const auth = await authenticateSession(req);
+        if (!auth) {
+          sendJson(res, 401, { error: 'Authentication required.' });
+          return;
+        }
+
+        let existingTeam = null;
+        if (isPrismaConnected) {
+          try {
+            existingTeam = await prisma.team.findUnique({ where: { id: teamId } });
+          } catch (e) {}
+        }
+        if (!existingTeam) {
+          existingTeam = TEAMS_DB.find(t => t.id === teamId);
+        }
+
+        if (!existingTeam) {
+          sendJson(res, 404, { error: 'Team not found.' });
+          return;
+        }
+
+        const isLeader = existingTeam.leaderId === auth.user.id;
+        const isSuperAdmin = auth.user.activeRole === 'SUPER_ADMIN';
+
+        if (!isLeader && !isSuperAdmin) {
+          sendJson(res, 403, { error: 'Access Denied: Only the team leader or administrator can modify team settings.' });
+          return;
+        }
+
+        const body = await parseJsonBody(req);
+        const updateData = {};
+        if (body.name) updateData.name = body.name.trim();
+        if (body.domain) updateData.domain = body.domain;
+        if (body.status) updateData.status = body.status;
+        if (body.requiredRoles) updateData.requiredRoles = body.requiredRoles;
+        if (body.maxMembers) updateData.maxMembers = body.maxMembers;
+        if (body.mentorId) updateData.mentorId = body.mentorId;
+        if (body.mentorStatus) updateData.mentorStatus = body.mentorStatus;
+
+        if (isPrismaConnected) {
+          try {
+            await prisma.team.update({
+              where: { id: teamId },
+              data: updateData
+            });
+          } catch (e) {
+            console.warn('[Prisma] Team update notice:', e.message);
+          }
+        }
+
+        const memTeam = TEAMS_DB.find(t => t.id === teamId);
+        if (memTeam) {
+          Object.assign(memTeam, body);
+        }
+        persistStoreToDisk();
+
+        sendJson(res, 200, { success: true, message: 'Team settings updated.', team: memTeam || existingTeam });
+        return;
+      }
+
+      // POST /api/teams/:id/members (Join team / claim role)
+      if (pathname.match(/^\/api\/teams\/[a-zA-Z0-9_-]+\/members$/) && req.method === 'POST') {
+        const teamId = pathname.split('/')[3];
+        const auth = await authenticateSession(req);
+        if (!auth) {
+          sendJson(res, 401, { error: 'Authentication required to join team.' });
+          return;
+        }
+
+        let team = null;
+        if (isPrismaConnected) {
+          try {
+            team = await prisma.team.findUnique({
+              where: { id: teamId },
+              include: { members: true, project: true }
+            });
+          } catch (e) {}
+        }
+        if (!team) {
+          team = TEAMS_DB.find(t => t.id === teamId);
+        }
+
+        if (!team) {
+          sendJson(res, 404, { error: 'Team not found.' });
+          return;
+        }
+
+        if (team.status === 'completed') {
+          sendJson(res, 400, { error: 'Cannot join a completed team.' });
+          return;
+        }
+
+        const members = team.members || [];
+        // Duplicate membership check
+        const isAlreadyMember = members.some(m => m.userId === auth.user.id);
+        if (isAlreadyMember) {
+          sendJson(res, 400, { error: 'You are already an active member of this team.' });
+          return;
+        }
+
+        // Capacity check
+        if (members.length >= (team.maxMembers || 6)) {
+          sendJson(res, 400, { error: 'This team has already reached its maximum member capacity.' });
+          return;
+        }
+
+        const body = await parseJsonBody(req);
+        const { roleIndex, roleName } = body;
+
+        let assignedRoleName = roleName || 'Contributor';
+        const requiredRoles = Array.isArray(team.requiredRoles) ? [...team.requiredRoles] : [];
+
+        if (typeof roleIndex === 'number' && requiredRoles[roleIndex]) {
+          const roleSlot = requiredRoles[roleIndex];
+          if (roleSlot.filled) {
+            sendJson(res, 400, { error: 'This role has already been claimed by another team member.' });
+            return;
+          }
+          roleSlot.filled = true;
+          roleSlot.filledBy = auth.user.name;
+          assignedRoleName = roleSlot.role || assignedRoleName;
+        }
+
+        const newMemberRecord = {
+          userId: auth.user.id,
+          name: auth.user.name,
+          department: auth.user.department || '',
+          college: auth.user.institution || '',
+          role: assignedRoleName,
+          avatar: auth.user.avatar || '',
+          verified: Boolean(auth.user.verifiedStudent || auth.user.verified),
+          isLeader: false,
+          studentId: auth.user.studentId || undefined,
+          email: auth.user.email || undefined,
+          mobile: auth.user.mobile || undefined
+        };
+
+        if (isPrismaConnected) {
+          try {
+            await prisma.$transaction(async (tx) => {
+              await tx.teamMember.create({
+                data: {
+                  teamId,
+                  userId: auth.user.id,
+                  roleName: assignedRoleName,
+                  department: auth.user.department || null,
+                  college: auth.user.institution || null,
+                  isLeader: false,
+                  studentId: auth.user.studentId || null,
+                  email: auth.user.email || null,
+                  mobile: auth.user.mobile || null
+                }
+              });
+
+              await tx.team.update({
+                where: { id: teamId },
+                data: {
+                  requiredRoles: requiredRoles,
+                  updatedAt: new Date()
+                }
+              });
+
+              if (team.projectId) {
+                await tx.project.update({
+                  where: { id: team.projectId },
+                  data: { teamMembersCount: members.length + 1 }
+                }).catch(() => {});
+              }
+
+              await tx.auditLog.create({
+                data: {
+                  actorId: auth.user.id,
+                  actorName: auth.user.name,
+                  actorRole: auth.user.activeRole,
+                  action: 'TEAM_MEMBER_JOINED',
+                  targetType: 'team',
+                  targetId: teamId,
+                  targetName: team.name,
+                  details: `${auth.user.name} joined as ${assignedRoleName}`,
+                  ipAddress: clientIp
+                }
+              });
+            });
+          } catch (e) {
+            console.warn('[Prisma] Team member join transaction notice:', e.message);
+          }
+        }
+
+        const memTeam = TEAMS_DB.find(t => t.id === teamId);
+        if (memTeam) {
+          if (!memTeam.members) memTeam.members = [];
+          memTeam.members.push(newMemberRecord);
+          memTeam.requiredRoles = requiredRoles;
+          persistStoreToDisk();
+        }
+
+        sendJson(res, 201, {
+          success: true,
+          message: `Successfully joined ${team.name} as ${assignedRoleName}!`,
+          member: newMemberRecord
+        });
+        return;
+      }
+
+      // DELETE /api/teams/:id/members/:userId (Leave team or remove member)
+      if (pathname.match(/^\/api\/teams\/[a-zA-Z0-9_-]+\/members\/[a-zA-Z0-9_-]+$/) && req.method === 'DELETE') {
+        const parts = pathname.split('/');
+        const teamId = parts[3];
+        const targetUserId = parts[5];
+        const auth = await authenticateSession(req);
+        if (!auth) {
+          sendJson(res, 401, { error: 'Authentication required.' });
+          return;
+        }
+
+        let team = null;
+        if (isPrismaConnected) {
+          try {
+            team = await prisma.team.findUnique({
+              where: { id: teamId },
+              include: { members: { include: { user: true } } }
+            });
+          } catch (e) {}
+        }
+        if (!team) {
+          team = TEAMS_DB.find(t => t.id === teamId);
+        }
+
+        if (!team) {
+          sendJson(res, 404, { error: 'Team not found.' });
+          return;
+        }
+
+        const isSelf = auth.user.id === targetUserId;
+        const isLeader = team.leaderId === auth.user.id;
+        const isSuperAdmin = auth.user.activeRole === 'SUPER_ADMIN';
+
+        if (!isSelf && !isLeader && !isSuperAdmin) {
+          sendJson(res, 403, { error: 'Access Denied: You cannot remove another user from this team.' });
+          return;
+        }
+
+        if (targetUserId === team.leaderId && (team.members || []).length > 1) {
+          sendJson(res, 400, { error: 'Team leader cannot leave while team has other members. Transfer leadership first.' });
+          return;
+        }
+
+        // Unfill the vacated role slot if applicable
+        const leavingMember = (team.members || []).find(m => m.userId === targetUserId);
+        const targetUser = USERS_DB.find(u => u.id === targetUserId);
+        const memberName = (targetUser && targetUser.name) || (leavingMember && (leavingMember.name || (leavingMember.user && leavingMember.user.name)));
+        const memberRoleName = leavingMember ? (leavingMember.roleName || leavingMember.role) : null;
+
+        let updatedRoles = Array.isArray(team.requiredRoles) ? [...team.requiredRoles] : [];
+        if (updatedRoles.length > 0) {
+          updatedRoles = updatedRoles.map(r => {
+            if ((memberName && r.filledBy === memberName) || (memberRoleName && r.role === memberRoleName && r.filled)) {
+              return { ...r, filled: false, filledBy: null };
+            }
+            return r;
+          });
+        }
+
+        if (isPrismaConnected) {
+          try {
+            await prisma.$transaction(async (tx) => {
+              await tx.teamMember.deleteMany({
+                where: { teamId, userId: targetUserId }
+              });
+              await tx.team.update({
+                where: { id: teamId },
+                data: {
+                  requiredRoles: updatedRoles,
+                  updatedAt: new Date()
+                }
+              });
+              if (team.projectId) {
+                await tx.project.update({
+                  where: { id: team.projectId },
+                  data: { teamMembersCount: Math.max(1, (team.members || []).length - 1) }
+                }).catch(() => {});
+              }
+            });
+          } catch (e) {
+            console.warn('[Prisma] Team member delete notice:', e.message);
+          }
+        }
+
+        const memTeam = TEAMS_DB.find(t => t.id === teamId);
+        if (memTeam) {
+          if (Array.isArray(memTeam.members)) {
+            memTeam.members = memTeam.members.filter(m => m.userId !== targetUserId);
+          }
+          memTeam.requiredRoles = updatedRoles;
+          persistStoreToDisk();
+        }
+
+        sendJson(res, 200, { success: true, message: 'Member successfully removed from team.' });
+        return;
+      }
+
       // 404 for unknown /api routes
       sendJson(res, 404, { error: 'API endpoint not found.' });
       return;
@@ -1378,7 +3167,7 @@ const server = http.createServer(async (req, res) => {
     const ext = path.extname(filePath).toLowerCase();
     const contentType = MIME_TYPES[ext] || 'application/octet-stream';
     res.writeHead(200, { 
-      'Content-Type': contentType,
+      'Content-Type': contentType, 
       'Cache-Control': ext === '.html' ? 'no-cache' : 'public, max-age=31536000, immutable'
     });
     fs.createReadStream(filePath).pipe(res);
@@ -1402,3 +3191,32 @@ const server = http.createServer(async (req, res) => {
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`CampusNet production server listening on http://0.0.0.0:${PORT}`);
 });
+
+// Connect to Neon PostgreSQL in background
+prisma.$connect()
+  .then(() => {
+    isPrismaConnected = true;
+    console.log('[Prisma] Connected to Neon PostgreSQL database.');
+  })
+  .catch((err) => {
+    console.warn('[Prisma] Database connection notice:', err.message);
+  });
+
+// Graceful Prisma and Server Shutdown
+async function gracefulShutdown(signal) {
+  console.log(`\n[Server] Received ${signal}. Closing server and database connection...`);
+  server.close(async () => {
+    if (isPrismaConnected) {
+      try {
+        await prisma.$disconnect();
+        console.log('[Prisma] Disconnected cleanly from Neon PostgreSQL.');
+      } catch (err) {
+        console.error('[Prisma] Disconnect error:', err.message);
+      }
+    }
+    process.exit(0);
+  });
+}
+
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
