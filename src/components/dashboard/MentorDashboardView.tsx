@@ -10,6 +10,7 @@ import {
   GitBranch, HelpCircle
 } from 'lucide-react';
 import { MentorProfileEditModal } from './MentorProfileEditModal';
+import { LetterAvatar } from '../common/LetterAvatar';
 
 export const MentorDashboardView: React.FC = () => {
   const navigate = useNavigate();
@@ -163,10 +164,10 @@ export const MentorDashboardView: React.FC = () => {
         {/* Profile Avatar & Academic Details */}
         <div className="flex items-start sm:items-center gap-4 sm:gap-5">
           <div className="relative shrink-0">
-            <img
-              src={currentMentor?.avatar || currentUser?.avatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150'}
-              alt={currentMentor?.name || 'Mentor'}
-              className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl object-cover ring-2 ring-slate-200/80 shadow-2xs"
+            <LetterAvatar
+              name={currentMentor?.name || currentUser?.name || 'Mentor'}
+              size="xl"
+              className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl ring-2 ring-slate-200/80 shadow-2xs"
             />
             {currentMentor?.verifiedMentor && (
               <span

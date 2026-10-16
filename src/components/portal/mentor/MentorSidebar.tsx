@@ -6,6 +6,7 @@ import {
   Calendar, Video, Bell, Settings, TrendingUp, BookOpen,
   ChevronRight, Sparkles, CheckCircle2, UserCheck
 } from 'lucide-react';
+import { LetterAvatar } from '../../common/LetterAvatar';
 
 interface MentorSidebarProps {
   onCloseMobile?: () => void;
@@ -211,10 +212,10 @@ export const MentorSidebar: React.FC<MentorSidebarProps> = ({ onCloseMobile, cla
           className="flex items-center gap-2.5 p-1.5 rounded-xl hover:bg-white transition-colors group"
         >
           <div className="relative shrink-0">
-            <img
-              src={currentMentor?.avatar || currentUser?.avatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100'}
-              alt={currentMentor?.name || currentUser?.name || 'Mentor'}
-              className="w-8 h-8 rounded-lg object-cover ring-1 ring-slate-200"
+            <LetterAvatar
+              name={currentMentor?.name || currentUser?.name || 'Mentor'}
+              size="sm"
+              className="w-8 h-8 rounded-lg ring-1 ring-slate-200"
             />
             {currentMentor?.verifiedMentor && (
               <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-teal-600 rounded-full ring-2 ring-white" />

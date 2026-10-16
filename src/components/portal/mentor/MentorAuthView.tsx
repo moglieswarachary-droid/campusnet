@@ -78,7 +78,7 @@ export const MentorAuthView: React.FC<Props> = ({ mode = 'login' }) => {
         activeAppRole: 'MENTOR',
         institution: 'Indian Institute of Technology Bombay',
         designation: 'Associate Professor & Head of Robotics',
-        avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'
+        avatar: ''
       };
 
       setCurrentUser({
@@ -157,7 +157,7 @@ export const MentorAuthView: React.FC<Props> = ({ mode = 'login' }) => {
       domain: domain.split(',').map(d => d.trim()),
       vidwan_profile_url: vidwanUrl,
       verifiedFaculty: true,
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+      avatar: '',
       bio: 'Experienced academic researcher and hackathon mentor.'
     };
 

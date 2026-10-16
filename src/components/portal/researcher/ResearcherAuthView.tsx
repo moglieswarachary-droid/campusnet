@@ -76,7 +76,7 @@ export const ResearcherAuthView: React.FC<Props> = ({ mode = 'login' }) => {
         activeAppRole: 'PHD_RESEARCHER',
         institution: 'Indian Institute of Science (IISc), Bengaluru',
         department: 'Computational and Data Sciences (CDS)',
-        avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'
+        avatar: ''
       };
 
       setCurrentUser({
@@ -156,7 +156,7 @@ export const ResearcherAuthView: React.FC<Props> = ({ mode = 'login' }) => {
       orcid_id: orcidId,
       advisor_name: advisorName,
       thesis_title: thesisTopic,
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+      avatar: '',
       bio: 'Doctoral researcher passionate about deep learning and scientific computing.'
     };
 

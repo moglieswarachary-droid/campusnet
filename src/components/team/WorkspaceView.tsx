@@ -9,6 +9,7 @@ import {
 import { TeamChat } from '../workspace/TeamChat';
 import { KanbanBoard } from '../workspace/KanbanBoard';
 import { MentorGuidanceTab } from '../workspace/MentorGuidanceTab';
+import { LetterAvatar } from '../common/LetterAvatar';
 
 export const WorkspaceView: React.FC = () => {
   const { teams, projects, startVideoMeeting, currentUser, setActiveTab } = useApp();
@@ -203,10 +204,10 @@ export const WorkspaceView: React.FC = () => {
                   key={member.userId}
                   className="bg-white rounded-3xl p-5 border border-campus-border shadow-warm-sm hover:shadow-warm-md transition-all flex items-start gap-4"
                 >
-                  <img
-                    src={member.avatar}
-                    alt={member.name}
-                    className="w-14 h-14 rounded-2xl object-cover ring-1 ring-campus-border flex-shrink-0"
+                  <LetterAvatar
+                    name={member.name}
+                    size="lg"
+                    className="w-14 h-14 rounded-2xl ring-1 ring-campus-border shrink-0"
                   />
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between">

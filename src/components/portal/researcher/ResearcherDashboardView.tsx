@@ -9,6 +9,7 @@ import {
   Globe2, CheckSquare, MessageSquare, AlertTriangle
 } from 'lucide-react';
 import { PhDScholarProfileEditModal } from '../../dashboard/PhDScholarProfileEditModal';
+import { LetterAvatar } from '../../common/LetterAvatar';
 
 export const ResearcherDashboardView: React.FC = () => {
   const navigate = useNavigate();
@@ -134,10 +135,10 @@ export const ResearcherDashboardView: React.FC = () => {
       <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
         <div className="flex items-start sm:items-center gap-4 sm:gap-6 relative z-10">
           <div className="relative shrink-0">
-            <img
-              src={currentUser?.avatar || currentScholar.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120'}
-              alt={currentUser?.name || currentScholar.name}
-              className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl object-cover ring-2 ring-purple-100 shadow-2xs"
+            <LetterAvatar
+              name={currentUser?.name || currentScholar.name}
+              size="xl"
+              className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl ring-2 ring-purple-100 shadow-2xs"
             />
             {currentScholar.verifiedResearcher && (
               <span

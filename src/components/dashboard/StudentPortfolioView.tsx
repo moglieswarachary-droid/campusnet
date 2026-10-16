@@ -11,6 +11,7 @@ import {
 import { CertificateCard } from '../certificates/CertificateGenerator';
 import { StudentProfileEditModal } from './StudentProfileEditModal';
 import { InnovationTranscriptModal } from './InnovationTranscriptModal';
+import { LetterAvatar } from '../common/LetterAvatar';
 
 export const StudentPortfolioView: React.FC = () => {
   const { currentUser, certificates, projects, publications, setActiveTab } = useApp();
@@ -27,10 +28,10 @@ export const StudentPortfolioView: React.FC = () => {
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           
           <div className="flex flex-col sm:flex-row sm:items-center gap-6">
-            <img
-              src={currentUser.avatar}
-              alt={currentUser.name}
-              className="w-24 h-24 sm:w-28 sm:h-28 rounded-3xl object-cover ring-4 ring-campus-soft-blue shadow-warm-md"
+            <LetterAvatar
+              name={currentUser.name}
+              size="2xl"
+              className="w-24 h-24 sm:w-28 sm:h-28 rounded-3xl ring-4 ring-campus-soft-blue shadow-warm-md shrink-0"
             />
             <div className="space-y-1.5">
               <div className="flex flex-wrap items-center gap-2">

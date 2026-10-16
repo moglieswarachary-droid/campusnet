@@ -9,6 +9,7 @@ import {
   LinkedinIcon, GithubIcon, TwitterIcon, LeetCodeIcon, InstagramIcon 
 } from '../common/SocialIcons';
 import { User, Mentor, Researcher } from '../../types';
+import { LetterAvatar } from '../common/LetterAvatar';
 
 export const UserProfileModal: React.FC = () => {
   const { 
@@ -58,10 +59,10 @@ export const UserProfileModal: React.FC = () => {
           {/* Avatar & Main Info */}
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
             <div className="flex items-end gap-4">
-              <img
-                src={user.avatar}
-                alt={user.name}
-                className="w-24 h-24 sm:w-28 sm:h-28 rounded-3xl object-cover ring-4 ring-white shadow-warm-lg bg-white flex-shrink-0"
+              <LetterAvatar
+                name={user.name}
+                size="2xl"
+                className="w-24 h-24 sm:w-28 sm:h-28 rounded-3xl ring-4 ring-white shadow-warm-lg shrink-0"
               />
               <div className="space-y-1">
                 <div className="flex items-center gap-2 flex-wrap">

@@ -6,6 +6,7 @@ import {
   Lock, Edit3, Save, ChevronRight, Star, ExternalLink
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
+import { LetterAvatar } from '../../common/LetterAvatar';
 
 interface MenteeNote {
   [studentId: string]: string;
@@ -43,7 +44,7 @@ export const MentorStudentsView: React.FC = () => {
         role: member.role,
         college: member.college || studentProfile?.institution || 'IIT Bombay',
         department: member.department || studentProfile?.department || 'Computer Science & Engineering',
-        avatar: member.avatar || studentProfile?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100',
+        avatar: member.avatar || studentProfile?.avatar || '',
         teamName: team.name,
         teamId: team.id,
         domain: team.domain,
@@ -173,10 +174,10 @@ export const MentorStudentsView: React.FC = () => {
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-3">
                   <div className="relative">
-                    <img
-                      src={mentee.avatar}
-                      alt={mentee.name}
-                      className="w-11 h-11 rounded-2xl object-cover ring-2 ring-slate-100"
+                    <LetterAvatar
+                      name={mentee.name}
+                      size="md"
+                      className="w-11 h-11 rounded-2xl ring-2 ring-slate-100"
                     />
                     {mentee.verified && (
                       <span className="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-[#0F9488] rounded-full ring-2 ring-white flex items-center justify-center text-[7px] text-white font-bold">

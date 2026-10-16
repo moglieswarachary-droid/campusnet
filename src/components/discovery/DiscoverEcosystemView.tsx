@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { MOCK_INDIAN_STATES, MOCK_INDIAN_CITIES, MOCK_DEPARTMENTS_LIST } from '../../data/mockData';
 import { EventItem, Project, User, Mentor, Researcher } from '../../types';
+import { LetterAvatar } from '../common/LetterAvatar';
 
 export const DiscoverEcosystemView: React.FC = () => {
   const { 
@@ -314,10 +315,10 @@ export const DiscoverEcosystemView: React.FC = () => {
                 >
                   <div className="space-y-3">
                     <div className="flex items-center gap-3">
-                      <img 
-                        src={mentor.avatar} 
-                        alt={mentor.name} 
-                        className="w-12 h-12 rounded-2xl object-cover ring-1 ring-campus-border" 
+                      <LetterAvatar 
+                        name={mentor.name} 
+                        size="lg"
+                        className="w-12 h-12 rounded-2xl ring-1 ring-campus-border shrink-0" 
                       />
                       <div>
                         <h4 className="text-xs font-bold text-campus-deep-blue">{mentor.name}</h4>
@@ -388,10 +389,10 @@ export const DiscoverEcosystemView: React.FC = () => {
                 >
                   <div className="space-y-3">
                     <div className="flex items-center gap-3">
-                      <img 
-                        src={student.avatar} 
-                        alt={student.name} 
-                        className="w-12 h-12 rounded-2xl object-cover ring-1 ring-campus-border" 
+                      <LetterAvatar 
+                        name={student.name} 
+                        size="lg"
+                        className="w-12 h-12 rounded-2xl ring-1 ring-campus-border shrink-0" 
                       />
                       <div>
                         <h4 className="text-xs font-bold text-campus-deep-blue">{student.name}</h4>
@@ -509,10 +510,10 @@ export const DiscoverEcosystemView: React.FC = () => {
               >
                 <div className="space-y-3">
                   <div className="flex items-start gap-3.5">
-                    <img 
-                      src={student.avatar} 
-                      alt={student.name} 
-                      className="w-14 h-14 rounded-2xl object-cover ring-1 ring-campus-border" 
+                    <LetterAvatar 
+                      name={student.name} 
+                      size="lg"
+                      className="w-14 h-14 rounded-2xl ring-1 ring-campus-border shrink-0" 
                     />
                     <div>
                       <div className="flex items-center gap-1.5">
@@ -583,10 +584,10 @@ export const DiscoverEcosystemView: React.FC = () => {
               >
                 <div className="space-y-3">
                   <div className="flex items-start gap-4">
-                    <img 
-                      src={mentor.avatar} 
-                      alt={mentor.name} 
-                      className="w-16 h-16 rounded-2xl object-cover ring-1 ring-campus-border" 
+                    <LetterAvatar 
+                      name={mentor.name} 
+                      size="xl"
+                      className="w-16 h-16 rounded-2xl ring-1 ring-campus-border shrink-0" 
                     />
                     <div>
                       <div className="flex items-center gap-1.5">
@@ -654,10 +655,10 @@ export const DiscoverEcosystemView: React.FC = () => {
               >
                 <div className="space-y-3">
                   <div className="flex items-start gap-4">
-                    <img 
-                      src={scholar.avatar} 
-                      alt={scholar.name} 
-                      className="w-16 h-16 rounded-2xl object-cover ring-1 ring-campus-border" 
+                    <LetterAvatar 
+                      name={scholar.name} 
+                      size="xl"
+                      className="w-16 h-16 rounded-2xl ring-1 ring-campus-border shrink-0" 
                     />
                     <div>
                       <div className="flex items-center gap-1.5">

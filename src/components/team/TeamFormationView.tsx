@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { MOCK_DEPARTMENTS_LIST, MOCK_INSTITUTIONS_LIST } from '../../data/mockData';
 import { User } from '../../types';
+import { LetterAvatar } from '../common/LetterAvatar';
 
 export const TeamFormationView: React.FC = () => {
   const { students, teams, currentUser, joinTeamRole, setActiveTab, createTeam, addToast } = useApp();
@@ -218,10 +219,10 @@ export const TeamFormationView: React.FC = () => {
             >
               <div className="space-y-3">
                 <div className="flex items-start gap-3.5">
-                  <img
-                    src={student.avatar}
-                    alt={student.name}
-                    className="w-14 h-14 rounded-2xl object-cover ring-1 ring-campus-border"
+                  <LetterAvatar
+                    name={student.name}
+                    size="lg"
+                    className="w-14 h-14 rounded-2xl ring-1 ring-campus-border shrink-0"
                   />
                   <div>
                     <div className="flex items-center gap-1.5">

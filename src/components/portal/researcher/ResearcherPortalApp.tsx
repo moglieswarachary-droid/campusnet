@@ -27,6 +27,7 @@ import { ResearcherAnalyticsView } from './ResearcherAnalyticsView';
 import { ResearcherProfileView } from './ResearcherProfileView';
 import { ResearcherNotificationsView } from './ResearcherNotificationsView';
 import { ResearcherSettingsView } from './ResearcherSettingsView';
+import { LetterAvatar } from '../../common/LetterAvatar';
 
 import { PhDScholarProfileEditModal } from '../../dashboard/PhDScholarProfileEditModal';
 import { WorkspaceSwitcher } from '../../common/WorkspaceSwitcher';
@@ -175,10 +176,10 @@ const ResearcherTopHeader: React.FC<{
                 onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
                 className="flex items-center gap-2 p-1 pl-1.5 rounded-xl border border-slate-200 hover:bg-slate-50 transition-colors"
               >
-                <img
-                  src={currentScholar?.avatar || currentUser?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100'}
-                  alt={currentScholar?.name || currentUser?.name || 'Scholar'}
-                  className="w-7 h-7 rounded-lg object-cover ring-1 ring-slate-200"
+                <LetterAvatar
+                  name={currentScholar?.name || currentUser?.name || 'Scholar'}
+                  size="xs"
+                  className="w-7 h-7 rounded-lg ring-1 ring-slate-200"
                 />
                 <span className="text-xs font-bold text-[#182442] max-w-[100px] truncate hidden sm:inline">
                   {currentScholar?.name || currentUser?.name || 'Scholar'}

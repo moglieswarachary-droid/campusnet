@@ -35,6 +35,7 @@ import { CampusAIAssistant } from '../../ai/CampusAIAssistant';
 import { VideoCallModal } from '../../workspace/VideoCallModal';
 import { DirectMessagingModal } from '../../messaging/DirectMessagingModal';
 import { UserProfileModal } from '../../network/UserProfileModal';
+import { LetterAvatar } from '../../common/LetterAvatar';
 
 // Dedicated Student Portal Top Header
 const StudentTopHeader: React.FC<{
@@ -149,10 +150,10 @@ const StudentTopHeader: React.FC<{
                 onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
                 className="flex items-center gap-2 p-1 pl-1.5 rounded-xl border border-slate-200 hover:bg-slate-50 transition-colors"
               >
-                <img
-                  src={currentUser?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100'}
-                  alt={currentUser?.name || 'Student'}
-                  className="w-7 h-7 rounded-lg object-cover ring-1 ring-slate-200"
+                <LetterAvatar
+                  name={currentUser?.name || 'Student'}
+                  size="xs"
+                  className="w-7 h-7 rounded-lg ring-1 ring-slate-200"
                 />
                 <span className="text-xs font-bold text-slate-800 max-w-[100px] truncate hidden sm:inline">
                   {currentUser?.name || 'Student'}
@@ -384,10 +385,10 @@ const StudentProfileView: React.FC<{ onOpenEdit: () => void }> = ({ onOpenEdit }
         
         <div className="px-6 pb-6 pt-0 relative flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4 -mt-12">
           <div className="flex items-end gap-4">
-            <img
-              src={currentUser.avatar}
-              alt={currentUser.name}
-              className="w-24 h-24 rounded-2xl object-cover ring-4 ring-white shadow-md bg-white"
+            <LetterAvatar
+              name={currentUser.name}
+              size="2xl"
+              className="w-24 h-24 rounded-2xl ring-4 ring-white shadow-md bg-white shrink-0"
             />
             <div className="mb-1">
               <h2 className="text-xl font-black text-campus-deep-blue">{currentUser.name}</h2>

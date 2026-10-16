@@ -7,6 +7,7 @@ import {
   TrendingUp, User, Bell, Settings, ChevronRight,
   ShieldCheck, CheckCircle2, BookmarkCheck, Atom
 } from 'lucide-react';
+import { LetterAvatar } from '../../common/LetterAvatar';
 
 interface ResearcherSidebarProps {
   onCloseMobile?: () => void;
@@ -224,10 +225,10 @@ export const ResearcherSidebar: React.FC<ResearcherSidebarProps> = ({ onCloseMob
           className="flex items-center gap-2.5 p-1.5 rounded-xl hover:bg-white transition-colors group"
         >
           <div className="relative shrink-0">
-            <img
-              src={currentScholar?.avatar || currentUser?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100'}
-              alt={currentScholar?.name || currentUser?.name || 'Scholar'}
-              className="w-8 h-8 rounded-lg object-cover ring-1 ring-slate-200"
+            <LetterAvatar
+              name={currentScholar?.name || currentUser?.name || 'Scholar'}
+              size="sm"
+              className="w-8 h-8 rounded-lg ring-1 ring-slate-200"
             />
             {currentScholar?.verifiedResearcher && (
               <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-[#13877B] rounded-full ring-2 ring-white" />

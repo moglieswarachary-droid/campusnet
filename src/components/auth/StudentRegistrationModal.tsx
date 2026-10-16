@@ -62,7 +62,7 @@ export const StudentRegistrationModal: React.FC = () => {
   const handleSimulateIdUpload = () => {
     setIsIdAnalyzing(true);
     setTimeout(() => {
-      setIdCardFile('https://images.unsplash.com/photo-1578836537282-3171d77f8632?w=400&auto=format&fit=crop&q=80');
+      setIdCardFile('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="160" height="100" viewBox="0 0 160 100"><rect width="160" height="100" rx="8" fill="%231E3A8A"/><rect x="12" y="15" width="36" height="45" rx="4" fill="%233B82F6"/><rect x="56" y="20" width="85" height="8" rx="2" fill="%23FFFFFF"/><rect x="56" y="34" width="60" height="6" rx="2" fill="%2393C5FD"/><rect x="56" y="46" width="70" height="6" rx="2" fill="%2393C5FD"/><rect x="12" y="72" width="136" height="14" rx="3" fill="%23172554"/></svg>');
       setIsIdAnalyzing(false);
       setIdOcrPassed(true);
       addToast({
@@ -86,7 +86,7 @@ export const StudentRegistrationModal: React.FC = () => {
       course,
       year,
       verifiedStudent: true,
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+      avatar: '',
       innovationScore: 750,
       skills: selectedSkills,
       badges: ['Verified Student', 'Innovator', 'Hardware Contributor'],

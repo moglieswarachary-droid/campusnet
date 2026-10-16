@@ -11,6 +11,7 @@ import {
 import { Project } from '../../types';
 import { MOCK_INDIAN_STATES } from '../../data/mockData';
 import { ResearchHubView } from '../research/ResearchHubView';
+import { LetterAvatar } from '../common/LetterAvatar';
 
 export const ProjectsEcosystemView: React.FC = () => {
   const { 
@@ -299,13 +300,22 @@ export const ProjectsEcosystemView: React.FC = () => {
             className="bg-white rounded-3xl border border-campus-border shadow-warm-md hover:shadow-warm-lg transition-all flex flex-col justify-between overflow-hidden group"
           >
             {/* Top Cover Image / Banner */}
-            <div className="h-44 relative overflow-hidden bg-slate-900">
-              <img 
-                src={project.coverImage || 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=600&auto=format&fit=crop&q=80'} 
-                alt={project.title} 
-                className="w-full h-full object-cover opacity-85 group-hover:scale-105 transition-transform duration-500" 
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+            <div className="h-44 relative overflow-hidden bg-gradient-to-br from-slate-900 via-campus-deep-blue to-slate-900 flex items-center justify-center">
+              {project.coverImage ? (
+                <img 
+                  src={project.coverImage} 
+                  alt={project.title} 
+                  className="w-full h-full object-cover opacity-85 group-hover:scale-105 transition-transform duration-500" 
+                />
+              ) : (
+                <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-800 via-campus-deep-blue to-slate-950 p-6 text-center">
+                  <div className="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center mb-2 border border-white/10 group-hover:scale-110 transition-transform">
+                    <FolderKanban className="w-6 h-6 text-campus-gold" />
+                  </div>
+                  <span className="text-xs font-bold text-slate-300 tracking-wider uppercase">{project.domain}</span>
+                </div>
+              )}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
 
               <div className="absolute top-3 left-3 flex items-center gap-1.5">
                 <span className="text-[10px] font-bold bg-campus-blue text-white px-2 py-0.5 rounded-full">
@@ -568,7 +578,7 @@ export const ProjectsEcosystemView: React.FC = () => {
                   className="p-3 rounded-2xl border border-campus-border hover:border-campus-blue bg-white flex items-center justify-between gap-3 transition-colors"
                 >
                   <div className="flex items-center gap-3">
-                    <img src={m.avatar} alt={m.name} className="w-10 h-10 rounded-xl object-cover" />
+                    <LetterAvatar name={m.name} size="md" className="w-10 h-10 rounded-xl shrink-0" />
                     <div>
                       <h4 className="text-xs font-bold text-campus-deep-blue">{m.name}</h4>
                       <p className="text-[11px] text-campus-muted-text truncate max-w-[200px]">{m.institution}</p>

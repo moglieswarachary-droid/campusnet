@@ -10,6 +10,7 @@ import {
 import { RoleType } from '../../types';
 import { WorkspaceSelectionModal } from '../landing/WorkspaceSelectionModal';
 import { WorkspaceSwitcher } from './WorkspaceSwitcher';
+import { LetterAvatar } from './LetterAvatar';
 
 export const Navbar: React.FC = () => {
   const { 
@@ -301,10 +302,10 @@ export const Navbar: React.FC = () => {
                     className="flex items-center gap-1.5 p-1 rounded-xl border border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all text-left cursor-pointer"
                     aria-label="User Profile and Role Menu"
                   >
-                    <img
-                      src={currentUser.avatar}
-                      alt={currentUser.name}
-                      className="w-7 h-7 rounded-lg object-cover ring-1 ring-slate-200"
+                    <LetterAvatar
+                      name={currentUser.name}
+                      size="xs"
+                      className="w-7 h-7 rounded-lg ring-1 ring-slate-200"
                     />
                     <ChevronDown className="w-3.5 h-3.5 text-slate-400 mr-0.5" />
                   </button>

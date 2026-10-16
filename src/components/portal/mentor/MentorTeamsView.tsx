@@ -5,6 +5,7 @@ import {
   Calendar, Award, MessageSquare, ExternalLink, Clock
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { LetterAvatar } from '../../common/LetterAvatar';
 
 export const MentorTeamsView: React.FC = () => {
   const { teams, projects, startVideoMeeting } = useApp();
@@ -78,7 +79,7 @@ export const MentorTeamsView: React.FC = () => {
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   {team.members.map(m => (
                     <div key={m.userId} className="flex items-center gap-2 p-1.5 bg-[#F3F6FA] rounded-xl border border-slate-200/60">
-                      <img src={m.avatar} alt={m.name} className="w-6 h-6 rounded-lg object-cover" />
+                      <LetterAvatar name={m.name} size="xs" className="w-6 h-6 rounded-lg shrink-0" />
                       <div className="min-w-0">
                         <p className="font-bold text-slate-800 text-[11px] truncate">{m.name}</p>
                         <p className="text-[9.5px] text-slate-400 truncate">{m.role}</p>

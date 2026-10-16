@@ -1,6 +1,7 @@
 import React from 'react';
 import { useApp } from '../../context/AppContext';
 import { Video, Heart, MessageSquare, Play, ArrowRight } from 'lucide-react';
+import { LetterAvatar } from '../common/LetterAvatar';
 
 export const StoriesSection: React.FC = () => {
   const { stories, setActiveTab, toggleLikeStory } = useApp();
@@ -72,10 +73,10 @@ export const StoriesSection: React.FC = () => {
               {/* Bottom interactions */}
               <div className="p-4 flex items-center justify-between text-xs text-campus-slate-text">
                 <div className="flex items-center gap-2">
-                  <img
-                    src={story.creatorAvatar}
-                    alt={story.creatorName}
-                    className="w-6 h-6 rounded-full object-cover ring-1 ring-campus-border"
+                  <LetterAvatar
+                    name={story.creatorName}
+                    size="xs"
+                    className="w-6 h-6 rounded-full ring-1 ring-campus-border"
                   />
                   <span className="font-semibold text-xs text-campus-slate-text">{story.creatorName}</span>
                 </div>

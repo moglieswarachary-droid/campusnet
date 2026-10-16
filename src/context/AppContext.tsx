@@ -627,7 +627,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       id: 'conn-req-1',
       senderId: 'usr-std-005',
       senderName: 'Rohan Sen',
-      senderAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
+      senderAvatar: '',
       senderRole: 'student',
       senderInstitution: 'IIT Bombay',
       senderDepartment: 'Computer Science',
@@ -656,7 +656,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       teamId: 'team-001',
       senderId: 'mnt-001',
       senderName: 'Dr. Arvind Rao',
-      senderAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+      senderAvatar: '',
       senderRole: 'mentor',
       text: 'Good job on the YOLOv11 TensorRT layer quantization. Please remember to attach the FMEA motor cut-off safety schematic before the hardware inspection round.',
       timestamp: '10:45 AM'
@@ -1007,7 +1007,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       accreditationDetails: data.accreditationDetails,
       address: data.address,
       website: data.website,
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
+      avatar: '',
       lastLoginAt: new Date().toISOString(),
       eventsCreatedCount: 0
     };
@@ -1136,7 +1136,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         email: 'reviewer.gov@aicte.gov.in',
         name: 'Dr. Sunita Murthy (AICTE Review Board)',
         role: 'moderator',
-        avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80',
+        avatar: '',
         mfaEnabled: true,
         lastLoginAt: new Date().toISOString()
       };

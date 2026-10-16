@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { Send, Paperclip, FileText, Image, ShieldCheck, Sparkles } from 'lucide-react';
+import { LetterAvatar } from '../common/LetterAvatar';
 
 export const TeamChat: React.FC<{ teamId: string }> = ({ teamId }) => {
   const { chatMessages, sendChatMessage, currentUser } = useApp();
@@ -52,10 +53,10 @@ export const TeamChat: React.FC<{ teamId: string }> = ({ teamId }) => {
               key={msg.id}
               className={`flex items-start gap-3 ${isMe ? 'flex-row-reverse' : ''}`}
             >
-              <img
-                src={msg.senderAvatar}
-                alt={msg.senderName}
-                className="w-8 h-8 rounded-xl object-cover ring-1 ring-campus-border mt-0.5 flex-shrink-0"
+              <LetterAvatar
+                name={msg.senderName}
+                size="sm"
+                className="w-8 h-8 rounded-xl ring-1 ring-campus-border mt-0.5 shrink-0"
               />
 
               <div className={`max-w-md ${isMe ? 'items-end' : 'items-start'} flex flex-col`}>

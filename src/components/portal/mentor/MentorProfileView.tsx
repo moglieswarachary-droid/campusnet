@@ -6,6 +6,7 @@ import {
   TrendingUp, Sparkles, AlertCircle
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { LetterAvatar } from '../../common/LetterAvatar';
 
 interface MentorProfileViewProps {
   onOpenEdit: () => void;
@@ -55,10 +56,10 @@ export const MentorProfileView: React.FC<MentorProfileViewProps> = ({ onOpenEdit
         {/* Identity content */}
         <div className="px-6 pb-6 pt-0 relative flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4 -mt-10">
           <div className="flex items-end gap-4">
-            <img
-              src={currentMentor.avatar || currentUser.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120'}
-              alt={currentMentor.name}
-              className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl object-cover ring-4 ring-white shadow-md bg-white shrink-0"
+            <LetterAvatar
+              name={currentMentor.name || currentUser.name}
+              size="2xl"
+              className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl ring-4 ring-white shadow-md bg-white shrink-0"
             />
             <div className="mb-0.5">
               <h1 className="text-xl sm:text-2xl font-black text-[#12243A]">

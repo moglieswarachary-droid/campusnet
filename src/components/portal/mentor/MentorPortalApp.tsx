@@ -27,6 +27,7 @@ import { MentorNotificationsView } from './MentorNotificationsView';
 import { MentorSettingsView } from './MentorSettingsView';
 
 import { WorkspaceSwitcher } from '../../common/WorkspaceSwitcher';
+import { LetterAvatar } from '../../common/LetterAvatar';
 import { ToastContainer } from '../../common/Toast';
 import { MentorProfileEditModal } from '../../dashboard/MentorProfileEditModal';
 import { VideoCallModal } from '../../workspace/VideoCallModal';
@@ -176,10 +177,10 @@ const MentorTopHeader: React.FC<{
                 onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
                 className="flex items-center gap-2 p-1 pl-1.5 rounded-xl border border-slate-200 hover:bg-slate-50 transition-colors"
               >
-                <img
-                  src={currentMentor?.avatar || currentUser?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100'}
-                  alt={currentMentor?.name || currentUser?.name || 'Mentor'}
-                  className="w-7 h-7 rounded-lg object-cover ring-1 ring-slate-200"
+                <LetterAvatar
+                  name={currentMentor?.name || currentUser?.name || 'Mentor'}
+                  size="xs"
+                  className="w-7 h-7 rounded-lg ring-1 ring-slate-200"
                 />
                 <span className="text-xs font-bold text-[#12243A] max-w-[100px] truncate hidden sm:inline">
                   {currentMentor?.name || currentUser?.name || 'Mentor'}

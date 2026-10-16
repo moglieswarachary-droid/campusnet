@@ -10,6 +10,7 @@ import {
   LinkedinIcon, GithubIcon, TwitterIcon, LeetCodeIcon, InstagramIcon 
 } from '../common/SocialIcons';
 import { Mentor } from '../../types';
+import { LetterAvatar } from '../common/LetterAvatar';
 
 export const MentorDirectoryView: React.FC = () => {
   const { mentors, sendMentorshipRequest, addToast, currentUser, setActiveTab, setSelectedUserProfileModal } = useApp();
@@ -140,12 +141,13 @@ export const MentorDirectoryView: React.FC = () => {
             >
               <div className="space-y-3">
                 <div className="flex items-start gap-4">
-                  <img
-                    src={mentor.avatar}
-                    alt={mentor.name}
-                    onClick={() => setSelectedUserProfileModal(mentor)}
-                    className="w-18 h-18 sm:w-20 sm:h-20 rounded-2xl object-cover ring-1 ring-campus-border flex-shrink-0 cursor-pointer hover:opacity-90 transition-opacity"
-                  />
+                  <div onClick={() => setSelectedUserProfileModal(mentor)} className="cursor-pointer hover:opacity-90 transition-opacity shrink-0">
+                    <LetterAvatar
+                      name={mentor.name}
+                      size="2xl"
+                      className="w-18 h-18 sm:w-20 sm:h-20 rounded-2xl ring-1 ring-campus-border"
+                    />
+                  </div>
                   <div className="min-w-0">
                     <div className="flex items-center gap-1.5 flex-wrap">
                       <h3 
@@ -311,10 +313,10 @@ export const MentorDirectoryView: React.FC = () => {
         <div className="fixed inset-0 z-50 bg-campus-deep-blue/60 backdrop-blur-md flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-warm-xl border border-campus-border space-y-5 animate-in fade-in">
             <div className="flex items-center gap-3 pb-3 border-b border-campus-border">
-              <img
-                src={requestModalMentor.avatar}
-                alt={requestModalMentor.name}
-                className="w-12 h-12 rounded-xl object-cover ring-1 ring-campus-border"
+              <LetterAvatar
+                name={requestModalMentor.name}
+                size="lg"
+                className="w-12 h-12 rounded-xl ring-1 ring-campus-border"
               />
               <div>
                 <h3 className="font-bold text-base text-campus-deep-blue">

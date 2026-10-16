@@ -4,6 +4,7 @@ import {
   MessageSquare, Search, Send, User, ShieldCheck, Clock,
   Video, Phone, Paperclip, MoreVertical, Sparkles, CheckCheck
 } from 'lucide-react';
+import { LetterAvatar } from '../../common/LetterAvatar';
 
 export const StudentMessagesView: React.FC = () => {
   const {
@@ -21,7 +22,7 @@ export const StudentMessagesView: React.FC = () => {
       participant: {
         name: 'Dr. Arvind Rao',
         role: 'Faculty Mentor • IIT Bombay',
-        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
+        avatar: '',
         online: true
       },
       lastMessage: 'Let us review the TensorRT benchmarks during Thursday office hours.',
@@ -38,7 +39,7 @@ export const StudentMessagesView: React.FC = () => {
       participant: {
         name: 'Team AgriVision (SIH 2026)',
         role: '6 Members • Capstone Sprint',
-        avatar: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=150&auto=format&fit=crop&q=80',
+        avatar: '',
         online: true
       },
       lastMessage: 'Hardware team has assembled the dual-nozzle spray assembly.',
@@ -54,7 +55,7 @@ export const StudentMessagesView: React.FC = () => {
       participant: {
         name: 'Prof. Sudhir Sen',
         role: 'Distinguished Fellow • IISc',
-        avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80',
+        avatar: '',
         online: false
       },
       lastMessage: 'Good paper draft. Please check Section 4 bibliography.',
@@ -144,10 +145,10 @@ export const StudentMessagesView: React.FC = () => {
                   }`}
                 >
                   <div className="relative shrink-0">
-                    <img
-                      src={t.participant.avatar}
-                      alt={t.participant.name}
-                      className="w-10 h-10 rounded-xl object-cover ring-1 ring-slate-200"
+                    <LetterAvatar
+                      name={t.participant.name}
+                      size="md"
+                      className="w-10 h-10 rounded-xl ring-1 ring-slate-200"
                     />
                     {t.participant.online && (
                       <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 rounded-full ring-2 ring-white" />
@@ -180,10 +181,10 @@ export const StudentMessagesView: React.FC = () => {
           {/* Active Thread Header */}
           <div className="p-4 border-b border-slate-200 bg-slate-50/50 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <img
-                src={activeThread.participant.avatar}
-                alt={activeThread.participant.name}
-                className="w-9 h-9 rounded-xl object-cover ring-1 ring-slate-200"
+              <LetterAvatar
+                name={activeThread.participant.name}
+                size="md"
+                className="w-9 h-9 rounded-xl ring-1 ring-slate-200"
               />
               <div>
                 <div className="flex items-center gap-1.5">

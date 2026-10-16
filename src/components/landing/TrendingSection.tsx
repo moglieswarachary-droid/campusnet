@@ -6,6 +6,7 @@ import {
   MapPin, Award, ShieldCheck, Tag, ExternalLink 
 } from 'lucide-react';
 import { EventItem, Project, Mentor } from '../../types';
+import { LetterAvatar } from '../common/LetterAvatar';
 
 export const TrendingSection: React.FC = () => {
   const { 
@@ -284,10 +285,10 @@ export const TrendingSection: React.FC = () => {
                       className="p-3 rounded-xl border border-slate-100 hover:border-slate-200 hover:bg-slate-50/60 transition-all cursor-pointer group text-left"
                     >
                       <div className="flex items-center gap-3">
-                        <img
-                          src={mentor.avatar}
-                          alt={mentor.name}
-                          className="w-9 h-9 rounded-xl object-cover ring-1 ring-slate-200 flex-shrink-0"
+                        <LetterAvatar
+                          name={mentor.name}
+                          size="md"
+                          className="w-9 h-9 rounded-xl ring-1 ring-slate-200 shrink-0"
                         />
                         <div className="min-w-0 flex-1">
                           <h4 className="text-xs font-bold text-slate-900 group-hover:text-amber-600 transition-colors truncate">

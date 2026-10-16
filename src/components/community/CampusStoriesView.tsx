@@ -5,6 +5,7 @@ import {
   Play, Pause, Volume2, VolumeX, X, Sparkles, Plus 
 } from 'lucide-react';
 import { CampusStory } from '../../types';
+import { LetterAvatar } from '../common/LetterAvatar';
 
 export const CampusStoriesView: React.FC = () => {
   const { stories, toggleLikeStory, addCommentToStory, addToast } = useApp();
@@ -98,10 +99,10 @@ export const CampusStoriesView: React.FC = () => {
             <div className="p-6 bg-gradient-to-t from-black/95 via-black/80 to-transparent text-white space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <img
-                    src={activeStory.creatorAvatar}
-                    alt={activeStory.creatorName}
-                    className="w-10 h-10 rounded-xl object-cover ring-2 ring-white/30"
+                  <LetterAvatar
+                    name={activeStory.creatorName}
+                    size="md"
+                    className="w-10 h-10 rounded-xl ring-2 ring-white/30 shrink-0"
                   />
                   <div>
                     <h4 className="font-bold text-sm text-white">{activeStory.creatorName}</h4>

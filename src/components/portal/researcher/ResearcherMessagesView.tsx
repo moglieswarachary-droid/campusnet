@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../../../context/AppContext';
 import { MessageSquare, Send, User, Search, Paperclip, Video } from 'lucide-react';
+import { LetterAvatar } from '../../common/LetterAvatar';
 
 export const ResearcherMessagesView: React.FC = () => {
   const { addToast, startVideoMeeting } = useApp();
@@ -12,7 +13,7 @@ export const ResearcherMessagesView: React.FC = () => {
       id: 'conv-1',
       name: 'Dr. Arvind Rao',
       institution: 'IIT Bombay',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100',
+      avatar: '',
       lastMessage: 'Let us schedule a quick sync for the FPGA testbed results tomorrow.',
       time: '10:30 AM',
       unread: 1,
@@ -26,7 +27,7 @@ export const ResearcherMessagesView: React.FC = () => {
       id: 'conv-2',
       name: 'Aarav Sharma (RA)',
       institution: 'NIT Karnataka',
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100',
+      avatar: '',
       lastMessage: 'I pushed the latest ROS 2 telemetry node scripts to the shared repository.',
       time: 'Yesterday',
       unread: 0,
@@ -102,7 +103,11 @@ export const ResearcherMessagesView: React.FC = () => {
                   activePartner === conv.name ? 'bg-purple-50/70 border-l-4 border-[#6954C8]' : 'hover:bg-slate-50'
                 }`}
               >
-                <img src={conv.avatar} alt={conv.name} className="w-10 h-10 rounded-xl object-cover ring-1 ring-slate-200 shrink-0" />
+                <LetterAvatar
+                  name={conv.name}
+                  size="md"
+                  className="w-10 h-10 rounded-xl ring-1 ring-slate-200 shrink-0"
+                />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between text-xs font-bold text-[#182442]">
                     <span className="truncate">{conv.name}</span>
@@ -122,7 +127,11 @@ export const ResearcherMessagesView: React.FC = () => {
           {/* Active Partner Header */}
           <div className="p-4 bg-white border-b border-slate-200/90 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <img src={activeConv.avatar} alt={activeConv.name} className="w-9 h-9 rounded-xl object-cover" />
+              <LetterAvatar
+                name={activeConv.name}
+                size="md"
+                className="w-9 h-9 rounded-xl"
+              />
               <div>
                 <h3 className="text-xs font-bold text-[#182442]">{activeConv.name}</h3>
                 <p className="text-[10px] text-slate-400">{activeConv.institution}</p>

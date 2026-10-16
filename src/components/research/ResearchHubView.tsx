@@ -9,6 +9,7 @@ import {
   LinkedinIcon, GithubIcon, TwitterIcon, LeetCodeIcon, InstagramIcon 
 } from '../common/SocialIcons';
 import { Researcher, ResearchPublication } from '../../types';
+import { LetterAvatar } from '../common/LetterAvatar';
 
 export const ResearchHubView: React.FC = () => {
   const { researchers, publications, currentUser, addToast, setSelectedUserProfileModal } = useApp();
@@ -142,12 +143,13 @@ export const ResearchHubView: React.FC = () => {
               >
                 <div className="space-y-3">
                   <div className="flex items-start gap-4">
-                    <img
-                      src={scholar.avatar}
-                      alt={scholar.name}
-                      onClick={() => setSelectedUserProfileModal(scholar)}
-                      className="w-16 h-16 rounded-2xl object-cover ring-1 ring-campus-border flex-shrink-0 cursor-pointer hover:opacity-90 transition-opacity"
-                    />
+                    <div onClick={() => setSelectedUserProfileModal(scholar)} className="cursor-pointer hover:opacity-90 transition-opacity shrink-0">
+                      <LetterAvatar
+                        name={scholar.name}
+                        size="xl"
+                        className="w-16 h-16 rounded-2xl ring-1 ring-campus-border"
+                      />
+                    </div>
                     <div className="min-w-0">
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <h3 

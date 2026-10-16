@@ -4,6 +4,7 @@ import {
   Globe2, Search, Filter, Mail, Video, Users,
   BookOpen, ExternalLink, CheckCircle2, Award, Building2
 } from 'lucide-react';
+import { LetterAvatar } from '../../common/LetterAvatar';
 
 export const ResearcherDirectoryView: React.FC = () => {
   const { researchers, addToast, startVideoMeeting } = useApp();
@@ -29,7 +30,7 @@ export const ResearcherDirectoryView: React.FC = () => {
       hIndex: 9,
       datasets: ['Zenodo #91024'],
       verifiedResearcher: true,
-      avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100',
+      avatar: '',
       openForCollab: true,
       bio: 'Leading experimental investigations into silicon spin qubits with international consortia.'
     },
@@ -49,7 +50,7 @@ export const ResearcherDirectoryView: React.FC = () => {
       hIndex: 7,
       datasets: ['CERN Open Data'],
       verifiedResearcher: true,
-      avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100',
+      avatar: '',
       openForCollab: true,
       bio: 'Doctoral fellow at CMS Experiment CERN, Geneva. Focus on low-latency trigger GNNs on FPGA.'
     }
@@ -132,10 +133,10 @@ export const ResearcherDirectoryView: React.FC = () => {
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-3">
                   <div className="relative">
-                    <img
-                      src={scholar.avatar}
-                      alt={scholar.name}
-                      className="w-12 h-12 rounded-2xl object-cover ring-2 ring-slate-100"
+                    <LetterAvatar
+                      name={scholar.name}
+                      size="lg"
+                      className="w-12 h-12 rounded-2xl ring-2 ring-slate-100"
                     />
                     {scholar.verifiedResearcher && (
                       <span className="absolute -bottom-1 -right-1 w-4 h-4 bg-[#13877B] rounded-full ring-2 ring-white flex items-center justify-center text-[8px] text-white font-bold">

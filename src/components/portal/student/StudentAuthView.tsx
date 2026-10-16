@@ -79,7 +79,7 @@ export const StudentAuthView: React.FC<Props> = ({ mode = 'login' }) => {
         department: 'Computer Science & Engineering',
         institution: 'NIT Karnataka, Surathkal',
         verifiedStudent: true,
-        avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'
+        avatar: ''
       };
       
       setCurrentUser(demoStudent as any);
@@ -155,7 +155,7 @@ export const StudentAuthView: React.FC<Props> = ({ mode = 'login' }) => {
       department,
       skills: skills.split(',').map(s => s.trim()),
       verifiedStudent: true,
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+      avatar: '',
       bio: 'Enthusiastic engineering student and hackathon innovator.',
       points: 150,
       badges: ['Early Innovator', 'Verified Scholar']

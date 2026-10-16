@@ -5,6 +5,7 @@ import {
   CheckCircle2, Clock, Check, X, ExternalLink, ShieldCheck,
   Send, Sparkles, ArrowRight
 } from 'lucide-react';
+import { LetterAvatar } from '../../common/LetterAvatar';
 
 interface CollaborationRequest {
   id: string;
@@ -39,7 +40,7 @@ export const ResearcherCollaborationsView: React.FC = () => {
       type: 'Joint Paper',
       status: 'active',
       progress: 75,
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100',
+      avatar: '',
       notes: 'Target venue: ACM SenSys 2026. Experimental telemetry node benchmarks completed.',
       date: 'Active Sprint'
     },
@@ -51,7 +52,7 @@ export const ResearcherCollaborationsView: React.FC = () => {
       type: 'Grant Co-PI',
       status: 'active',
       progress: 60,
-      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100',
+      avatar: '',
       notes: 'SERB CRG grant co-supervision. Bi-weekly review on Thursdays.',
       date: 'Active Project'
     },
@@ -62,7 +63,7 @@ export const ResearcherCollaborationsView: React.FC = () => {
       topic: 'Edge TensorRT & ROS 2 Telemetry Benchmarking',
       type: 'Research Assistant',
       status: 'pending',
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100',
+      avatar: '',
       notes: 'Undergraduate RA candidate. PyTorch/Linux expert. Portfolio match score: 96%.',
       date: 'Applied 1 day ago'
     }
@@ -98,7 +99,7 @@ export const ResearcherCollaborationsView: React.FC = () => {
       topic: inviteTopic.trim(),
       type: 'Joint Paper',
       status: 'pending',
-      avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100',
+      avatar: '',
       notes: 'Collaboration proposal dispatched via academic network.',
       date: 'Dispatched today'
     };
@@ -173,10 +174,10 @@ export const ResearcherCollaborationsView: React.FC = () => {
             className="bg-white rounded-3xl border border-slate-200/90 p-6 shadow-2xs hover:shadow-warm-sm hover:border-purple-200 transition-all flex flex-col md:flex-row md:items-center justify-between gap-5"
           >
             <div className="flex items-start gap-4 min-w-0">
-              <img
-                src={collab.avatar}
-                alt={collab.partnerName}
-                className="w-12 h-12 rounded-2xl object-cover ring-2 ring-slate-100 shrink-0"
+              <LetterAvatar
+                name={collab.partnerName}
+                size="lg"
+                className="w-12 h-12 rounded-2xl ring-2 ring-slate-100 shrink-0"
               />
               <div className="space-y-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">

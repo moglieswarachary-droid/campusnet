@@ -10,6 +10,7 @@ import {
 } from '../common/SocialIcons';
 import { ResearchPublication, ResearchConference } from '../../types';
 import { PhDScholarProfileEditModal } from './PhDScholarProfileEditModal';
+import { LetterAvatar } from '../common/LetterAvatar';
 
 export const PhDScholarDashboardView: React.FC = () => {
   const { 
@@ -52,10 +53,10 @@ export const PhDScholarDashboardView: React.FC = () => {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
           
           <div className="flex items-start sm:items-center gap-4 sm:gap-6">
-            <img
-              src={currentUser?.avatar || currentScholar.avatar}
-              alt={currentUser?.name || currentScholar.name}
-              className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl object-cover ring-2 ring-white/30 shadow-warm-md"
+            <LetterAvatar
+              name={currentUser?.name || currentScholar.name}
+              size="xl"
+              className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl ring-2 ring-white/30 shadow-warm-md"
             />
             <div className="space-y-1">
               <div className="flex items-center gap-2 flex-wrap">
@@ -341,7 +342,7 @@ export const PhDScholarDashboardView: React.FC = () => {
               <div key={std.id} className="bg-white rounded-3xl p-5 border border-campus-border shadow-warm-sm hover:shadow-warm-md transition-all flex flex-col justify-between">
                 <div className="space-y-3">
                   <div className="flex items-center gap-3">
-                    <img src={std.avatar} alt={std.name} className="w-12 h-12 rounded-2xl object-cover ring-1 ring-campus-border" />
+                    <LetterAvatar name={std.name} size="lg" className="w-12 h-12 rounded-2xl ring-1 ring-campus-border" />
                     <div>
                       <h4 className="text-xs font-bold text-campus-deep-blue">{std.name}</h4>
                       <p className="text-[10px] text-campus-blue font-semibold">{std.department}</p>

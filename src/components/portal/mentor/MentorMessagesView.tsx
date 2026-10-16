@@ -4,6 +4,7 @@ import {
   MessageSquare, Search, Send, ShieldCheck, Clock, Video,
   CheckCheck, Users, ArrowRight
 } from 'lucide-react';
+import { LetterAvatar } from '../../common/LetterAvatar';
 
 export const MentorMessagesView: React.FC = () => {
   const { teams, startVideoMeeting, addToast } = useApp();
@@ -17,7 +18,7 @@ export const MentorMessagesView: React.FC = () => {
       participant: {
         name: 'Aarav Sharma (Lead, Team AgriVision)',
         role: 'Autonomous Micro-Drones • SIH 2026',
-        avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100',
+        avatar: '',
         online: true
       },
       lastMessage: 'Dr. Rao, we have added the hardware watchdog timer logic to the flight controller.',
@@ -34,7 +35,7 @@ export const MentorMessagesView: React.FC = () => {
       participant: {
         name: 'Sneha Patel (Team MedEdge)',
         role: 'Wearable ECG DSP Lead',
-        avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=100',
+        avatar: '',
         online: false
       },
       lastMessage: 'Fixed-point CMSIS FIR filter benchmarks ready for review.',
@@ -49,7 +50,7 @@ export const MentorMessagesView: React.FC = () => {
       participant: {
         name: 'Karthik Raja (Team Consensus)',
         role: 'Byzantine Fault Tolerance Lead',
-        avatar: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=100',
+        avatar: '',
         online: true
       },
       lastMessage: 'Paper draft Section 4 revised with IEEE style bibliography.',
@@ -139,10 +140,10 @@ export const MentorMessagesView: React.FC = () => {
                   }`}
                 >
                   <div className="relative shrink-0">
-                    <img
-                      src={t.participant.avatar}
-                      alt={t.participant.name}
-                      className="w-10 h-10 rounded-xl object-cover ring-1 ring-slate-200"
+                    <LetterAvatar
+                      name={t.participant.name}
+                      size="md"
+                      className="w-10 h-10 rounded-xl ring-1 ring-slate-200"
                     />
                     {t.participant.online && (
                       <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 rounded-full ring-2 ring-white" />
@@ -175,10 +176,10 @@ export const MentorMessagesView: React.FC = () => {
           {/* Active Thread Header */}
           <div className="p-4 border-b border-slate-200 bg-[#F3F6FA] flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <img
-                src={activeThread.participant.avatar}
-                alt={activeThread.participant.name}
-                className="w-9 h-9 rounded-xl object-cover ring-1 ring-slate-200"
+              <LetterAvatar
+                name={activeThread.participant.name}
+                size="md"
+                className="w-9 h-9 rounded-xl ring-1 ring-slate-200"
               />
               <div>
                 <h3 className="text-xs font-bold text-[#12243A]">{activeThread.participant.name}</h3>

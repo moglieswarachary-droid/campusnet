@@ -5,6 +5,7 @@ import {
   GraduationCap, Sparkles, Check, CheckCheck, Smile 
 } from 'lucide-react';
 import { User, Mentor, Researcher, DirectMessage } from '../../types';
+import { LetterAvatar } from '../common/LetterAvatar';
 
 export const DirectMessagingModal: React.FC = () => {
   const { 
@@ -69,10 +70,10 @@ export const DirectMessagingModal: React.FC = () => {
                   }`}
                 >
                   <div className="relative flex-shrink-0">
-                    <img
-                      src={contact.avatar}
-                      alt={contact.name}
-                      className="w-10 h-10 rounded-xl object-cover ring-1 ring-campus-border"
+                    <LetterAvatar
+                      name={contact.name}
+                      size="md"
+                      className="w-10 h-10 rounded-xl ring-1 ring-campus-border"
                     />
                     <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 rounded-full ring-2 ring-white" />
                   </div>
@@ -97,10 +98,10 @@ export const DirectMessagingModal: React.FC = () => {
           {/* Chat Header */}
           <div className="p-4 border-b border-campus-border flex items-center justify-between bg-white">
             <div className="flex items-center gap-3">
-              <img
-                src={currentPartner.avatar}
-                alt={currentPartner.name}
-                className="w-10 h-10 rounded-xl object-cover ring-1 ring-campus-border"
+              <LetterAvatar
+                name={currentPartner.name}
+                size="md"
+                className="w-10 h-10 rounded-xl ring-1 ring-campus-border"
               />
               <div>
                 <h4 className="text-sm font-bold text-campus-deep-blue flex items-center gap-1.5">
@@ -146,10 +147,10 @@ export const DirectMessagingModal: React.FC = () => {
                     className={`flex items-end gap-2 ${isMe ? 'justify-end' : 'justify-start'}`}
                   >
                     {!isMe && (
-                      <img
-                        src={msg.senderAvatar}
-                        alt={msg.senderName}
-                        className="w-7 h-7 rounded-lg object-cover ring-1 ring-campus-border"
+                      <LetterAvatar
+                        name={msg.senderName}
+                        size="xs"
+                        className="w-7 h-7 rounded-lg ring-1 ring-campus-border"
                       />
                     )}
 

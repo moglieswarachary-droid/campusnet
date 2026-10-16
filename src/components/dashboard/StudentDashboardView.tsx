@@ -9,6 +9,7 @@ import {
   TrendingUp, Bell, Check, Sparkle
 } from 'lucide-react';
 import { StudentProfileEditModal } from './StudentProfileEditModal';
+import { LetterAvatar } from '../common/LetterAvatar';
 
 export const StudentDashboardView: React.FC = () => {
   const navigate = useNavigate();
@@ -35,9 +36,9 @@ export const StudentDashboardView: React.FC = () => {
     domain: 'Agriculture & Drone Robotics',
     projectName: 'Autonomous Crop Spraying & Spectral Disease Detection',
     members: [
-      { userId: 'u1', name: 'Aarav Sharma', role: 'Team Lead', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100' },
-      { userId: 'u2', name: 'Sneha Patel', role: 'Computer Vision', avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=100' },
-      { userId: 'u3', name: 'Karthik Raja', role: 'Embedded Firmware', avatar: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=100' }
+      { userId: 'u1', name: 'Aarav Sharma', role: 'Team Lead', avatar: '' },
+      { userId: 'u2', name: 'Sneha Patel', role: 'Computer Vision', avatar: '' },
+      { userId: 'u3', name: 'Karthik Raja', role: 'Embedded Firmware', avatar: '' }
     ]
   };
 
@@ -127,10 +128,10 @@ export const StudentDashboardView: React.FC = () => {
         {/* Student Avatar & Academic Identity */}
         <div className="flex items-start sm:items-center gap-4 sm:gap-5">
           <div className="relative shrink-0">
-            <img
-              src={currentUser?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'}
-              alt={currentUser?.name || 'Student'}
-              className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl object-cover ring-2 ring-slate-200/80 shadow-2xs"
+            <LetterAvatar
+              name={currentUser?.name || 'Student'}
+              size="xl"
+              className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl ring-2 ring-slate-200/80 shadow-2xs"
             />
             {currentUser?.verifiedStudent && (
               <span
@@ -468,13 +469,13 @@ export const StudentDashboardView: React.FC = () => {
               <div className="flex items-center justify-between pt-2 border-t border-slate-200/70 text-xs">
                 <div className="flex items-center gap-2">
                   <span className="text-[11px] text-slate-500 font-medium">Core Leads:</span>
-                  <div className="flex -space-x-2">
+                    <div className="flex -space-x-2">
                     {activeTeam.members.map(m => (
-                      <img
+                      <LetterAvatar
                         key={m.userId}
-                        src={m.avatar}
-                        alt={m.name}
-                        className="w-7 h-7 rounded-full object-cover ring-2 ring-white"
+                        name={m.name}
+                        size="xs"
+                        className="w-7 h-7 rounded-full ring-2 ring-white"
                         title={`${m.name} (${m.role})`}
                       />
                     ))}
@@ -602,10 +603,10 @@ export const StudentDashboardView: React.FC = () => {
             </div>
 
             <div className="flex items-center gap-2.5">
-              <img
-                src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80"
-                alt="Dr. Arvind Rao"
-                className="w-8 h-8 rounded-lg object-cover ring-1 ring-slate-200"
+              <LetterAvatar
+                name="Dr. Arvind Rao"
+                size="sm"
+                className="w-8 h-8 rounded-lg ring-1 ring-slate-200"
               />
               <div>
                 <h4 className="text-xs font-bold text-campus-deep-blue">Dr. Arvind Rao</h4>

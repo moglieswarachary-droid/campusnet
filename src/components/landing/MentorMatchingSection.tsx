@@ -4,6 +4,7 @@ import {
   GraduationCap, ShieldCheck, Star, Sparkles, 
   ArrowRight, CheckCircle2, MessageSquare, Award 
 } from 'lucide-react';
+import { LetterAvatar } from '../common/LetterAvatar';
 
 export const MentorMatchingSection: React.FC = () => {
   const { mentors, setActiveTab, setSelectedMentorId, sendMentorshipRequest } = useApp();
@@ -36,10 +37,10 @@ export const MentorMatchingSection: React.FC = () => {
             {/* Mentor Profile Overview */}
             <div className="lg:col-span-5 space-y-4 border-b lg:border-b-0 lg:border-r border-campus-border pb-6 lg:pb-0 lg:pr-8">
               <div className="flex items-start gap-4">
-                <img
-                  src={featuredMentor.avatar}
-                  alt={featuredMentor.name}
-                  className="w-20 h-20 rounded-2xl object-cover ring-2 ring-campus-border"
+                <LetterAvatar
+                  name={featuredMentor.name}
+                  size="2xl"
+                  className="w-20 h-20 rounded-2xl ring-2 ring-campus-border shrink-0"
                 />
                 <div>
                   <div className="flex items-center gap-1.5">

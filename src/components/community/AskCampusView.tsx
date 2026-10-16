@@ -5,6 +5,7 @@ import {
   MessageSquare, Plus, Tag, ArrowRight, UserCheck, ShieldCheck 
 } from 'lucide-react';
 import { AskQuestion } from '../../types';
+import { LetterAvatar } from '../common/LetterAvatar';
 
 export const AskCampusView: React.FC = () => {
   const { 
@@ -182,7 +183,7 @@ export const AskCampusView: React.FC = () => {
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <img src={ans.authorAvatar} alt={ans.authorName} className="w-6 h-6 rounded-lg object-cover" />
+                        <LetterAvatar name={ans.authorName} size="xs" className="w-6 h-6 rounded-lg shrink-0" />
                         <span className="font-bold text-campus-deep-blue">{ans.authorName}</span>
                         <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
                           ans.authorBadge === 'Verified Mentor' ? 'bg-red-100 text-campus-red' : 'bg-blue-100 text-campus-blue'

@@ -6,6 +6,7 @@ import {
   X, Sparkles, SlidersHorizontal, ChevronDown 
 } from 'lucide-react';
 import { EventItem, User, Mentor, Researcher, Project, InstitutionInfo } from '../../types';
+import { LetterAvatar } from '../common/LetterAvatar';
 
 export type SearchCategoryFilter = 'all' | 'projects' | 'mentors' | 'events' | 'colleges';
 
@@ -354,10 +355,10 @@ export const FederatedSearchDropdown: React.FC = () => {
                         className="p-2 rounded-xl hover:bg-slate-50 transition-colors cursor-pointer flex items-center justify-between group"
                       >
                         <div className="flex items-center gap-2.5 min-w-0 pr-2">
-                          <img
-                            src={mentor.avatar}
-                            alt={mentor.name}
-                            className="w-7 h-7 rounded-lg object-cover ring-1 ring-slate-200 flex-shrink-0"
+                          <LetterAvatar
+                            name={mentor.name}
+                            size="xs"
+                            className="w-7 h-7 rounded-lg ring-1 ring-slate-200 shrink-0"
                           />
                           <div className="min-w-0">
                             <h4 className="text-xs sm:text-sm font-semibold text-slate-900 group-hover:text-amber-700 truncate">
@@ -426,10 +427,10 @@ export const FederatedSearchDropdown: React.FC = () => {
                         className="p-2 rounded-xl hover:bg-slate-50 transition-colors cursor-pointer flex items-center justify-between group"
                       >
                         <div className="flex items-center gap-2.5 min-w-0 pr-2">
-                          <img
-                            src={scholar.avatar}
-                            alt={scholar.name}
-                            className="w-7 h-7 rounded-lg object-cover ring-1 ring-slate-200 flex-shrink-0"
+                          <LetterAvatar
+                            name={scholar.name}
+                            size="xs"
+                            className="w-7 h-7 rounded-lg ring-1 ring-slate-200 shrink-0"
                           />
                           <div className="min-w-0">
                             <h4 className="text-xs sm:text-sm font-semibold text-slate-900 group-hover:text-purple-600 truncate">

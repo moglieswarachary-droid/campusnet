@@ -5,6 +5,7 @@ import {
   ShieldCheck, Users, MessageSquare, Sparkles, Wifi, 
   Maximize2, Lock, Volume2
 } from 'lucide-react';
+import { LetterAvatar } from '../common/LetterAvatar';
 
 export const VideoCallModal: React.FC = () => {
   const { 
@@ -107,11 +108,11 @@ export const VideoCallModal: React.FC = () => {
               </div>
 
               {/* Floating mini user camera */}
-              <div className="absolute bottom-4 right-4 w-40 h-28 rounded-2xl bg-campus-deep-blue border-2 border-campus-red overflow-hidden shadow-warm-xl">
-                <img
-                  src={currentUser.avatar}
-                  alt={currentUser.name}
-                  className="w-full h-full object-cover"
+              <div className="absolute bottom-4 right-4 w-40 h-28 rounded-2xl bg-slate-900 border-2 border-campus-blue overflow-hidden shadow-warm-xl flex items-center justify-center">
+                <LetterAvatar
+                  name={currentUser.name}
+                  size="xl"
+                  className="w-14 h-14 rounded-2xl ring-2 ring-white/20"
                 />
                 <div className="absolute bottom-1 left-2 text-[10px] font-bold text-white bg-black/60 px-1.5 py-0.5 rounded">
                   You ({currentUser.name.split(' ')[0]})
@@ -129,12 +130,14 @@ export const VideoCallModal: React.FC = () => {
                   }`}
                 >
                   {/* Participant Video Simulation Background */}
-                  <img
-                    src={p.avatar}
-                    alt={p.name}
-                    className="absolute inset-0 w-full h-full object-cover opacity-80"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30" />
+                  <div className="absolute inset-0 flex items-center justify-center bg-slate-800/80">
+                    <LetterAvatar
+                      name={p.name}
+                      size="2xl"
+                      className="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl ring-4 ring-white/10 shadow-xl"
+                    />
+                  </div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 pointer-events-none" />
 
                   {/* Top Status */}
                   <div className="relative z-10 flex items-center justify-between">
@@ -260,7 +263,7 @@ export const VideoCallModal: React.FC = () => {
                 {videoMeeting.participants.map(p => (
                   <div key={p.id} className="p-2.5 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-between text-xs">
                     <div className="flex items-center gap-2.5">
-                      <img src={p.avatar} alt={p.name} className="w-8 h-8 rounded-xl object-cover ring-1 ring-white/20" />
+                      <LetterAvatar name={p.name} size="sm" className="w-8 h-8 rounded-xl ring-1 ring-white/20 shrink-0" />
                       <div>
                         <div className="font-bold text-white">{p.name}</div>
                         <div className="text-[10.5px] text-gray-400">{p.role}</div>

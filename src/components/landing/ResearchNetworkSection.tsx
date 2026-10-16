@@ -1,6 +1,7 @@
 import React from 'react';
 import { useApp } from '../../context/AppContext';
 import { BookOpen, Sparkles, FileText, ArrowRight, ShieldCheck, Database, GraduationCap } from 'lucide-react';
+import { LetterAvatar } from '../common/LetterAvatar';
 
 export const ResearchNetworkSection: React.FC = () => {
   const { researchers, publications, setActiveTab } = useApp();
@@ -83,10 +84,10 @@ export const ResearchNetworkSection: React.FC = () => {
                 className="p-5 rounded-3xl bg-white/5 border border-white/10 space-y-3"
               >
                 <div className="flex items-center gap-3">
-                  <img
-                    src={res.avatar}
-                    alt={res.name}
-                    className="w-12 h-12 rounded-xl object-cover ring-1 ring-white/20"
+                  <LetterAvatar
+                    name={res.name}
+                    size="lg"
+                    className="w-12 h-12 rounded-xl ring-1 ring-white/20 shrink-0"
                   />
                   <div>
                     <div className="flex items-center gap-1.5">

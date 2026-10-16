@@ -6,6 +6,7 @@ import {
   Award, Send, ExternalLink, Sparkles
 } from 'lucide-react';
 import { Mentor } from '../../../types';
+import { LetterAvatar } from '../../common/LetterAvatar';
 
 export const StudentMentorshipView: React.FC = () => {
   const {
@@ -28,7 +29,7 @@ export const StudentMentorshipView: React.FC = () => {
       id: 'gn-01',
       mentorName: 'Dr. Arvind Rao',
       mentorRole: 'Professor of AI & Robotics • IIT Bombay',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
+      avatar: '',
       date: 'April 14, 2026',
       project: 'AgriVision: Autonomous Micro-Drones',
       title: 'FMEA Safety Directive & Motor Cut-Off Validation',
@@ -39,7 +40,7 @@ export const StudentMentorshipView: React.FC = () => {
       id: 'gn-02',
       mentorName: 'Prof. Sudhir Sen',
       mentorRole: 'Distinguished Fellow • IISc Bengaluru',
-      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80',
+      avatar: '',
       date: 'April 09, 2026',
       project: 'Distributed Byzantine Fault Tolerance Ledger',
       title: 'Raft Latency Benchmark Suggestions',
@@ -185,10 +186,10 @@ export const StudentMentorshipView: React.FC = () => {
               >
                 <div>
                   <div className="flex items-start gap-3">
-                    <img
-                      src={mentor.avatar}
-                      alt={mentor.name}
-                      className="w-12 h-12 rounded-xl object-cover ring-1 ring-slate-200 shrink-0"
+                    <LetterAvatar
+                      name={mentor.name}
+                      size="lg"
+                      className="w-12 h-12 rounded-xl ring-1 ring-slate-200 shrink-0"
                     />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-1.5">
@@ -246,10 +247,10 @@ export const StudentMentorshipView: React.FC = () => {
               <div key={mentor.id} className="bg-white rounded-2xl border border-blue-200/80 p-6 shadow-2xs space-y-4">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
-                    <img
-                      src={mentor.avatar}
-                      alt={mentor.name}
-                      className="w-12 h-12 rounded-xl object-cover ring-2 ring-blue-100"
+                    <LetterAvatar
+                      name={mentor.name}
+                      size="lg"
+                      className="w-12 h-12 rounded-xl ring-2 ring-blue-100"
                     />
                     <div>
                       <h4 className="text-sm font-bold text-campus-deep-blue">{mentor.name}</h4>
@@ -299,10 +300,10 @@ export const StudentMentorshipView: React.FC = () => {
             <div key={gn.id} className="bg-white rounded-2xl border border-slate-200/90 p-6 shadow-2xs space-y-3">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-center gap-3">
-                  <img
-                    src={gn.avatar}
-                    alt={gn.mentorName}
-                    className="w-10 h-10 rounded-xl object-cover ring-1 ring-slate-200"
+                  <LetterAvatar
+                    name={gn.mentorName}
+                    size="md"
+                    className="w-10 h-10 rounded-xl ring-1 ring-slate-200"
                   />
                   <div>
                     <h4 className="text-xs font-bold text-campus-deep-blue">{gn.mentorName}</h4>

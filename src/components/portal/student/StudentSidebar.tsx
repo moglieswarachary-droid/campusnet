@@ -7,6 +7,7 @@ import {
   MessageSquare, Bell, Settings, ShieldCheck, ChevronRight,
   ExternalLink, Sparkle
 } from 'lucide-react';
+import { LetterAvatar } from '../../common/LetterAvatar';
 
 interface StudentSidebarProps {
   onCloseMobile?: () => void;
@@ -220,10 +221,10 @@ export const StudentSidebar: React.FC<StudentSidebarProps> = ({ onCloseMobile, c
           className="flex items-center gap-2.5 p-1.5 rounded-xl hover:bg-white transition-colors group"
         >
           <div className="relative shrink-0">
-            <img
-              src={currentUser?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80'}
-              alt={currentUser?.name || 'Student'}
-              className="w-8 h-8 rounded-lg object-cover ring-1 ring-slate-200"
+            <LetterAvatar
+              name={currentUser?.name || 'Student'}
+              size="sm"
+              className="w-8 h-8 rounded-lg ring-1 ring-slate-200"
             />
             {currentUser?.verifiedStudent && (
               <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 rounded-full ring-2 ring-white" />

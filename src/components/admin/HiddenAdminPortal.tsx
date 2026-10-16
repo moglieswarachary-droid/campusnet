@@ -4,6 +4,7 @@ import {
   ShieldAlert, ShieldCheck, CheckCircle2, XCircle, 
   Lock, AlertTriangle, Users, Award, Eye, FileText 
 } from 'lucide-react';
+import { LetterAvatar } from '../common/LetterAvatar';
 
 export const HiddenAdminPortal: React.FC = () => {
   const { currentUser, students, verifyStudentManually, addToast } = useApp();
@@ -74,7 +75,7 @@ export const HiddenAdminPortal: React.FC = () => {
             {students.map(student => (
               <div key={student.id} className="p-5 rounded-3xl bg-white border border-campus-border shadow-warm-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
-                  <img src={student.avatar} alt={student.name} className="w-12 h-12 rounded-xl object-cover ring-1 ring-campus-border" />
+                  <LetterAvatar name={student.name} size="lg" className="w-12 h-12 rounded-xl ring-1 ring-campus-border shrink-0" />
                   <div>
                     <div className="flex items-center gap-2">
                       <h4 className="font-bold text-sm text-campus-deep-blue">{student.name}</h4>
