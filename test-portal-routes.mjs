@@ -73,7 +73,7 @@ mentorRoutes.forEach(r => {
   assert(getPortalFromEnvironment(r, '') === 'mentor', `Route '${r}' resolves to Mentor Portal namespace`);
 });
 
-console.log('\n--- 4. Researcher Portal Routes (11 Required Routes) ---');
+console.log('\n--- 4. Researcher Portal Routes (17 Canonical Routes) ---');
 const researcherRoutes = [
   '/researcher/login',
   '/researcher/register',
@@ -84,6 +84,12 @@ const researcherRoutes = [
   '/researcher/projects',
   '/researcher/collaborations',
   '/researcher/opportunities',
+  '/researcher/directory',
+  '/researcher/institutions',
+  '/researcher/funding',
+  '/researcher/milestones',
+  '/researcher/messages',
+  '/researcher/analytics',
   '/researcher/notifications',
   '/researcher/settings'
 ];
