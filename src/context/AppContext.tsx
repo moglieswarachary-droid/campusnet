@@ -24,6 +24,8 @@ import {
   MOCK_CERTIFICATE_TEMPLATES, MOCK_EVENT_ANNOUNCEMENTS, MOCK_AUDIT_LOGS
 } from '../data/mockData';
 
+import { realtimeClient } from '../utils/realtimeClient';
+
 export type NavigationTab = 
   | 'home' 
   | 'discover' 
@@ -43,7 +45,7 @@ export type NavigationTab =
 export interface ToastMessage {
   id: string;
   type: 'success' | 'info' | 'error' | 'warning';
-  title: string;
+  title?: string;
   message: string;
 }
 
@@ -245,7 +247,7 @@ interface AppContextType {
   
   // UI Controls
   toasts: ToastMessage[];
-  addToast: (toast: Omit<ToastMessage, 'id'>) => void;
+  addToast: (toast: Omit<ToastMessage, 'id'> | string, type?: 'success' | 'info' | 'error' | 'warning') => void;
   removeToast: (id: string) => void;
   isAIModalOpen: boolean;
   setIsAIModalOpen: (open: boolean) => void;
@@ -265,6 +267,7 @@ interface AppContextType {
   verifyStudentManually: (studentId: string) => void;
   verifyMentorManually: (mentorId: string) => void;
   resetDemoData: () => void;
+  logoutPortalSession: (redirectPortal?: 'student' | 'mentor' | 'scholar' | 'organizer' | 'gateway') => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -410,7 +413,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Super Admin Portal State
   const [currentSuperAdmin, setCurrentSuperAdmin] = useState<SuperAdminAccount | null>(() => {
     const saved = localStorage.getItem('campusnet_admin_session');
-    return saved ? JSON.parse(saved) : MOCK_SUPER_ADMIN_ACCOUNT;
+    return saved ? JSON.parse(saved) : null;
   });
   
   // Event Operations & Lifecycle State
@@ -569,6 +572,56 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     localStorage.setItem('campusnet_notifications', JSON.stringify(notifications));
   }, [notifications]);
 
+  useEffect(() => {
+    if (currentUser) {
+      localStorage.setItem('campusnet_user', JSON.stringify(currentUser));
+    }
+  }, [currentUser]);
+
+  // Real-Time SSE Hub Listener across Portals
+  useEffect(() => {
+    const role = activeRole || 'student';
+    const userId = currentUser?.id || currentOrganizer?.id || '';
+    realtimeClient.connect(role, userId);
+
+    const unsubscribe = realtimeClient.subscribe((notif) => {
+      // Real-time toast feedback
+      addToast({
+        type: 'info',
+        message: `${notif.title}: ${notif.message}`
+      });
+
+      // Update live notifications bell
+      setNotifications(prev => [
+        {
+          id: notif.id,
+          title: notif.title,
+          description: notif.message || notif.title,
+          timestamp: 'Just now',
+          read: false,
+          type: notif.type.includes('EVENT') ? 'event' : notif.type.includes('MENTOR') ? 'mentor' : 'system',
+          linkAction: notif.type.includes('EVENT') ? '/student/events' : notif.type.includes('MENTOR') ? '/mentor/requests' : '/student/notifications'
+        },
+        ...prev
+      ]);
+
+      // Cross-portal updates: if new event registration, update organizer's roster live
+      if (notif.type === 'NEW_EVENT_REGISTRATION' && notif.payload) {
+        setEventRegistrations(prev => [notif.payload, ...prev]);
+      }
+
+      // If new mentorship request, update mentor's requests live
+      if (notif.type === 'NEW_MENTORSHIP_REQUEST' && notif.payload) {
+        setMentorshipRequests(prev => [notif.payload, ...prev]);
+      }
+    });
+
+    return () => {
+      unsubscribe();
+      realtimeClient.disconnect();
+    };
+  }, [activeRole, currentUser?.id, currentOrganizer?.id]);
+
   const [connectionRequests, setConnectionRequests] = useState<ConnectionRequest[]>([
     {
       id: 'conn-req-1',
@@ -630,21 +683,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // UI state
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [isAIModalOpen, setIsAIModalOpen] = useState(false);
-  const [authModalType, setAuthModalType] = useState<'none' | 'login' | 'student_register' | 'mentor_onboarding' | 'scholar_register' | 'organizer_login' | 'organizer_register'>(() => {
-    if (typeof window !== 'undefined') {
-      const p = window.location.pathname.toLowerCase();
-      // Do not overlay public modal if accessing dedicated organization or admin subapps
-      if (p.includes('/organization') || p.includes('/admin')) {
-        return 'none';
-      }
-      // Check if user has already entered session during this browser visit
-      const sessionEntered = sessionStorage.getItem('campusnet_session_entered') === 'true';
-      if (!sessionEntered) {
-        return 'login'; // Show login modal (Img 2) before landing page as default
-      }
-    }
-    return 'none';
-  });
+  const [authModalType, setAuthModalType] = useState<'none' | 'login' | 'student_register' | 'mentor_onboarding' | 'scholar_register' | 'organizer_login' | 'organizer_register'>('none');
   const [authTargetRole, setAuthTargetRole] = useState<'student' | 'mentor' | 'scholar' | 'organizer'>('student');
   const [authTargetMode, setAuthTargetMode] = useState<'login' | 'register'>('login');
 
@@ -654,23 +693,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   ) => {
     setAuthTargetRole(role);
     setAuthTargetMode(mode);
+    
+    // Direct navigation to dedicated role portals
     if (role === 'organizer') {
-      const url = new URL(window.location.href);
-      url.searchParams.set('portal', 'organizer');
-      if (mode === 'register') {
-        url.searchParams.set('action', 'register');
-      }
-      window.location.href = url.toString();
+      window.location.href = mode === 'register' ? '/organization/register' : '/organization/login';
       return;
     }
-
-    if (mode === 'login') {
-      setAuthModalType('login');
-    } else {
-      if (role === 'student') setAuthModalType('student_register');
-      else if (role === 'mentor') setAuthModalType('mentor_onboarding');
-      else if (role === 'scholar') setAuthModalType('scholar_register');
+    if (role === 'mentor') {
+      window.location.href = mode === 'register' ? '/mentor/register' : '/mentor/login';
+      return;
     }
+    if (role === 'scholar') {
+      window.location.href = mode === 'register' ? '/researcher/register' : '/researcher/login';
+      return;
+    }
+    
+    // Default student
+    window.location.href = mode === 'register' ? '/student/register' : '/student/login';
   };
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -688,9 +727,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     participants: []
   });
 
-  const addToast = (toast: Omit<ToastMessage, 'id'>) => {
+  const addToast = (toast: Omit<ToastMessage, 'id'> | string, legacyType?: 'success' | 'info' | 'error' | 'warning') => {
+    let finalToast: Omit<ToastMessage, 'id'>;
+    if (typeof toast === 'string') {
+      finalToast = {
+        type: legacyType || 'info',
+        title: legacyType === 'error' ? 'Notice' : 'CampusNet+',
+        message: toast
+      };
+    } else {
+      finalToast = {
+        ...toast,
+        title: toast.title || (toast.type === 'error' ? 'Notice' : 'CampusNet+')
+      };
+    }
     const id = `toast-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
-    setToasts(prev => [...prev, { ...toast, id }]);
+    setToasts(prev => [...prev, { ...finalToast, id, title: finalToast.title || 'CampusNet+' }]);
     setTimeout(() => {
       removeToast(id);
     }, 4500);
@@ -837,17 +889,53 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return false;
   };
 
-  const organizerLogout = () => {
+  const logoutPortalSession = async (redirectPortal: 'student' | 'mentor' | 'scholar' | 'organizer' | 'gateway' = 'gateway') => {
+    try {
+      const token = sessionStorage.getItem('campusnet_token') || localStorage.getItem('campusnet_token');
+      if (token) {
+        await fetch('/api/auth/logout', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+      }
+    } catch {
+      // Ignore network errors on logout
+    }
+
+    sessionStorage.removeItem('campusnet_token');
+    localStorage.removeItem('campusnet_token');
+    sessionStorage.removeItem('campusnet_session_entered');
+    localStorage.removeItem('campusnet_user');
+    realtimeClient.disconnect();
+
+    if (redirectPortal === 'organizer') {
+      setCurrentOrganizer(null);
+      localStorage.removeItem('campusnet_organizer_session');
+      navigate('/organization/login');
+    } else if (redirectPortal === 'mentor') {
+      navigate('/mentor/login');
+    } else if (redirectPortal === 'scholar') {
+      navigate('/researcher/login');
+    } else if (redirectPortal === 'student') {
+      navigate('/student/login');
+    } else {
+      navigate('/');
+    }
+
+    addToast({
+      type: 'info',
+      title: 'Session Terminated',
+      message: 'You have been securely logged out. Session invalidated.'
+    });
+  };
+
+  const organizerLogout = async () => {
     if (currentOrganizer) {
       logAuditAction('ORGANIZER_LOGOUT', 'institution', currentOrganizer.id, currentOrganizer.institutionName, 'Organizer session ended');
     }
-    setCurrentOrganizer(null);
-    localStorage.removeItem('campusnet_organizer_session');
-    addToast({
-      type: 'info',
-      title: 'Logged Out',
-      message: 'Organizer session securely terminated.'
-    });
+    await logoutPortalSession('organizer');
   };
 
   const updateOrganizerProfile = (data: Partial<OrganizerAccount>) => {
@@ -1020,6 +1108,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // --- SUPER ADMIN & PLATFORM REVIEWER AUTHENTICATION ---
   const superAdminLogin = (usernameOrEmail: string, password?: string): boolean => {
     const lower = usernameOrEmail.toLowerCase().trim();
+    if (!password || (password !== 'Admin@CampusNet2026' && password !== 'CampusNet@Demo2026')) {
+      addToast({
+        type: 'error',
+        title: 'Authentication Failed',
+        message: 'Invalid administrative password or security key.'
+      });
+      return false;
+    }
+
     if (lower === 'superadmin.demo' || lower === 'superadmin@campusnet-demo.in' || lower === 'admin' || lower === 'admin@campusnet.in') {
       setCurrentSuperAdmin(MOCK_SUPER_ADMIN_ACCOUNT);
       localStorage.setItem('campusnet_admin_session', JSON.stringify(MOCK_SUPER_ADMIN_ACCOUNT));
@@ -2484,7 +2581,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setMentorshipRequests([]);
     setOrganizers(MOCK_ORGANIZER_ACCOUNTS);
     setCurrentOrganizer(MOCK_ORGANIZER_ACCOUNTS[0]);
-    setCurrentSuperAdmin(MOCK_SUPER_ADMIN_ACCOUNT);
+    setCurrentSuperAdmin(null);
+    localStorage.removeItem('campusnet_admin_session');
     setEventRegistrations(MOCK_EVENT_REGISTRATIONS);
     setQrCheckInRecords(MOCK_QR_CHECKINS);
     setProjectSubmissions(MOCK_PROJECT_SUBMISSIONS);
@@ -2690,7 +2788,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setSearchQuery,
         verifyStudentManually,
         verifyMentorManually,
-        resetDemoData
+        resetDemoData,
+        logoutPortalSession
       }}
     >
       {children}

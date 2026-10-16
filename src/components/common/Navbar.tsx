@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { RoleType } from '../../types';
 import { WorkspaceSelectionModal } from '../landing/WorkspaceSelectionModal';
+import { WorkspaceSwitcher } from './WorkspaceSwitcher';
 
 export const Navbar: React.FC = () => {
   const { 
@@ -360,7 +361,7 @@ export const Navbar: React.FC = () => {
                           type="button"
                           onClick={() => {
                             setIsRoleMenuOpen(false);
-                            setIsWorkspaceModalOpen(true);
+                            navigate('/');
                           }}
                           className="w-full text-left px-2.5 py-1.5 text-xs text-indigo-600 font-semibold hover:bg-indigo-50 rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer"
                         >
@@ -371,18 +372,18 @@ export const Navbar: React.FC = () => {
                           type="button"
                           onClick={() => {
                             setIsRoleMenuOpen(false);
-                            openAuthModal('student', 'login');
+                            navigate('/');
                           }}
                           className="w-full text-left px-2.5 py-1.5 text-xs text-slate-600 font-medium hover:bg-slate-50 rounded-lg transition-colors cursor-pointer"
                         >
-                          Switch Account / Sign In
+                          Switch Account / RBAC Gateway
                         </button>
                         <button
                           type="button"
                           onClick={() => {
                             setIsRoleMenuOpen(false);
                             sessionStorage.removeItem('campusnet_session_entered');
-                            openAuthModal('student', 'login');
+                            navigate('/');
                           }}
                           className="w-full text-left px-2.5 py-1.5 text-xs text-rose-600 font-semibold hover:bg-rose-50 rounded-lg transition-colors cursor-pointer flex items-center justify-between"
                         >
@@ -394,10 +395,13 @@ export const Navbar: React.FC = () => {
                   )}
                 </div>
 
+                {/* Multi-role Workspace Switcher */}
+                <WorkspaceSwitcher />
+
                 {/* Sign In & Join CampusNet buttons */}
                 <button
                   type="button"
-                  onClick={() => openAuthModal('student', 'login')}
+                  onClick={() => navigate('/')}
                   className="hidden xl:inline-flex px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-700 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
                 >
                   Sign In
@@ -405,7 +409,7 @@ export const Navbar: React.FC = () => {
 
                 <button
                   type="button"
-                  onClick={() => setIsWorkspaceModalOpen(true)}
+                  onClick={() => navigate('/')}
                   className="hidden sm:inline-flex px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-900 hover:bg-slate-800 text-white shadow-xs transition-colors cursor-pointer"
                 >
                   Join CampusNet

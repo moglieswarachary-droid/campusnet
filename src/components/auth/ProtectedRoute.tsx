@@ -48,14 +48,10 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     }
   }
 
-  // 1. Unauthenticated Check
+  // 1. Unauthenticated Check: Protected routes strictly require an authenticated identity
   if (!isAuthenticated) {
-    const sessionEntered = typeof window !== 'undefined' && sessionStorage.getItem('campusnet_session_entered') === 'true';
-    if (!sessionEntered) {
-      // Direct unauthenticated visit: Open the Initial Access Gateway preserving intended path
-      const redirectTarget = encodeURIComponent(location.pathname + location.search);
-      return <Navigate to={`/?redirect=${redirectTarget}`} replace />;
-    }
+    const redirectTarget = encodeURIComponent(location.pathname + location.search);
+    return <Navigate to={`/?redirect=${redirectTarget}`} replace />;
   }
 
   // 2. Role Check

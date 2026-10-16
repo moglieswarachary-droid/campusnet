@@ -7,7 +7,7 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const DIST_DIR = path.join(__dirname, 'dist');
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3199;
 
 const MIME_TYPES = {
   '.html': 'text/html; charset=utf-8',
@@ -90,7 +90,7 @@ const SERVER_ROLE_PERMISSIONS = {
 };
 
 // Seed Users Database with Multi-Role Support
-const USERS_DB = [
+let USERS_DB = [
   {
     id: 'usr-std-001',
     email: 'aarav.sharma@nitk.edu.in',
@@ -250,8 +250,67 @@ const USERS_DB = [
 // Active Server Sessions Store: token -> { userId, expiresAt }
 const SESSIONS = new Map();
 
+// Persistent File Database & Session Infrastructure
+const DATA_DIR = path.join(__dirname, 'data');
+const STORE_PATH = path.join(DATA_DIR, 'campusnet_store.json');
+const REVOKED_TOKENS = new Set();
+const SSE_CLIENTS = new Set();
+
+// Resource Stores for Granular Resource-Level Authorization
+let MENTORSHIP_REQUESTS_DB = [
+  {
+    id: 'req-001',
+    studentId: 'usr-std-001',
+    studentName: 'Aarav Sharma',
+    mentorId: 'usr-mnt-001',
+    mentorName: 'Dr. Arvind Rao',
+    projectTitle: 'KrishiDrone AI: Autonomous Edge UAV',
+    teamName: 'Team AeroInnovators',
+    status: 'pending',
+    message: 'Seeking guidance on ROS 2 integration and edge computer vision inference.'
+  }
+];
+
+let RESEARCH_COLLABORATIONS_DB = [
+  {
+    id: 'collab-001',
+    requesterId: 'usr-res-001',
+    requesterName: 'Kavya Ramanathan',
+    collaboratorId: 'usr-mnt-001',
+    collaboratorName: 'Dr. Arvind Rao',
+    projectTitle: 'Hardware-in-the-Loop Edge Telemetry for Autonomous Agro-UAVs',
+    status: 'active',
+    confidentialDraft: 'Confidential architecture proposal for ACM SenSys 2026.'
+  }
+];
+
+let ORGANIZATION_MEMBERS_DB = [
+  {
+    id: 'mem-kec-001',
+    organizationId: 'KEC-DEMO-001',
+    userId: 'usr-multi-001',
+    name: 'Karthik Raja',
+    email: 'karthik.raja@campusnet.in',
+    role: 'EVENT_MANAGER',
+    status: 'active'
+  }
+];
+
+let EVENT_REGISTRATIONS_DB = [
+  {
+    id: 'reg-001',
+    eventId: 'ev-001',
+    organizerId: 'KEC-DEMO-001',
+    studentId: 'usr-std-001',
+    participantName: 'Aarav Sharma',
+    email: 'aarav.sharma@nitk.edu.in',
+    teamName: 'Team AeroInnovators',
+    status: 'confirmed'
+  }
+];
+
 // Audit Logs Store
-const AUDIT_LOGS = [
+let AUDIT_LOGS = [
   {
     id: 'aud-seed-1',
     actorId: 'adm-root-001',
@@ -265,6 +324,111 @@ const AUDIT_LOGS = [
     details: 'Production RBAC server initialized with 7 canonical roles and permission matrix.'
   }
 ];
+
+// File-Backed Atomic Database Persistence
+function persistStoreToDisk() {
+  try {
+    if (!fs.existsSync(DATA_DIR)) {
+      fs.mkdirSync(DATA_DIR, { recursive: true });
+    }
+    const payload = {
+      version: '1.0.0',
+      lastSaved: new Date().toISOString(),
+      users: USERS_DB,
+      mentorshipRequests: MENTORSHIP_REQUESTS_DB,
+      researchCollaborations: RESEARCH_COLLABORATIONS_DB,
+      organizationMembers: ORGANIZATION_MEMBERS_DB,
+      eventRegistrations: EVENT_REGISTRATIONS_DB,
+      auditLogs: AUDIT_LOGS,
+      revokedTokens: Array.from(REVOKED_TOKENS)
+    };
+    fs.writeFileSync(STORE_PATH, JSON.stringify(payload, null, 2), 'utf-8');
+  } catch (err) {
+    console.error('[Store] Error persisting database to disk:', err.message);
+  }
+}
+
+function loadStoreFromDisk() {
+  try {
+    if (!fs.existsSync(DATA_DIR)) {
+      fs.mkdirSync(DATA_DIR, { recursive: true });
+    }
+    if (fs.existsSync(STORE_PATH)) {
+      const data = JSON.parse(fs.readFileSync(STORE_PATH, 'utf-8'));
+      if (Array.isArray(data.users) && data.users.length > 0) USERS_DB = data.users;
+      if (Array.isArray(data.mentorshipRequests)) MENTORSHIP_REQUESTS_DB = data.mentorshipRequests;
+      if (Array.isArray(data.researchCollaborations)) RESEARCH_COLLABORATIONS_DB = data.researchCollaborations;
+      if (Array.isArray(data.organizationMembers)) ORGANIZATION_MEMBERS_DB = data.organizationMembers;
+      if (Array.isArray(data.eventRegistrations)) EVENT_REGISTRATIONS_DB = data.eventRegistrations;
+      if (Array.isArray(data.auditLogs)) AUDIT_LOGS = data.auditLogs;
+      if (Array.isArray(data.revokedTokens)) {
+        data.revokedTokens.forEach(t => REVOKED_TOKENS.add(t));
+      }
+      return;
+    }
+  } catch (err) {
+    console.error('[Store] Could not load existing store, using seeds:', err.message);
+  }
+  persistStoreToDisk();
+}
+
+// Hydrate store on server start
+loadStoreFromDisk();
+
+// Real-Time SSE Notification Dispatcher
+function broadcastRealtimeNotification({ type, title, message, targetRole, targetUserId, payload }) {
+  const notif = {
+    id: `notif-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+    type: type || 'SYSTEM_ALERT',
+    title: title || 'CampusNet+ Notification',
+    message: message || '',
+    targetRole,
+    targetUserId,
+    payload: payload || {},
+    timestamp: new Date().toISOString()
+  };
+
+  const payloadString = `event: notification\ndata: ${JSON.stringify(notif)}\n\n`;
+
+  for (const client of SSE_CLIENTS) {
+    try {
+      if (targetRole && client.role && client.role !== targetRole && client.role !== 'SUPER_ADMIN') {
+        continue;
+      }
+      if (targetUserId && client.userId && client.userId !== targetUserId) {
+        continue;
+      }
+      client.res.write(payloadString);
+    } catch {
+      SSE_CLIENTS.delete(client);
+    }
+  }
+
+  AUDIT_LOGS.push({
+    id: `aud-${Date.now()}`,
+    actorId: 'system-sse',
+    actorName: 'Realtime SSE Hub',
+    actorRole: 'SYSTEM',
+    action: `SSE_${type}`,
+    targetType: targetRole || 'user',
+    targetId: targetUserId || 'all',
+    targetName: title,
+    timestamp: notif.timestamp,
+    details: message
+  });
+  persistStoreToDisk();
+}
+
+// SSE Connection Heartbeat
+setInterval(() => {
+  for (const client of SSE_CLIENTS) {
+    try {
+      client.res.write(': ping\n\n');
+    } catch {
+      SSE_CLIENTS.delete(client);
+    }
+  }
+}, 25000);
 
 // Helper: Parse JSON Body
 function parseJsonBody(req) {
@@ -305,6 +469,9 @@ function authenticateSession(req) {
   const authHeader = req.headers['authorization'] || '';
   const token = authHeader.replace(/^Bearer\s+/i, '').trim();
   if (!token) return null;
+
+  // Session Invalidation / Token Blacklist Check
+  if (REVOKED_TOKENS.has(token)) return null;
 
   const session = SESSIONS.get(token);
   if (!session) return null;
@@ -366,8 +533,8 @@ const server = http.createServer(async (req, res) => {
           return;
         }
 
-        // Demo password check or match
-        if (password && password !== user.passwordHash && password !== 'CampusNet@Demo2026') {
+        // Strict credential verification: require password
+        if (!password || (password !== user.passwordHash && password !== 'CampusNet@Demo2026')) {
           sendJson(res, 401, { error: 'Invalid password provided.' });
           return;
         }
@@ -522,6 +689,77 @@ const server = http.createServer(async (req, res) => {
         return;
       }
 
+      // POST /api/auth/logout (Token Revocation & Session Invalidation)
+      if (pathname === '/api/auth/logout' && req.method === 'POST') {
+        const authHeader = req.headers['authorization'] || '';
+        const token = authHeader.replace(/^Bearer\s+/i, '').trim();
+
+        if (token) {
+          REVOKED_TOKENS.add(token);
+          SESSIONS.delete(token);
+          persistStoreToDisk();
+        }
+
+        sendJson(res, 200, {
+          success: true,
+          message: 'Session revoked successfully. Token has been blacklisted.'
+        });
+        return;
+      }
+
+      // GET /api/realtime/stream (Server-Sent Events Realtime Notification Hub)
+      if (pathname === '/api/realtime/stream' && req.method === 'GET') {
+        res.writeHead(200, {
+          'Content-Type': 'text/event-stream',
+          'Cache-Control': 'no-cache, no-transform',
+          'Connection': 'keep-alive',
+          'Access-Control-Allow-Origin': '*'
+        });
+
+        const client = {
+          id: `sse-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+          res,
+          role: ((parsedUrl.searchParams.get('role') || '').toUpperCase()),
+          userId: parsedUrl.searchParams.get('userId') || ''
+        };
+
+        SSE_CLIENTS.add(client);
+        res.write(`data: ${JSON.stringify({ type: 'CONNECTED', message: 'CampusNet Realtime SSE stream active', clientId: client.id })}\n\n`);
+
+        req.on('close', () => {
+          SSE_CLIENTS.delete(client);
+        });
+        return;
+      }
+
+      // POST /api/realtime/broadcast (Broadcast Announcement / Alert across Workspaces)
+      if (pathname === '/api/realtime/broadcast' && req.method === 'POST') {
+        const auth = authenticateSession(req);
+        if (!auth) {
+          sendJson(res, 401, { error: 'Authentication required to broadcast.' });
+          return;
+        }
+
+        const isAuthorized = auth.user.activeRole === 'ORGANIZATION_OWNER' || auth.user.activeRole === 'SUPER_ADMIN' || auth.user.activeRole === 'PLATFORM_REVIEWER';
+        if (!isAuthorized) {
+          sendJson(res, 403, { error: 'Permission Denied: Only organizers or administrators can broadcast real-time announcements.' });
+          return;
+        }
+
+        const body = await parseJsonBody(req);
+        broadcastRealtimeNotification({
+          type: body.type || 'ANNOUNCEMENT',
+          title: body.title || 'Platform Announcement',
+          message: body.message || '',
+          targetRole: body.targetRole,
+          targetUserId: body.targetUserId,
+          payload: body.payload
+        });
+
+        sendJson(res, 200, { success: true, message: 'Broadcast sent to connected workspaces.' });
+        return;
+      }
+
       // POST /api/auth/switch-role (Server-enforced privilege escalation prevention!)
       if (pathname === '/api/auth/switch-role' && req.method === 'POST') {
         const auth = authenticateSession(req);
@@ -607,7 +845,7 @@ const server = http.createServer(async (req, res) => {
       }
 
       // GET /api/organizations/:id (Server-Enforced Multi-Tenant Isolation)
-      if (pathname.startsWith('/api/organizations/') && req.method === 'GET') {
+      if (pathname.startsWith('/api/organizations/') && !pathname.includes('/members') && req.method === 'GET') {
         const targetOrgId = pathname.replace('/api/organizations/', '');
         const auth = authenticateSession(req);
         if (!auth) {
@@ -677,6 +915,18 @@ const server = http.createServer(async (req, res) => {
           details: `Created event with status ${status}`
         });
 
+        persistStoreToDisk();
+
+        if (status === 'published') {
+          broadcastRealtimeNotification({
+            type: 'NEW_PUBLISHED_EVENT',
+            title: 'New National Event Published',
+            message: `"${title || 'Accredited Event'}" is now open for collegiate registrations!`,
+            targetRole: 'STUDENT',
+            payload: { eventId: newEventId, title, organizerId: auth.user.organizationId }
+          });
+        }
+
         sendJson(res, 201, {
           success: true,
           eventId: newEventId,
@@ -684,6 +934,315 @@ const server = http.createServer(async (req, res) => {
           status
         });
         return;
+      }
+
+      // ----------------------------------------------------
+      // RESOURCE-LEVEL AUTHORIZATION: STUDENT PROFILES
+      // ----------------------------------------------------
+      if (pathname.startsWith('/api/students/')) {
+        const targetStudentId = pathname.replace('/api/students/', '');
+        const auth = authenticateSession(req);
+        if (!auth) {
+          sendJson(res, 401, { error: 'Authentication required to access student records.' });
+          return;
+        }
+
+        const student = USERS_DB.find(u => u.id === targetStudentId);
+        if (!student) {
+          sendJson(res, 404, { error: 'Student record not found.' });
+          return;
+        }
+
+        if (req.method === 'GET') {
+          // If self or super-admin or mentor assigned to this student: full access
+          const isSelf = auth.user.id === targetStudentId;
+          const isSuperAdmin = auth.user.activeRole === 'SUPER_ADMIN';
+          const isAssignedMentor = auth.user.activeRole === 'MENTOR' && MENTORSHIP_REQUESTS_DB.some(r => r.mentorId === auth.user.id && r.studentId === targetStudentId && r.status === 'accepted');
+
+          if (isSelf || isSuperAdmin || isAssignedMentor) {
+            sendJson(res, 200, { student });
+          } else {
+            // Sanitize: Redact sensitive contact info for unrelated users
+            sendJson(res, 200, {
+              student: {
+                id: student.id,
+                name: student.name,
+                institution: student.institution,
+                department: student.department,
+                verified: student.verified
+              }
+            });
+          }
+          return;
+        }
+
+        if (req.method === 'PUT') {
+          // Horizontal Privilege Escalation Prevention: Only the student themselves or super-admin can modify
+          if (auth.user.id !== targetStudentId && auth.user.activeRole !== 'SUPER_ADMIN') {
+            sendJson(res, 403, { 
+              error: 'Access Denied: Horizontal privilege escalation blocked. You can only edit your own student record.' 
+            });
+            return;
+          }
+
+          const body = await parseJsonBody(req);
+          Object.assign(student, body);
+          sendJson(res, 200, { success: true, message: 'Student profile updated.', student });
+          return;
+        }
+      }
+
+      // ----------------------------------------------------
+      // RESOURCE-LEVEL AUTHORIZATION: MENTORSHIP REQUESTS
+      // ----------------------------------------------------
+      if (pathname === '/api/mentors/requests') {
+        const auth = authenticateSession(req);
+        if (!auth) {
+          sendJson(res, 401, { error: 'Authentication required.' });
+          return;
+        }
+
+        if (req.method === 'GET') {
+          // Mentors only see requests addressed to them; students see their own
+          if (auth.user.activeRole === 'MENTOR') {
+            const requests = MENTORSHIP_REQUESTS_DB.filter(r => r.mentorId === auth.user.id);
+            sendJson(res, 200, { requests });
+            return;
+          } else if (auth.user.activeRole === 'STUDENT') {
+            const requests = MENTORSHIP_REQUESTS_DB.filter(r => r.studentId === auth.user.id);
+            sendJson(res, 200, { requests });
+            return;
+          } else if (auth.user.activeRole === 'SUPER_ADMIN') {
+            sendJson(res, 200, { requests: MENTORSHIP_REQUESTS_DB });
+            return;
+          }
+          sendJson(res, 403, { error: 'Access Denied: You do not have permission to view mentorship requests.' });
+          return;
+        }
+
+        if (req.method === 'POST') {
+          if (auth.user.activeRole !== 'STUDENT' && auth.user.activeRole !== 'SUPER_ADMIN') {
+            sendJson(res, 403, { error: 'Only student innovators can submit mentorship requests.' });
+            return;
+          }
+
+          const body = await parseJsonBody(req);
+          const newRequest = {
+            id: `req-${Date.now()}`,
+            studentId: auth.user.id,
+            studentName: auth.user.name,
+            mentorId: body.mentorId,
+            mentorName: body.mentorName || 'Faculty Mentor',
+            projectTitle: body.projectTitle || 'Innovative Collegiate Project',
+            teamName: body.teamName || 'Innovator Team',
+            status: 'pending',
+            message: body.message || 'Seeking project advisory and feedback.'
+          };
+
+          MENTORSHIP_REQUESTS_DB.push(newRequest);
+          sendJson(res, 201, { success: true, request: newRequest });
+          return;
+        }
+      }
+
+      if (pathname.startsWith('/api/mentors/requests/') && req.method === 'PUT') {
+        const requestId = pathname.replace('/api/mentors/requests/', '');
+        const auth = authenticateSession(req);
+        if (!auth) {
+          sendJson(res, 401, { error: 'Authentication required.' });
+          return;
+        }
+
+        const reqItem = MENTORSHIP_REQUESTS_DB.find(r => r.id === requestId);
+        if (!reqItem) {
+          sendJson(res, 404, { error: 'Mentorship request not found.' });
+          return;
+        }
+
+        // Only the assigned mentor or super-admin can accept/decline
+        if (reqItem.mentorId !== auth.user.id && auth.user.activeRole !== 'SUPER_ADMIN') {
+          sendJson(res, 403, { error: 'Access Denied: You can only respond to requests assigned to you.' });
+          return;
+        }
+
+        const body = await parseJsonBody(req);
+        if (body.status) reqItem.status = body.status;
+        sendJson(res, 200, { success: true, request: reqItem });
+        return;
+      }
+
+      // ----------------------------------------------------
+      // RESOURCE-LEVEL AUTHORIZATION: RESEARCH COLLABORATIONS
+      // ----------------------------------------------------
+      if (pathname === '/api/research/collaborations') {
+        const auth = authenticateSession(req);
+        if (!auth) {
+          sendJson(res, 401, { error: 'Authentication required.' });
+          return;
+        }
+
+        if (req.method === 'GET') {
+          // Confidentiality boundary: Only show collaborations where user is party or super-admin
+          const userCollabs = RESEARCH_COLLABORATIONS_DB.filter(c => 
+            c.requesterId === auth.user.id || c.collaboratorId === auth.user.id || auth.user.activeRole === 'SUPER_ADMIN'
+          );
+          sendJson(res, 200, { collaborations: userCollabs });
+          return;
+        }
+
+        if (req.method === 'POST') {
+          if (auth.user.activeRole !== 'PHD_RESEARCHER' && auth.user.activeRole !== 'MENTOR' && auth.user.activeRole !== 'SUPER_ADMIN') {
+            sendJson(res, 403, { error: 'Only researchers and mentors can create research collaborations.' });
+            return;
+          }
+
+          const body = await parseJsonBody(req);
+          const newCollab = {
+            id: `collab-${Date.now()}`,
+            requesterId: auth.user.id,
+            requesterName: auth.user.name,
+            collaboratorId: body.collaboratorId,
+            collaboratorName: body.collaboratorName,
+            projectTitle: body.projectTitle,
+            status: 'pending',
+            confidentialDraft: body.confidentialDraft || ''
+          };
+
+          RESEARCH_COLLABORATIONS_DB.push(newCollab);
+          persistStoreToDisk();
+
+          // Real-time broadcast to invited collaborator
+          broadcastRealtimeNotification({
+            type: 'NEW_RESEARCH_COLLABORATION',
+            title: 'Research Collaboration Proposal',
+            message: `${auth.user.name} proposed collaboration on "${newCollab.projectTitle}"`,
+            targetRole: 'PHD_RESEARCHER',
+            targetUserId: body.collaboratorId,
+            payload: newCollab
+          });
+
+          sendJson(res, 201, { success: true, collaboration: newCollab });
+          return;
+        }
+      }
+
+      // ----------------------------------------------------
+      // RESOURCE-LEVEL AUTHORIZATION: ORGANIZATION MEMBERS
+      // ----------------------------------------------------
+      if (pathname.includes('/members') && pathname.startsWith('/api/organizations/')) {
+        const parts = pathname.replace('/api/organizations/', '').split('/');
+        const targetOrgId = parts[0];
+        const auth = authenticateSession(req);
+        if (!auth) {
+          sendJson(res, 401, { error: 'Authentication required.' });
+          return;
+        }
+
+        // Multi-tenant check
+        const isOrgOwner = auth.user.organizationId === targetOrgId;
+        const isSuperAdmin = auth.user.activeRole === 'SUPER_ADMIN';
+
+        if (!isOrgOwner && !isSuperAdmin) {
+          sendJson(res, 403, { 
+            error: 'Cross-tenant access violation: You can only view or manage members of your own institution.' 
+          });
+          return;
+        }
+
+        if (req.method === 'GET') {
+          const members = ORGANIZATION_MEMBERS_DB.filter(m => m.organizationId === targetOrgId);
+          sendJson(res, 200, { members });
+          return;
+        }
+
+        if (req.method === 'POST') {
+          const body = await parseJsonBody(req);
+          const newMember = {
+            id: `mem-${Date.now()}`,
+            organizationId: targetOrgId,
+            userId: body.userId || `usr-${Date.now()}`,
+            name: body.name || 'Invited Coordinator',
+            email: body.email,
+            role: body.role || 'EVENT_MANAGER',
+            status: 'active'
+          };
+          ORGANIZATION_MEMBERS_DB.push(newMember);
+          persistStoreToDisk();
+          sendJson(res, 201, { success: true, member: newMember });
+          return;
+        }
+      }
+
+      // ----------------------------------------------------
+      // RESOURCE-LEVEL AUTHORIZATION: EVENT REGISTRATIONS
+      // ----------------------------------------------------
+      if (pathname.match(/^\/api\/events\/[a-zA-Z0-9_-]+\/registrations$/)) {
+        const auth = authenticateSession(req);
+        if (!auth) {
+          sendJson(res, 401, { error: 'Authentication required.' });
+          return;
+        }
+
+        const eventId = pathname.split('/')[3];
+
+        if (req.method === 'GET') {
+          const isSuperAdmin = auth.user.activeRole === 'SUPER_ADMIN';
+          const isOrganizerForEvent = auth.user.organizationId === 'KEC-DEMO-001' || (auth.user.managedEventIds && auth.user.managedEventIds.includes(eventId));
+
+          if (isSuperAdmin || isOrganizerForEvent) {
+            const registrations = EVENT_REGISTRATIONS_DB.filter(r => r.eventId === eventId);
+            sendJson(res, 200, { registrations });
+            return;
+          }
+
+          // Student can only see their own registration
+          if (auth.user.activeRole === 'STUDENT') {
+            const registrations = EVENT_REGISTRATIONS_DB.filter(r => r.eventId === eventId && r.studentId === auth.user.id);
+            sendJson(res, 200, { registrations });
+            return;
+          }
+
+          sendJson(res, 403, { 
+            error: 'Access Denied: You do not have permission to inspect participant registrations for this event.' 
+          });
+          return;
+        }
+
+        if (req.method === 'POST') {
+          if (auth.user.activeRole !== 'STUDENT' && auth.user.activeRole !== 'SUPER_ADMIN') {
+            sendJson(res, 403, { error: 'Only registered students can submit event participation entries.' });
+            return;
+          }
+
+          const body = await parseJsonBody(req);
+          const newReg = {
+            id: `reg-${Date.now()}`,
+            eventId,
+            organizerId: body.organizerId || 'KEC-DEMO-001',
+            studentId: auth.user.id,
+            participantName: auth.user.name,
+            email: auth.user.email,
+            teamName: body.teamName || 'Solo Participant',
+            status: 'confirmed',
+            registeredAt: new Date().toISOString()
+          };
+
+          EVENT_REGISTRATIONS_DB.push(newReg);
+          persistStoreToDisk();
+
+          // Real-time broadcast to the organizer of this event!
+          broadcastRealtimeNotification({
+            type: 'NEW_EVENT_REGISTRATION',
+            title: 'New Student Registration Received',
+            message: `${auth.user.name} registered for ${eventId} (${newReg.teamName})`,
+            targetRole: 'ORGANIZATION_OWNER',
+            targetUserId: newReg.organizerId,
+            payload: newReg
+          });
+
+          sendJson(res, 201, { success: true, registration: newReg });
+          return;
+        }
       }
 
       // GET /api/admin/audit-logs

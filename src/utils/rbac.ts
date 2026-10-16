@@ -299,6 +299,25 @@ export function canPublishEvent(
 }
 
 /**
+ * Validates redirect destination to strictly prevent Open Redirect attacks.
+ * Rejects external URLs, protocol-relative paths (//), javascript:, and backslashes.
+ */
+export function isValidRedirectDestination(destination?: string | null): destination is string {
+  if (!destination || typeof destination !== 'string') return false;
+  const trimmed = destination.trim();
+  // Must start with a single slash, not protocol-relative // or backslash
+  if (!trimmed.startsWith('/') || trimmed.startsWith('//') || trimmed.includes('\\')) {
+    return false;
+  }
+  // Reject javascript:, data:, vbscript: URIs
+  const lower = trimmed.toLowerCase();
+  if (lower.startsWith('/javascript:') || lower.includes('javascript:') || lower.includes('data:')) {
+    return false;
+  }
+  return true;
+}
+
+/**
  * Post-Login Destination Resolver
  * Resolves destination deterministically based on assigned active role and verification state.
  */
@@ -308,33 +327,38 @@ export function resolvePostLoginRoute(
   requestedDestination?: string
 ): string {
   // If destination is safe and allowed for this role, preserve it
-  if (requestedDestination && requestedDestination !== '/' && !requestedDestination.includes('login') && !requestedDestination.includes('register')) {
+  if (isValidRedirectDestination(requestedDestination) && requestedDestination !== '/' && !requestedDestination.includes('login') && !requestedDestination.includes('register')) {
+    const dest: string = requestedDestination;
     // Disallow non-admin accessing /admin
-    if (requestedDestination.startsWith('/admin') && role !== 'SUPER_ADMIN' && role !== 'PLATFORM_REVIEWER') {
+    if (dest.startsWith('/admin') && role !== 'SUPER_ADMIN' && role !== 'PLATFORM_REVIEWER') {
+      // Fallback to role dashboard
+    } else if (dest.startsWith('/organization') && role !== 'ORGANIZATION_OWNER' && role !== 'EVENT_MANAGER' && role !== 'SUPER_ADMIN') {
       // Fallback
-    } else if (requestedDestination.startsWith('/organization') && role !== 'ORGANIZATION_OWNER' && role !== 'EVENT_MANAGER' && role !== 'SUPER_ADMIN') {
+    } else if (dest.startsWith('/mentor') && role !== 'MENTOR' && role !== 'SUPER_ADMIN') {
+      // Fallback
+    } else if (dest.startsWith('/researcher') && role !== 'PHD_RESEARCHER' && role !== 'SUPER_ADMIN') {
       // Fallback
     } else {
-      return requestedDestination;
+      return dest;
     }
   }
 
   switch (role) {
     case 'STUDENT':
-      return '/dashboard';
+      return '/student/dashboard';
 
     case 'MENTOR':
-      return '/dashboard';
+      return '/mentor/dashboard';
 
     case 'PHD_RESEARCHER':
-      return '/dashboard';
+      return '/researcher/dashboard';
 
     case 'ORGANIZATION_OWNER':
       // If organization is unverified / pending, redirect to verification tracking view
       if (orgVerificationStatus && orgVerificationStatus !== 'verified') {
-        return '/organization/verify';
+        return '/organization/verification';
       }
-      return '/organization/events';
+      return '/organization/dashboard';
 
     case 'EVENT_MANAGER':
       return '/organization/events';
@@ -346,7 +370,7 @@ export function resolvePostLoginRoute(
       return '/admin';
 
     default:
-      return '/dashboard';
+      return '/student/dashboard';
   }
 }
 

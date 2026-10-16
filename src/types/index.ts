@@ -108,6 +108,7 @@ export interface Mentor {
   certifications: string[];
   mentoringInterests: string[];
   preferredDomains?: string[];
+  expertise?: string[];
   availability: 'Available' | 'Limited Slots' | 'Busy';
   maxTeams?: number;
   activeTeamsCount?: number;
@@ -141,6 +142,7 @@ export interface Researcher {
   department: string;
   researchArea: string;
   interests: string[];
+  domains?: string[];
   guide: string;
   publicationsCount: number;
   citationsCount: number;
@@ -239,6 +241,8 @@ export interface OrganizerAccount {
   accreditationDetails?: string;
   address?: string;
   website?: string;
+  aisheCode?: string;
+  phone?: string;
   isDevelopmentDemo?: boolean;
   avatar: string;
   lastLoginAt?: string;
@@ -335,6 +339,8 @@ export interface Project {
   title: string;
   problemStatement: string;
   proposedSolution: string;
+  description?: string;
+  category?: string;
   domain: string;
   technologies: string[];
   requiredSkills: string[];
@@ -699,6 +705,7 @@ export interface MentorshipCertificate {
   teamId: string;
   teamName: string;
   studentNames: string[];
+  studentName?: string;
   studentInstitutions: string[];
   projectTitle: string;
   projectDomain: string;

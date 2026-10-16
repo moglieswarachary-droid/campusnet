@@ -167,20 +167,32 @@ export const OrganizationRegistrationWizard: React.FC<Props> = ({ onSuccess, onN
       
       {/* Header Bar */}
       <header className="max-w-4xl mx-auto w-full flex items-center justify-between pb-6 border-b border-slate-800">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-amber-700 flex items-center justify-center text-white font-bold shadow-lg">
-            <Building2 className="w-5 h-5" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-xl font-black text-white tracking-tight">
-                Campus<span className="text-amber-400">Net+</span>
-              </span>
-              <span className="text-[10px] font-bold uppercase tracking-widest bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded">
-                Institution Registration
-              </span>
+        <div className="flex items-center gap-4">
+          <button
+            type="button"
+            onClick={() => navigate('/')}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+            title="Return to RBAC Gateway"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Back to RBAC Gateway</span>
+          </button>
+
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-amber-700 flex items-center justify-center text-white font-bold shadow-lg">
+              <Building2 className="w-5 h-5" />
             </div>
-            <p className="text-[11px] text-slate-400">All-India Academic Event Hosting Gateway</p>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-xl font-black text-white tracking-tight">
+                  Campus<span className="text-amber-400">Net+</span>
+                </span>
+                <span className="text-[10px] font-bold uppercase tracking-widest bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded">
+                  Institution Registration
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-400">All-India Academic Event Hosting Gateway</p>
+            </div>
           </div>
         </div>
 
@@ -190,7 +202,7 @@ export const OrganizationRegistrationWizard: React.FC<Props> = ({ onSuccess, onN
             if (onNavigateToLogin) onNavigateToLogin();
             else navigate('/organization/login');
           }}
-          className="text-xs font-semibold text-amber-400 hover:text-amber-300 transition-colors"
+          className="text-xs font-semibold text-amber-400 hover:text-amber-300 transition-colors cursor-pointer"
         >
           Already registered? Sign In →
         </button>

@@ -23,7 +23,7 @@ export const PhDScholarDashboardView: React.FC = () => {
   const [searchStudentTopic, setSearchStudentTopic] = useState('');
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
-  const currentScholar = researchers.find(r => r.email === currentUser.email || r.name.includes(currentUser.name.split(' ')[0] || '')) || researchers[0];
+  const currentScholar = researchers.find(r => (currentUser?.email && r.email === currentUser.email) || (currentUser?.name && r.name.includes(currentUser.name.split(' ')[0] || ''))) || researchers[0];
   const socialLinks = currentScholar.socialLinks;
   const vidwanUrl = currentScholar.vidwan_profile_url;
 
@@ -53,13 +53,13 @@ export const PhDScholarDashboardView: React.FC = () => {
           
           <div className="flex items-start sm:items-center gap-4 sm:gap-6">
             <img
-              src={currentUser.avatar}
-              alt={currentUser.name}
+              src={currentUser?.avatar || currentScholar.avatar}
+              alt={currentUser?.name || currentScholar.name}
               className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl object-cover ring-2 ring-white/30 shadow-warm-md"
             />
             <div className="space-y-1">
               <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="text-xl sm:text-2xl font-black">{currentUser.name}</h1>
+                <h1 className="text-xl sm:text-2xl font-black">{currentUser?.name || currentScholar.name}</h1>
                 
                 {currentScholar.isDemoData ? (
                   <span className="text-[10px] font-bold bg-amber-400/30 text-amber-200 border border-amber-400/40 px-2 py-0.5 rounded-full">
@@ -77,7 +77,7 @@ export const PhDScholarDashboardView: React.FC = () => {
               </div>
 
               <p className="text-xs sm:text-sm text-slate-200 font-medium">
-                {currentScholar.department} • {currentUser.institution}
+                {currentScholar.department} • {currentUser?.institution || currentScholar.institution}
               </p>
               
               <p className="text-[11.5px] text-slate-300 max-w-xl">

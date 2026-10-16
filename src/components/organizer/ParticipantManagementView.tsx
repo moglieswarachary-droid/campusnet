@@ -6,14 +6,18 @@ import {
 } from 'lucide-react';
 import { EventRegistrationItem } from '../../types';
 
-export const ParticipantManagementView: React.FC = () => {
+interface Props {
+  initialEventId?: string;
+}
+
+export const ParticipantManagementView: React.FC<Props> = ({ initialEventId }) => {
   const { eventRegistrations, events, updateRegistrationStatus, currentOrganizer } = useApp();
 
   const orgEvents = events.filter(
     e => e.organizerId === currentOrganizer?.id || e.organizer === currentOrganizer?.institutionName
   );
 
-  const [selectedEventId, setSelectedEventId] = useState<string>('all');
+  const [selectedEventId, setSelectedEventId] = useState<string>(initialEventId || 'all');
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
 

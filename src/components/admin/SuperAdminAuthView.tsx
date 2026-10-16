@@ -8,20 +8,13 @@ import {
 export const SuperAdminAuthView: React.FC = () => {
   const { superAdminLogin } = useApp();
 
-  const [username, setUsername] = useState('superadmin.demo');
-  const [password, setPassword] = useState('Admin@CampusNet2026');
-  const [mfaCode, setMfaCode] = useState('849201');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [mfaCode, setMfaCode] = useState('');
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     superAdminLogin(username, password);
-  };
-
-  const handleQuickDemo = () => {
-    setUsername('superadmin.demo');
-    setPassword('Admin@CampusNet2026');
-    setMfaCode('849201');
-    superAdminLogin('superadmin.demo', 'Admin@CampusNet2026');
   };
 
   return (
@@ -47,9 +40,17 @@ export const SuperAdminAuthView: React.FC = () => {
             </div>
           </div>
 
-          <div className="text-xs text-slate-400 hidden sm:flex items-center gap-1.5">
-            <ShieldCheck className="w-4 h-4 text-red-400" />
-            <span>Restricted Level-5 Access</span>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => window.location.href = '/'}
+              className="text-xs text-slate-400 hover:text-white bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5"
+            >
+              <span>← Return to Gateway</span>
+            </button>
+            <div className="text-xs text-slate-400 hidden sm:flex items-center gap-1.5">
+              <ShieldCheck className="w-4 h-4 text-red-400" />
+              <span>Restricted Level-5 Access</span>
+            </div>
           </div>
         </div>
       </header>
@@ -67,25 +68,18 @@ export const SuperAdminAuthView: React.FC = () => {
             </p>
           </div>
 
-          {/* Dev Demo Notice Banner */}
-          <div className="p-3.5 rounded-2xl bg-red-950/40 border border-red-500/30 text-xs space-y-2">
+          {/* Security Directive Notice */}
+          <div className="p-3.5 rounded-2xl bg-red-950/30 border border-red-500/20 text-xs space-y-1.5">
             <div className="flex items-center justify-between text-red-300 font-bold">
               <span className="flex items-center gap-1.5">
-                <Sparkles className="w-4 h-4" />
-                Seeded Super Admin Credentials
+                <ShieldCheck className="w-4 h-4 text-red-400" />
+                Root Authority Verification
               </span>
-              <span className="text-[10px] bg-red-400/20 px-2 py-0.5 rounded font-mono">ROOT DEV</span>
+              <span className="text-[10px] bg-red-500/20 px-2 py-0.5 rounded font-mono text-red-300">PROTECTED CONSOLE</span>
             </div>
-            <p className="text-[11px] text-slate-300">
-              Demo credentials pre-filled: <code className="text-red-300 font-mono">superadmin.demo</code> / <code className="text-red-300 font-mono">Admin@CampusNet2026</code>
+            <p className="text-[11px] text-slate-400">
+              Enter authorized administrator credentials and hardware TOTP token to unlock governance controls.
             </p>
-            <button
-              type="button"
-              onClick={handleQuickDemo}
-              className="w-full py-2 rounded-xl bg-red-900/60 hover:bg-red-800 text-white font-bold text-xs border border-red-700 transition-colors"
-            >
-              1-Click Super Admin Login
-            </button>
           </div>
 
           {/* Login Card */}

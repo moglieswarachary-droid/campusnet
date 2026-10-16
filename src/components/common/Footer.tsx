@@ -64,15 +64,14 @@ export const Footer: React.FC = () => {
                   }} 
                   className="text-slate-400 hover:text-white transition-colors cursor-pointer"
                 >
-                  Student Dashboard
+                  Student Workspace
                 </button>
               </li>
               <li>
                 <button 
                   type="button"
                   onClick={() => {
-                    switchRole('mentor');
-                    handleNav('dashboard', '/dashboard');
+                    navigate('/mentor/login');
                   }} 
                   className="text-slate-400 hover:text-white transition-colors cursor-pointer"
                 >
@@ -83,8 +82,7 @@ export const Footer: React.FC = () => {
                 <button 
                   type="button"
                   onClick={() => {
-                    switchRole('researcher');
-                    handleNav('dashboard', '/dashboard');
+                    navigate('/researcher/login');
                   }} 
                   className="text-slate-400 hover:text-white transition-colors cursor-pointer"
                 >
@@ -95,7 +93,7 @@ export const Footer: React.FC = () => {
                 <button 
                   type="button"
                   onClick={() => {
-                    window.location.href = '/organization/login';
+                    navigate('/organization/login');
                   }} 
                   className="text-rose-400 font-semibold hover:underline transition-colors cursor-pointer"
                 >
@@ -105,7 +103,7 @@ export const Footer: React.FC = () => {
               <li>
                 <button 
                   type="button"
-                  onClick={() => openAuthModal('student', 'register')} 
+                  onClick={() => navigate('/student/register')} 
                   className="text-indigo-400 font-semibold hover:underline transition-colors cursor-pointer"
                 >
                   + Student Registration
@@ -114,7 +112,7 @@ export const Footer: React.FC = () => {
               <li>
                 <button 
                   type="button"
-                  onClick={() => openAuthModal('mentor', 'register')} 
+                  onClick={() => navigate('/mentor/register')} 
                   className="text-amber-400 font-semibold hover:underline transition-colors cursor-pointer"
                 >
                   + Faculty Onboarding

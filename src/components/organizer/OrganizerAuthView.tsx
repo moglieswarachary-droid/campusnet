@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { 
   Building2, ShieldCheck, Lock, Mail, ArrowRight, 
   Sparkles, CheckCircle2, KeyRound, ArrowLeft, Eye, EyeOff,
-  School, Check
+  School, Check, Key
 } from 'lucide-react';
 
 import { OrganizationRegistrationWizard } from './OrganizationRegistrationWizard';
@@ -101,9 +101,22 @@ export const OrganizerAuthView: React.FC<Props> = ({ initialMode }) => {
     return 'login';
   });
 
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const p = window.location.pathname.toLowerCase();
+      const s = window.location.search.toLowerCase();
+      if (p.includes('/register') || s.includes('action=register')) {
+        setMode('register');
+      } else if (p.includes('/login')) {
+        setMode('login');
+      }
+    }
+    if (initialMode) setMode(initialMode);
+  }, [initialMode]);
+
   const [selectedDemoId, setSelectedDemoId] = useState<string>('KEC-DEMO-001');
-  const [emailOrId, setEmailOrId] = useState('organizer.demo@campusnet-demo.in');
-  const [password, setPassword] = useState('CampusNet@Demo2026');
+  const [emailOrId, setEmailOrId] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
@@ -131,11 +144,11 @@ export const OrganizerAuthView: React.FC<Props> = ({ initialMode }) => {
   const handleSelectDemoCollege = (college: DemoCollegeOption, autoLogin = true) => {
     setSelectedDemoId(college.id);
     setEmailOrId(college.email);
-    setPassword('CampusNet@Demo2026');
+    setPassword('');
 
     if (autoLogin) {
       setLoggingInCollegeId(college.id);
-      const success = organizerLogin(college.email, 'CampusNet@Demo2026');
+      const success = organizerLogin(college.email);
       if (!success) {
         setLoggingInCollegeId(null);
       }
@@ -158,18 +171,16 @@ export const OrganizerAuthView: React.FC<Props> = ({ initialMode }) => {
         <div className="absolute -bottom-32 right-1/4 w-[32rem] h-[32rem] bg-indigo-200/30 rounded-full blur-3xl" />
       </div>
 
-      {/* Top Navigation Bar with Frosted Glass Blur */}
       <header className="relative z-10 border-b border-slate-200/80 bg-white/80 backdrop-blur-md px-4 sm:px-6 py-3.5 shadow-sm">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
-          
           <div className="flex items-center gap-4">
             <a
               href="/"
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-950 hover:bg-slate-100 transition-colors"
-              title="Return to CampusNet Home"
+              title="Return to RBAC Gateway"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Back to Home</span>
+              <span className="hidden sm:inline">Back to RBAC Gateway</span>
             </a>
 
             <div className="h-4 w-px bg-slate-200 hidden sm:block" />
@@ -181,10 +192,10 @@ export const OrganizerAuthView: React.FC<Props> = ({ initialMode }) => {
               <div>
                 <div className="flex items-center gap-2">
                   <span className="text-lg font-black text-slate-900 tracking-tight">
-                    Campus<span className="text-amber-600">Net</span>
+                    Campus<span className="text-amber-600">Net+</span>
                   </span>
                   <span className="text-[10px] font-extrabold uppercase tracking-wider bg-amber-100 text-amber-800 border border-amber-300 px-2 py-0.5 rounded-md">
-                    ORGANIZER PORTAL
+                    ORGANIZATION PORTAL
                   </span>
                 </div>
                 <p className="text-[11px] text-slate-500 hidden sm:block">Institutional Event Hosting & Certification Management</p>
@@ -195,7 +206,10 @@ export const OrganizerAuthView: React.FC<Props> = ({ initialMode }) => {
           <div className="flex items-center gap-2.5">
             <button
               type="button"
-              onClick={() => setMode('register')}
+              onClick={() => {
+                setMode('register');
+                window.history.pushState(null, '', '/organization/register');
+              }}
               className="px-3.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs shadow-warm-xs transition-all cursor-pointer flex items-center gap-1.5"
             >
               <span>+ Register New Institution</span>
@@ -219,11 +233,31 @@ export const OrganizerAuthView: React.FC<Props> = ({ initialMode }) => {
               <span>National Academic Event Network</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-              Institutional Coordinator Login
+              Sign in to your Organization Portal
             </h1>
             <p className="text-xs sm:text-sm text-slate-600 max-w-lg mx-auto leading-relaxed">
-              Log in with your authorized college email or Institution ID to manage hackathons, symposiums, verify student attendance, and issue verifiable digital credentials.
+              Verify your institution, host academic events, manage student registrations, and connect with collegiate innovators nationwide.
             </p>
+          </div>
+
+          {/* Segmented Mode Switcher: Institutional Sign In vs Register Institution */}
+          <div className="grid grid-cols-2 p-1 bg-slate-200/90 rounded-2xl border border-slate-300 text-xs sm:text-sm font-bold shadow-inner">
+            <button
+              type="button"
+              className="py-2.5 rounded-xl transition-all bg-white text-slate-950 shadow-sm font-extrabold cursor-default"
+            >
+              Institutional Sign In
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setMode('register');
+                if (typeof window !== 'undefined') window.history.pushState(null, '', '/organization/register');
+              }}
+              className="py-2.5 rounded-xl transition-all cursor-pointer text-slate-600 hover:text-slate-900"
+            >
+              + Register Institution
+            </button>
           </div>
 
           {/* 5 DEMO LOGINS SELECTOR CARD (Clean White / Frosted Blur) */}
@@ -289,8 +323,10 @@ export const OrganizerAuthView: React.FC<Props> = ({ initialMode }) => {
                           <span className="text-slate-800 font-semibold truncate">{college.email}</span>
                         </div>
                         <div className="flex items-center justify-between">
-                          <span className="text-slate-400 font-sans text-[9px] uppercase font-bold tracking-wider">Pass:</span>
-                          <span className="text-slate-800 font-semibold">CampusNet@Demo2026</span>
+                          <span className="text-slate-400 font-sans text-[9px] uppercase font-bold tracking-wider">Access:</span>
+                          <span className="text-emerald-700 font-sans font-bold text-[9px] uppercase tracking-wider bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+                            1-Click Verified Sign-In
+                          </span>
                         </div>
                       </div>
                     </div>

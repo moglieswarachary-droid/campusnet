@@ -159,19 +159,19 @@ assert(canPublishEvent('under_review', 'SUPER_ADMIN') === true, 'Super Admin can
 // -------------------------------------------------------------
 // 7. Post-Login Routing Engine
 // -------------------------------------------------------------
-assert(resolvePostLoginRoute('STUDENT') === '/dashboard', 'Post-login: Student routes to /dashboard');
-assert(resolvePostLoginRoute('MENTOR') === '/dashboard', 'Post-login: Mentor routes to /dashboard');
-assert(resolvePostLoginRoute('PHD_RESEARCHER') === '/dashboard', 'Post-login: PhD Scholar routes to /dashboard');
-assert(resolvePostLoginRoute('ORGANIZATION_OWNER', 'verified') === '/organization/events', 'Post-login: Verified organizer routes to /organization/events');
-assert(resolvePostLoginRoute('ORGANIZATION_OWNER', 'under_review') === '/organization/verify', 'Post-login: Pending organizer routes to verification status page (/organization/verify)');
-assert(resolvePostLoginRoute('ORGANIZATION_OWNER', 'draft') === '/organization/verify', 'Post-login: Draft organizer routes to /organization/verify');
+assert(resolvePostLoginRoute('STUDENT') === '/student/dashboard', 'Post-login: Student routes to /student/dashboard');
+assert(resolvePostLoginRoute('MENTOR') === '/mentor/dashboard', 'Post-login: Mentor routes to /mentor/dashboard');
+assert(resolvePostLoginRoute('PHD_RESEARCHER') === '/researcher/dashboard', 'Post-login: PhD Scholar routes to /researcher/dashboard');
+assert(resolvePostLoginRoute('ORGANIZATION_OWNER', 'verified') === '/organization/dashboard', 'Post-login: Verified organizer routes to /organization/dashboard');
+assert(resolvePostLoginRoute('ORGANIZATION_OWNER', 'under_review') === '/organization/verification', 'Post-login: Pending organizer routes to verification status page (/organization/verification)');
+assert(resolvePostLoginRoute('ORGANIZATION_OWNER', 'draft') === '/organization/verification', 'Post-login: Draft organizer routes to /organization/verification');
 assert(resolvePostLoginRoute('EVENT_MANAGER') === '/organization/events', 'Post-login: Event Manager routes to /organization/events');
 assert(resolvePostLoginRoute('PLATFORM_REVIEWER') === '/admin/events', 'Post-login: Platform Reviewer routes to /admin/events');
 assert(resolvePostLoginRoute('SUPER_ADMIN') === '/admin', 'Post-login: Super Admin routes to /admin');
 
 // Preserving valid destinations
 assert(resolvePostLoginRoute('STUDENT', undefined, '/projects') === '/projects', 'Preserves authorized destination /projects');
-assert(resolvePostLoginRoute('STUDENT', undefined, '/admin') === '/dashboard', 'Blocks unauthorized redirect to /admin for student');
+assert(resolvePostLoginRoute('STUDENT', undefined, '/admin') === '/student/dashboard', 'Blocks unauthorized redirect to /admin for student');
 
 // -------------------------------------------------------------
 // 8. Multi-Role Account & Privilege Escalation Prevention

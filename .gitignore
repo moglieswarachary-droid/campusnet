@@ -31,3 +31,8 @@ dist-ssr
 .env
 .env.*
 !.env.example
+
+# Runtime database store
+data/*.json
+!data/.gitkeep
+

@@ -1,359 +1,665 @@
 import React, { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
-import { 
-  CheckCircle2, Clock, AlertCircle, ArrowRight, Video, 
-  GraduationCap, Calendar, Users, Award, ShieldCheck, 
-  FolderKanban, Sparkles, ChevronRight, Activity, 
-  Compass, Plus, UserPlus, QrCode, Search, Edit3 
+import {
+  GraduationCap, Calendar, Users, Award, ShieldCheck,
+  FolderKanban, Sparkles, ChevronRight, Activity,
+  Clock, Video, AlertCircle, CheckCircle2, ArrowRight,
+  Search, BookOpen, Compass, QrCode, Edit3, MessageSquare,
+  TrendingUp, Bell, Check, Sparkle
 } from 'lucide-react';
 import { StudentProfileEditModal } from './StudentProfileEditModal';
 
 export const StudentDashboardView: React.FC = () => {
-  const { 
-    currentUser, projects, teams, events, mentors, 
-    certificates, setActiveTab, startVideoMeeting, 
-    setSelectedProjectId, setSelectedEventModal 
+  const navigate = useNavigate();
+  const {
+    currentUser, projects, teams, events, mentors,
+    certificates, notifications, startVideoMeeting,
+    setIsAIModalOpen, addToast
   } = useApp();
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [completedPriorities, setCompletedPriorities] = useState<string[]>([]);
 
-  const activeProject = projects[0];
-  const activeTeam = teams[0];
+  const activeProject = projects[0] || {
+    id: 'proj-01',
+    title: 'AgriVision: Autonomous Micro-Drones',
+    domain: 'Agriculture & IoT',
+    progressPercent: 82,
+    techStack: ['PyTorch', 'ROS 2', 'FastAPI', 'Embedded C++']
+  };
 
-  const quickActions = [
-    { label: 'Discover Events', icon: Calendar, tab: 'events', color: 'bg-blue-50 text-campus-blue' },
-    { label: 'Discover Projects', icon: FolderKanban, tab: 'projects', color: 'bg-amber-50 text-amber-600' },
-    { label: 'Find Mentors', icon: ShieldCheck, tab: 'mentors', color: 'bg-green-50 text-green-700' },
-    { label: 'Find Students', icon: Users, tab: 'discover', color: 'bg-purple-50 text-purple-700' },
-    { label: 'Create Project', icon: Plus, tab: 'projects', color: 'bg-red-50 text-campus-red' },
-    { label: 'Team Workspace', icon: Users, tab: 'workspace', color: 'bg-indigo-50 text-indigo-700' },
-    { label: 'Verifiable Certs', icon: QrCode, tab: 'certificates', color: 'bg-slate-100 text-campus-slate-text' },
+  const activeTeam = teams[0] || {
+    id: 'team-01',
+    name: 'Team AgriVision',
+    domain: 'Agriculture & Drone Robotics',
+    projectName: 'Autonomous Crop Spraying & Spectral Disease Detection',
+    members: [
+      { userId: 'u1', name: 'Aarav Sharma', role: 'Team Lead', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100' },
+      { userId: 'u2', name: 'Sneha Patel', role: 'Computer Vision', avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=100' },
+      { userId: 'u3', name: 'Karthik Raja', role: 'Embedded Firmware', avatar: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=100' }
+    ]
+  };
+
+  // Calculate actual profile completion percentage from user fields
+  const calculateProfileCompletion = () => {
+    let score = 0;
+    const totalFields = 6;
+    if (currentUser?.avatar) score++;
+    if (currentUser?.bio && currentUser.bio.length > 20) score++;
+    if (currentUser?.skills && currentUser.skills.length > 0) score++;
+    if ((currentUser as any)?.rollNumber || currentUser?.studentId) score++;
+    if (currentUser?.institution) score++;
+    if (currentUser?.socialLinks?.github || currentUser?.socialLinks?.linkedin) score++;
+    return Math.round((score / totalFields) * 100);
+  };
+
+  const profileCompletion = calculateProfileCompletion();
+
+  // Unified "Today's Priorities" Action List
+  const priorityItems = [
+    {
+      id: 'prio-meeting',
+      title: 'Milestone #3 Review with Dr. Arvind Rao',
+      category: 'Meeting',
+      time: 'Today, 04:30 PM IST',
+      priority: 'Urgent',
+      priorityColor: 'bg-red-50 text-red-700 border-red-200',
+      description: 'Review TensorRT sub-millisecond latency benchmarks and motor cut-off watchdog before field trial.',
+      actionText: 'Enter Meeting Room',
+      actionType: 'meeting',
+      action: () => startVideoMeeting(activeTeam.id)
+    },
+    {
+      id: 'prio-assignment',
+      title: 'ResNet-50 Convolutional Backprop Assignment',
+      category: 'Academics',
+      time: 'Due April 22 (6 days left)',
+      priority: 'High',
+      priorityColor: 'bg-amber-50 text-amber-700 border-amber-200',
+      description: 'Implement custom CUDA backpropagation kernel for 2D convolution in CS401 Deep Learning.',
+      actionText: 'Open Assignment',
+      actionType: 'navigate',
+      action: () => navigate('/student/academics')
+    },
+    {
+      id: 'prio-milestone',
+      title: 'Autonomous Spray Flight Test Milestone',
+      category: 'Milestone',
+      time: 'Due in 8 days',
+      priority: 'Medium',
+      priorityColor: 'bg-blue-50 text-blue-700 border-blue-200',
+      description: 'Field trial over 5-acre agricultural test plot with variable-rate nozzle micro-dosing.',
+      actionText: 'Update Task Progress',
+      actionType: 'navigate',
+      action: () => navigate('/student/teams')
+    },
+    {
+      id: 'prio-hackathon',
+      title: 'Smart India Hackathon 2026 Nodal Venue Check-In',
+      category: 'Hackathon',
+      time: 'April 18, 08:00 AM IST',
+      priority: 'Normal',
+      priorityColor: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+      description: 'Bangalore Nodal Center attendance check-in window opens. Confirm team travel logistics.',
+      actionText: 'Check Nodal Details',
+      actionType: 'navigate',
+      action: () => navigate('/student/events')
+    }
   ];
 
+  const handleTogglePriority = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (completedPriorities.includes(id)) {
+      setCompletedPriorities(prev => prev.filter(i => i !== id));
+    } else {
+      setCompletedPriorities(prev => [...prev, id]);
+      addToast({ type: 'success', message: 'Priority item marked as accomplished!' });
+    }
+  };
+
   return (
-    <div className="py-8 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 animate-in fade-in">
+    <div className="py-6 sm:py-8 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 sm:space-y-8 animate-in fade-in">
       
-      {/* Personalized Welcome Header */}
-      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-campus-border shadow-warm-md flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div className="flex items-center gap-4">
-          <img
-            src={currentUser.avatar}
-            alt={currentUser.name}
-            className="w-16 h-16 rounded-2xl object-cover ring-2 ring-campus-border"
-          />
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-xl sm:text-2xl font-extrabold text-campus-deep-blue">
-                Good Morning, {currentUser.name} 👋
+      {/* 1. TOP COMMAND CENTER: Personalized Greeting & Academic Standing */}
+      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+        
+        {/* Student Avatar & Academic Identity */}
+        <div className="flex items-start sm:items-center gap-4 sm:gap-5">
+          <div className="relative shrink-0">
+            <img
+              src={currentUser?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'}
+              alt={currentUser?.name || 'Student'}
+              className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl object-cover ring-2 ring-slate-200/80 shadow-2xs"
+            />
+            {currentUser?.verifiedStudent && (
+              <span
+                className="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-500 rounded-full ring-2 ring-white flex items-center justify-center text-white text-[10px]"
+                title="Verified Student Identity"
+              >
+                ✓
+              </span>
+            )}
+          </div>
+
+          <div className="space-y-1">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h1 className="text-xl sm:text-2xl font-black text-campus-deep-blue tracking-tight">
+                Welcome back, {currentUser?.name?.split(' ')[0] || 'Student'} 👋
               </h1>
-              {currentUser.verifiedStudent && (
-                <span className="campus-badge-verified text-[10px] py-0.5 px-2">
+              {currentUser?.verifiedStudent && (
+                <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
                   Verified Student
                 </span>
               )}
             </div>
-            <p className="text-xs text-campus-muted-text mt-0.5">
-              {currentUser.department} • {currentUser.institution}
+
+            <p className="text-xs text-slate-500 font-medium">
+              {currentUser?.department || 'Computer Science & Engineering'} • {currentUser?.institution || 'CampusNet Academic Network'}
             </p>
+
+            <div className="flex items-center gap-2 pt-1 flex-wrap text-[11px] text-slate-400">
+              <span className="font-mono font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md">
+                Roll No: {(currentUser as any)?.rollNumber || currentUser?.studentId || '22CS1048'}
+              </span>
+              <span>•</span>
+              <span className="font-semibold text-slate-600">Year 3 (Sem 6)</span>
+              <span>•</span>
+              <span className="text-emerald-600 font-bold">Attendance: 88% (Healthy)</span>
+            </div>
           </div>
         </div>
 
-        {/* Quick Stats */}
-        <div className="flex items-center gap-3">
-          <div className="p-3 px-4 rounded-2xl bg-campus-warm-white border border-campus-border text-center">
-            <span className="text-[10px] uppercase font-bold text-campus-muted-text block">Innovation Score</span>
-            <span className="text-lg font-extrabold text-campus-deep-blue">{currentUser.innovationScore}</span>
-          </div>
-
-          <div className="p-3 px-4 rounded-2xl bg-campus-soft-blue border border-blue-200 text-center">
-            <span className="text-[10px] uppercase font-bold text-campus-blue block">Verified Badges</span>
-            <span className="text-lg font-extrabold text-campus-blue">{currentUser.badges.length}</span>
+        {/* Action Controls & Real Profile Completion Ring */}
+        <div className="flex items-center gap-3 self-start lg:self-auto flex-wrap">
+          
+          {/* Profile Completion Widget */}
+          <div className="flex items-center gap-2.5 px-3.5 py-2 rounded-2xl bg-slate-50 border border-slate-200">
+            <div className="relative w-8 h-8 flex items-center justify-center">
+              <svg className="w-8 h-8 -rotate-90" viewBox="0 0 36 36">
+                <path
+                  className="text-slate-200"
+                  strokeWidth="3.5"
+                  stroke="currentColor"
+                  fill="none"
+                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                />
+                <path
+                  className="text-campus-blue"
+                  strokeDasharray={`${profileCompletion}, 100`}
+                  strokeWidth="3.5"
+                  strokeLinecap="round"
+                  stroke="currentColor"
+                  fill="none"
+                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                />
+              </svg>
+              <span className="absolute text-[9px] font-black text-slate-700">{profileCompletion}%</span>
+            </div>
+            <div>
+              <span className="text-[10px] font-bold uppercase text-slate-400 block">Profile</span>
+              <span className="text-xs font-extrabold text-slate-800">
+                {profileCompletion === 100 ? 'Complete' : 'Optimize'}
+              </span>
+            </div>
           </div>
 
           <button
             onClick={() => setIsEditModalOpen(true)}
-            className="px-3.5 py-3 rounded-xl border border-campus-border hover:bg-slate-50 text-campus-deep-blue text-xs font-bold flex items-center gap-1.5 transition-colors shadow-warm-xs"
+            className="px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors flex items-center gap-1.5 shadow-2xs"
           >
             <Edit3 className="w-3.5 h-3.5 text-campus-blue" />
-            <span>Edit Profile & Socials</span>
+            <span>Edit Profile</span>
           </button>
 
           <button
-            onClick={() => setActiveTab('portfolio')}
-            className="campus-btn-primary text-xs py-3 px-4 rounded-xl shadow-warm-sm"
+            onClick={() => setIsAIModalOpen(true)}
+            className="campus-btn-primary text-xs py-2.5 px-4 rounded-xl shadow-xs inline-flex items-center gap-1.5"
           >
-            View Portfolio
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>AI Copilot</span>
           </button>
         </div>
       </div>
 
-      {/* QUICK ACTIONS DOCK */}
-      <div className="space-y-3">
-        <h3 className="text-xs font-bold uppercase tracking-wider text-campus-muted-text">
-          Quick Launch Actions
-        </h3>
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
-          {quickActions.map(act => {
-            const Icon = act.icon;
-            return (
-              <button
-                key={act.label}
-                onClick={() => setActiveTab(act.tab as any)}
-                className="p-3.5 rounded-2xl bg-white border border-campus-border shadow-warm-sm hover:shadow-warm-md hover:border-campus-blue transition-all flex flex-col items-center text-center gap-2 group"
-              >
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${act.color} group-hover:scale-110 transition-transform`}>
-                  <Icon className="w-5 h-5" />
-                </div>
-                <span className="text-xs font-bold text-campus-slate-text leading-tight">{act.label}</span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* TODAY'S PRIORITIES SECTION */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-campus-bright-red pulse-live"></span>
-            <h2 className="text-base sm:text-lg font-extrabold text-campus-deep-blue uppercase tracking-wider">
-              Today's Priorities & Active Deadlines
-            </h2>
-          </div>
-          <span className="text-xs font-semibold text-campus-muted-text">
-            Actionable Next Steps
-          </span>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          
-          {/* Priority 1: Video Meeting */}
-          <div className="p-5 rounded-3xl bg-white border border-campus-border shadow-warm-sm hover:shadow-warm-md transition-all flex flex-col justify-between space-y-3">
-            <div>
-              <div className="flex items-center justify-between text-xs text-campus-red font-bold">
-                <span className="flex items-center gap-1">
-                  <Video className="w-3.5 h-3.5" />
-                  Team Review Meeting
-                </span>
-                <span>Today, 4:30 PM</span>
-              </div>
-              <h4 className="font-bold text-sm text-campus-deep-blue mt-2">
-                Milestone #3 Review with Dr. Arvind Rao
-              </h4>
-              <p className="text-[11.5px] text-campus-muted-text mt-1">
-                6-Member team video conference to review TensorRT latency metrics on CampusNet.
-              </p>
-            </div>
-
-            <button
-              onClick={() => startVideoMeeting(activeTeam.id)}
-              className="w-full campus-btn-red text-xs py-2 rounded-xl"
-            >
-              Enter Meeting Room
-            </button>
-          </div>
-
-          {/* Priority 2: Mentor Feedback */}
-          <div className="p-5 rounded-3xl bg-white border border-campus-border shadow-warm-sm hover:shadow-warm-md transition-all flex flex-col justify-between space-y-3">
-            <div>
-              <div className="flex items-center justify-between text-xs text-campus-blue font-bold">
-                <span className="flex items-center gap-1">
-                  <GraduationCap className="w-3.5 h-3.5" />
-                  Mentor Feedback
-                </span>
-                <span className="text-green-700 bg-green-50 px-1.5 py-0.2 rounded">New</span>
-              </div>
-              <h4 className="font-bold text-sm text-campus-deep-blue mt-2">
-                FMEA Safety Directive Posted
-              </h4>
-              <p className="text-[11.5px] text-campus-muted-text mt-1">
-                Prepare fail-safe motor cut-off documentation for SIH grand finale.
-              </p>
-            </div>
-
-            <button
-              onClick={() => setActiveTab('workspace')}
-              className="w-full campus-btn-primary text-xs py-2 rounded-xl"
-            >
-              Read Guidance Note
-            </button>
-          </div>
-
-          {/* Priority 3: Milestone Due */}
-          <div className="p-5 rounded-3xl bg-white border border-campus-border shadow-warm-sm hover:shadow-warm-md transition-all flex flex-col justify-between space-y-3">
-            <div>
-              <div className="flex items-center justify-between text-xs text-amber-700 font-bold">
-                <span className="flex items-center gap-1">
-                  <Clock className="w-3.5 h-3.5" />
-                  Project Milestone
-                </span>
-                <span>Due in 8 Days</span>
-              </div>
-              <h4 className="font-bold text-sm text-campus-deep-blue mt-2">
-                Autonomous Spray Flight Test
-              </h4>
-              <p className="text-[11.5px] text-campus-muted-text mt-1">
-                Field trial over 5-acre test plot with nozzle micro-dosing.
-              </p>
-            </div>
-
-            <button
-              onClick={() => setActiveTab('workspace')}
-              className="w-full campus-btn-secondary text-xs py-2 rounded-xl"
-            >
-              Update Tasks (4/5 Done)
-            </button>
-          </div>
-
-          {/* Priority 4: Event Registration */}
-          <div className="p-5 rounded-3xl bg-white border border-campus-border shadow-warm-sm hover:shadow-warm-md transition-all flex flex-col justify-between space-y-3">
-            <div>
-              <div className="flex items-center justify-between text-xs text-green-700 font-bold">
-                <span className="flex items-center gap-1">
-                  <Award className="w-3.5 h-3.5" />
-                  SIH 2026 Nodal Venue
-                </span>
-                <span>April 18</span>
-              </div>
-              <h4 className="font-bold text-sm text-campus-deep-blue mt-2">
-                Bangalore Nodal Center
-              </h4>
-              <p className="text-[11.5px] text-campus-muted-text mt-1">
-                GPS & camera attendance check-in window opens 08:00 AM.
-              </p>
-            </div>
-
-            <button
-              onClick={() => setActiveTab('events')}
-              className="w-full campus-btn-secondary text-xs py-2 rounded-xl"
-            >
-              Check Nodal Details
-            </button>
-          </div>
-
-        </div>
-      </div>
-
-      {/* Main Dashboard Hubs: Active Teams & Transparency Center */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      {/* 2. PRIORITY SNAPSHOT CARDS (Next Action over decorative stats) */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         
-        {/* Active Team Workspace Hub (7 Cols) */}
-        <div className="lg:col-span-7 space-y-4">
+        {/* Next Lecture */}
+        <Link
+          to="/student/academics"
+          className="bg-white p-3.5 rounded-2xl border border-slate-200/90 shadow-2xs hover:border-campus-blue hover:shadow-xs transition-all flex flex-col justify-between space-y-2 group"
+        >
           <div className="flex items-center justify-between">
-            <h3 className="font-bold text-base text-campus-deep-blue">My Active Team Workspace</h3>
-            <button onClick={() => setActiveTab('workspace')} className="text-xs font-bold text-campus-blue hover:underline">
-              Enter Workspace →
-            </button>
+            <span className="text-[9.5px] font-black uppercase tracking-wider text-slate-400">
+              Next Lecture
+            </span>
+            <BookOpen className="w-3.5 h-3.5 text-campus-blue" />
           </div>
+          <div>
+            <span className="text-xs font-bold text-campus-deep-blue line-clamp-1 group-hover:text-campus-blue transition-colors">
+              CS401 Deep Learning
+            </span>
+            <span className="text-[10px] text-slate-500 block mt-0.5">09:00 AM • LH-302</span>
+          </div>
+        </Link>
 
-          <div className="p-6 rounded-3xl bg-white border border-campus-border shadow-warm-md space-y-4">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <span className="text-[10.5px] font-bold uppercase text-campus-blue bg-campus-soft-blue px-2 py-0.5 rounded">
-                  {activeTeam.domain}
-                </span>
-                <h4 className="font-bold text-lg text-campus-deep-blue mt-1.5">{activeTeam.name}</h4>
-                <p className="text-xs text-campus-muted-text">{activeTeam.projectName}</p>
+        {/* Due Submission */}
+        <Link
+          to="/student/academics"
+          className="bg-white p-3.5 rounded-2xl border border-slate-200/90 shadow-2xs hover:border-amber-400 hover:shadow-xs transition-all flex flex-col justify-between space-y-2 group"
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-[9.5px] font-black uppercase tracking-wider text-amber-600">
+              Pending Task
+            </span>
+            <Clock className="w-3.5 h-3.5 text-amber-600" />
+          </div>
+          <div>
+            <span className="text-xs font-bold text-campus-deep-blue line-clamp-1 group-hover:text-amber-700 transition-colors">
+              ResNet CUDA Kernel
+            </span>
+            <span className="text-[10px] text-amber-700 font-bold block mt-0.5">Due in 6 Days</span>
+          </div>
+        </Link>
+
+        {/* Project Progress */}
+        <Link
+          to="/student/teams"
+          className="bg-white p-3.5 rounded-2xl border border-slate-200/90 shadow-2xs hover:border-campus-blue hover:shadow-xs transition-all flex flex-col justify-between space-y-2 group"
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-[9.5px] font-black uppercase tracking-wider text-slate-400">
+              Active Project
+            </span>
+            <FolderKanban className="w-3.5 h-3.5 text-campus-blue" />
+          </div>
+          <div>
+            <span className="text-xs font-bold text-campus-deep-blue line-clamp-1 group-hover:text-campus-blue transition-colors">
+              {activeProject.title}
+            </span>
+            <span className="text-[10px] text-emerald-600 font-bold block mt-0.5">{activeProject.progressPercent}% Completed</span>
+          </div>
+        </Link>
+
+        {/* Hackathon Countdown */}
+        <Link
+          to="/student/events"
+          className="bg-white p-3.5 rounded-2xl border border-slate-200/90 shadow-2xs hover:border-purple-400 hover:shadow-xs transition-all flex flex-col justify-between space-y-2 group"
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-[9.5px] font-black uppercase tracking-wider text-purple-600">
+              Upcoming Event
+            </span>
+            <Calendar className="w-3.5 h-3.5 text-purple-600" />
+          </div>
+          <div>
+            <span className="text-xs font-bold text-campus-deep-blue line-clamp-1 group-hover:text-purple-700 transition-colors">
+              SIH 2026 Finals
+            </span>
+            <span className="text-[10px] text-slate-500 block mt-0.5">April 18 • Bangalore</span>
+          </div>
+        </Link>
+
+        {/* Mentor Advisory */}
+        <Link
+          to="/student/mentorship"
+          className="bg-white p-3.5 rounded-2xl border border-slate-200/90 shadow-2xs hover:border-emerald-400 hover:shadow-xs transition-all flex flex-col justify-between space-y-2 group"
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-[9.5px] font-black uppercase tracking-wider text-emerald-700">
+              Mentor Note
+            </span>
+            <Compass className="w-3.5 h-3.5 text-emerald-600" />
+          </div>
+          <div>
+            <span className="text-xs font-bold text-campus-deep-blue line-clamp-1 group-hover:text-emerald-700 transition-colors">
+              Dr. Arvind Rao
+            </span>
+            <span className="text-[10px] text-emerald-700 font-semibold block mt-0.5">Meeting @ 4:30 PM</span>
+          </div>
+        </Link>
+
+        {/* Opportunities */}
+        <Link
+          to="/student/opportunities"
+          className="bg-white p-3.5 rounded-2xl border border-slate-200/90 shadow-2xs hover:border-indigo-400 hover:shadow-xs transition-all flex flex-col justify-between space-y-2 group"
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-[9.5px] font-black uppercase tracking-wider text-indigo-600">
+              Opportunity
+            </span>
+            <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
+          </div>
+          <div>
+            <span className="text-xs font-bold text-campus-deep-blue line-clamp-1 group-hover:text-indigo-700 transition-colors">
+              IISc AI Fellowship
+            </span>
+            <span className="text-[10px] text-indigo-600 font-bold block mt-0.5">₹35k/mo • Closes Soon</span>
+          </div>
+        </Link>
+
+      </div>
+
+      {/* 3. TWO-COLUMN RESPONSIVE COMMAND GRID */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8">
+        
+        {/* PRIMARY COLUMN (8 COLS) */}
+        <div className="lg:col-span-8 space-y-6 sm:space-y-8">
+          
+          {/* TODAY'S PRIORITIES ACTION LIST */}
+          <div className="bg-white rounded-3xl p-6 border border-slate-200/90 shadow-xs space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-campus-red animate-pulse" />
+                <h2 className="text-base font-black text-campus-deep-blue tracking-tight">
+                  Today's Action Priorities
+                </h2>
               </div>
-
-              <span className="text-xs font-extrabold text-green-700 bg-green-50 border border-green-200 px-2.5 py-1 rounded-full">
-                Active 6/6
+              <span className="text-xs font-semibold text-slate-500">
+                {completedPriorities.length} / {priorityItems.length} Resolved
               </span>
             </div>
 
-            {/* Team Progress Meter */}
-            <div className="space-y-1.5 pt-2 border-t border-campus-border">
-              <div className="flex justify-between text-xs font-bold text-campus-slate-text">
-                <span>Milestone Completion</span>
-                <span className="text-campus-blue">{activeProject.progressPercent}%</span>
+            <div className="space-y-2.5">
+              {priorityItems.map(item => {
+                const isCompleted = completedPriorities.includes(item.id);
+
+                return (
+                  <div
+                    key={item.id}
+                    className={`p-4 rounded-2xl border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+                      isCompleted
+                        ? 'bg-slate-50/60 border-slate-200/60 opacity-60'
+                        : 'bg-white border-slate-200/90 shadow-2xs hover:border-blue-200'
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <button
+                        onClick={e => handleTogglePriority(item.id, e)}
+                        className={`w-5 h-5 rounded-lg border flex items-center justify-center shrink-0 mt-0.5 transition-colors ${
+                          isCompleted
+                            ? 'bg-emerald-500 border-emerald-500 text-white'
+                            : 'border-slate-300 hover:border-campus-blue bg-white'
+                        }`}
+                        title={isCompleted ? 'Mark incomplete' : 'Mark done'}
+                      >
+                        {isCompleted && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                      </button>
+
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className={`text-[9.5px] font-extrabold px-1.5 py-0.2 rounded-md ${item.priorityColor}`}>
+                            {item.category}
+                          </span>
+                          <span className="text-xs text-slate-400">•</span>
+                          <span className="text-xs font-bold text-slate-500">{item.time}</span>
+                        </div>
+                        <h4 className={`text-sm font-bold ${isCompleted ? 'line-through text-slate-400' : 'text-campus-deep-blue'}`}>
+                          {item.title}
+                        </h4>
+                        <p className="text-xs text-slate-500 leading-snug">
+                          {item.description}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="self-end sm:self-auto shrink-0">
+                      <button
+                        onClick={item.action}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-2xs ${
+                          item.actionType === 'meeting'
+                            ? 'campus-btn-red'
+                            : 'campus-btn-primary'
+                        }`}
+                      >
+                        {item.actionType === 'meeting' && <Video className="w-3.5 h-3.5" />}
+                        <span>{item.actionText}</span>
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* ACTIVE TEAM WORKSPACE HUB */}
+          <div className="bg-white rounded-3xl p-6 border border-slate-200/90 shadow-xs space-y-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">
+                  Sprint Workspace
+                </span>
+                <h3 className="text-base font-bold text-campus-deep-blue mt-0.5">{activeTeam.name}</h3>
               </div>
-              <div className="w-full h-2.5 bg-campus-warm-white rounded-full overflow-hidden border border-campus-border">
-                <div className="h-full bg-campus-blue rounded-full" style={{ width: `${activeProject.progressPercent}%` }} />
-              </div>
+
+              <Link
+                to="/student/teams"
+                className="text-xs font-bold text-campus-blue hover:underline flex items-center gap-1"
+              >
+                <span>Full Team Workspace</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </Link>
             </div>
 
-            {/* Mini Roster */}
-            <div className="flex items-center justify-between pt-2 text-xs">
-              <div className="flex -space-x-2 overflow-hidden">
-                {activeTeam.members.map(m => (
-                  <img
-                    key={m.userId}
-                    src={m.avatar}
-                    alt={m.name}
-                    title={`${m.name} (${m.role})`}
-                    className="inline-block h-8 w-8 rounded-full ring-2 ring-white object-cover"
-                  />
-                ))}
+            <div className="p-4 rounded-2xl bg-slate-50/70 border border-slate-200 space-y-3">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h4 className="text-sm font-bold text-slate-800">{activeTeam.projectName}</h4>
+                  <p className="text-xs text-slate-500 mt-0.5">{activeTeam.domain}</p>
+                </div>
+                <span className="text-xs font-extrabold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+                  Active 6/6
+                </span>
               </div>
 
-              <div className="text-campus-muted-text text-[11px]">
-                <strong>Mentor:</strong> {activeTeam.mentorName}
+              {/* Progress bar */}
+              <div className="space-y-1 pt-1">
+                <div className="flex justify-between text-xs font-bold">
+                  <span className="text-slate-600">Sprint Deliverables Completed</span>
+                  <span className="text-campus-blue">{activeProject.progressPercent}%</span>
+                </div>
+                <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+                  <div className="h-full bg-campus-blue rounded-full" style={{ width: `${activeProject.progressPercent}%` }} />
+                </div>
+              </div>
+
+              {/* Roster & Quick Action */}
+              <div className="flex items-center justify-between pt-2 border-t border-slate-200/70 text-xs">
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] text-slate-500 font-medium">Core Leads:</span>
+                  <div className="flex -space-x-2">
+                    {activeTeam.members.map(m => (
+                      <img
+                        key={m.userId}
+                        src={m.avatar}
+                        alt={m.name}
+                        className="w-7 h-7 rounded-full object-cover ring-2 ring-white"
+                        title={`${m.name} (${m.role})`}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => startVideoMeeting(activeTeam.id)}
+                  className="campus-btn-primary text-xs py-1.5 px-3 rounded-xl flex items-center gap-1"
+                >
+                  <Video className="w-3.5 h-3.5" />
+                  <span>Launch Sync</span>
+                </button>
               </div>
             </div>
           </div>
+
+          {/* ACADEMICS TIMETABLE PREVIEW */}
+          <div className="bg-white rounded-3xl p-6 border border-slate-200/90 shadow-xs space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <BookOpen className="w-4 h-4 text-campus-blue" />
+                <h3 className="text-base font-bold text-campus-deep-blue">
+                  Today's Academic Schedule
+                </h3>
+              </div>
+
+              <Link
+                to="/student/academics"
+                className="text-xs font-bold text-campus-blue hover:underline"
+              >
+                View Full Timetable →
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/50 space-y-1">
+                <span className="text-[10px] font-bold text-campus-blue">09:00 - 10:00 AM • Lecture</span>
+                <h5 className="text-xs font-bold text-slate-800">CS401: Deep Learning</h5>
+                <p className="text-[11px] text-slate-500">Hall: LH-302 • Dr. Arvind Rao</p>
+              </div>
+
+              <div className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/50 space-y-1">
+                <span className="text-[10px] font-bold text-purple-700">11:30 - 01:00 PM • Lab Session</span>
+                <h5 className="text-xs font-bold text-slate-800">CS408L: Robotics Practical</h5>
+                <p className="text-[11px] text-slate-500">Venue: Robotics Lab 2 • Dr. Radhika Sen</p>
+              </div>
+            </div>
+          </div>
+
         </div>
 
-        {/* Transparency Center: My Activity & Status (5 Cols) */}
-        <div className="lg:col-span-5 space-y-4">
-          <div className="flex items-center gap-2">
-            <Activity className="w-4 h-4 text-campus-red" />
-            <h3 className="font-bold text-base text-campus-deep-blue">National Portal Transparency Center</h3>
+        {/* SUPPORTING COLUMN (4 COLS) */}
+        <div className="lg:col-span-4 space-y-6 sm:space-y-8">
+          
+          {/* Academic Standing Snapshot */}
+          <div className="bg-white rounded-3xl p-6 border border-slate-200/90 shadow-xs space-y-4">
+            <h3 className="text-xs font-black uppercase tracking-wider text-slate-400">
+              Verified Academic Index
+            </h3>
+
+            <div className="grid grid-cols-2 gap-3 text-center">
+              <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200">
+                <span className="text-[10px] font-bold text-slate-400 uppercase">CGPA</span>
+                <span className="text-2xl font-black text-campus-deep-blue block mt-0.5">8.72</span>
+                <span className="text-[9.5px] text-emerald-600 font-bold">Top Quartile</span>
+              </div>
+
+              <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200">
+                <span className="text-[10px] font-bold text-slate-400 uppercase">Attendance</span>
+                <span className="text-2xl font-black text-emerald-700 block mt-0.5">88%</span>
+                <span className="text-[9.5px] text-slate-500 font-medium">Safe (&gt;75%)</span>
+              </div>
+            </div>
+
+            <Link
+              to="/student/academics"
+              className="w-full text-center py-2 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-colors block"
+            >
+              Academic Success Center →
+            </Link>
           </div>
 
-          <div className="p-5 rounded-3xl bg-white border border-campus-border shadow-warm-md space-y-3.5 text-xs">
-            
-            <div className="flex items-center justify-between p-3 rounded-2xl bg-campus-warm-white border border-campus-border">
-              <div>
-                <div className="font-bold text-campus-slate-text">Smart India Hackathon 2026</div>
-                <div className="text-[11px] text-campus-muted-text">Event Registration Status</div>
-              </div>
-              <span className="text-green-700 font-bold bg-green-100 px-2 py-0.5 rounded-full text-[10.5px]">
-                Confirmed ✓
-              </span>
+          {/* AI Copilot Quick Assist */}
+          <div className="bg-gradient-to-br from-indigo-900 via-blue-900 to-slate-900 text-white rounded-3xl p-6 shadow-sm space-y-4">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-amber-300" />
+              <h3 className="text-xs font-black uppercase tracking-wider text-blue-200">
+                AI Student Copilot
+              </h3>
             </div>
 
-            <div className="flex items-center justify-between p-3 rounded-2xl bg-campus-warm-white border border-campus-border">
-              <div>
-                <div className="font-bold text-campus-slate-text">Dr. Arvind Rao (IIT Bombay)</div>
-                <div className="text-[11px] text-campus-muted-text">Faculty Mentorship Assignment</div>
-              </div>
-              <span className="text-green-700 font-bold bg-green-100 px-2 py-0.5 rounded-full text-[10.5px]">
-                Accepted & Active
-              </span>
-            </div>
+            <p className="text-xs text-blue-100/90 leading-relaxed">
+              Instant assistance for drafting project abstracts, summarizing milestone blockers, or finding teammates.
+            </p>
 
-            <div className="flex items-center justify-between p-3 rounded-2xl bg-campus-warm-white border border-campus-border">
-              <div>
-                <div className="font-bold text-campus-slate-text">GPS Attendance Window</div>
-                <div className="text-[11px] text-campus-muted-text">Bangalore Nodal Center</div>
-              </div>
-              <span className="text-campus-blue font-bold bg-blue-100 px-2 py-0.5 rounded-full text-[10.5px]">
-                Scheduled April 18
-              </span>
-            </div>
-
-            <div className="flex items-center justify-between p-3 rounded-2xl bg-campus-warm-white border border-campus-border">
-              <div>
-                <div className="font-bold text-campus-slate-text">Smart India Ideathon 2025</div>
-                <div className="text-[11px] text-campus-muted-text">Verifiable QR Certificate</div>
-              </div>
-              <button 
-                onClick={() => setActiveTab('certificates')}
-                className="text-campus-red font-bold hover:underline text-[11px]"
+            <div className="space-y-2">
+              <button
+                onClick={() => setIsAIModalOpen(true)}
+                className="w-full text-left p-2.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 text-xs font-semibold text-white transition-colors flex items-center justify-between"
               >
-                View QR Cert →
+                <span>Draft project abstract for SIH</span>
+                <ArrowRight className="w-3.5 h-3.5 text-blue-300" />
+              </button>
+
+              <button
+                onClick={() => setIsAIModalOpen(true)}
+                className="w-full text-left p-2.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 text-xs font-semibold text-white transition-colors flex items-center justify-between"
+              >
+                <span>Find co-founders with ROS 2 skills</span>
+                <ArrowRight className="w-3.5 h-3.5 text-blue-300" />
               </button>
             </div>
-
           </div>
+
+          {/* Mentor Advisory Note */}
+          <div className="bg-white rounded-3xl p-6 border border-slate-200/90 shadow-xs space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">
+                Latest Advisor Note
+              </span>
+              <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md">
+                Verified
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2.5">
+              <img
+                src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80"
+                alt="Dr. Arvind Rao"
+                className="w-8 h-8 rounded-lg object-cover ring-1 ring-slate-200"
+              />
+              <div>
+                <h4 className="text-xs font-bold text-campus-deep-blue">Dr. Arvind Rao</h4>
+                <p className="text-[10px] text-slate-400">IIT Bombay AI Faculty</p>
+              </div>
+            </div>
+
+            <p className="text-xs text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-200/80 leading-relaxed">
+              "Keep the watchdog motor cut-off documentation ready for SIH final round evaluation."
+            </p>
+
+            <Link
+              to="/student/mentorship"
+              className="text-xs font-bold text-campus-blue hover:underline block pt-1"
+            >
+              Mentorship Network ({mentors.length} Verified Mentors) →
+            </Link>
+          </div>
+
+          {/* Cryptographic Credential Widget */}
+          <div className="bg-white rounded-3xl p-6 border border-slate-200/90 shadow-xs space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5">
+                <QrCode className="w-4 h-4 text-campus-blue" />
+                <h4 className="text-xs font-bold text-campus-deep-blue">Verifiable Credentials</h4>
+              </div>
+              <span className="text-[10px] font-extrabold text-slate-400">
+                {certificates.length} Active
+              </span>
+            </div>
+
+            <p className="text-xs text-slate-500 leading-snug">
+              Every hackathon certificate carries an immutable SHA-256 digital signature.
+            </p>
+
+            <Link
+              to="/student/certificates"
+              className="campus-btn-primary text-xs py-2 px-3 rounded-xl text-center block w-full"
+            >
+              Inspect Certificates & QR →
+            </Link>
+          </div>
+
         </div>
 
       </div>
 
-      <StudentProfileEditModal 
-        isOpen={isEditModalOpen} 
-        onClose={() => setIsEditModalOpen(false)} 
-      />
+      {/* Edit Student Profile Modal */}
+      {isEditModalOpen && (
+        <StudentProfileEditModal
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
+        />
+      )}
 
     </div>
   );

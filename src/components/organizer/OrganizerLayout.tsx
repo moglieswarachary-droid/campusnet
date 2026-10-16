@@ -7,6 +7,8 @@ import {
   Sparkles, ExternalLink, Menu, X, ChevronRight, Gavel,
   CheckCircle2, ArrowRight
 } from 'lucide-react';
+import { RoleType } from '../../types';
+import { WorkspaceSwitcher } from '../common/WorkspaceSwitcher';
 
 export type OrganizerTab = 
   | 'dashboard'
@@ -22,6 +24,9 @@ export type OrganizerTab =
   | 'certificates'
   | 'announcements'
   | 'reports'
+  | 'members'
+  | 'notifications'
+  | 'settings'
   | 'profile';
 
 interface Props {
@@ -70,7 +75,8 @@ export const OrganizerLayout: React.FC<Props> = ({ activeSection, setActiveSecti
       items: [
         { id: 'registrations', label: 'Student Registrations', icon: Users, badge: orgRegistrations.length },
         { id: 'attendance', label: 'QR Attendance Scanner', icon: QrCode },
-        { id: 'submissions', label: 'Project Submissions', icon: FileText, badge: pendingSubmissions.length > 0 ? pendingSubmissions.length : undefined }
+        { id: 'submissions', label: 'Project Submissions', icon: FileText, badge: pendingSubmissions.length > 0 ? pendingSubmissions.length : undefined },
+        { id: 'announcements', label: 'Announcements', icon: Bell }
       ]
     },
     {
@@ -78,19 +84,23 @@ export const OrganizerLayout: React.FC<Props> = ({ activeSection, setActiveSecti
       items: [
         { id: 'judges', label: 'Rubrics & Evaluation', icon: CheckSquare },
         { id: 'winners', label: 'Results & Rankings', icon: Award },
-        { id: 'certificates', label: 'Digital Certificates', icon: ShieldCheck }
+        { id: 'certificates', label: 'Digital Certificates', icon: ShieldCheck },
+        { id: 'reports', label: 'Analytics & Reports', icon: BarChart3 }
       ]
     },
     {
-      title: 'College Profile',
+      title: 'College Administration',
       items: [
+        { id: 'members', label: 'Institutional Members', icon: Users },
         { 
           id: 'verify', 
           label: 'Institutional Verification', 
           icon: ShieldCheck, 
           badge: currentOrganizer?.verificationStatus === 'verified' ? 'Verified' : 'Under Review' 
         },
-        { id: 'profile', label: 'College Profile & AISHE', icon: Building2 }
+        { id: 'profile', label: 'College Profile & AISHE', icon: Building2 },
+        { id: 'notifications', label: 'Alerts & Notifications', icon: Bell },
+        { id: 'settings', label: 'Hosting Policies & Settings', icon: Settings }
       ]
     }
   ];
@@ -136,6 +146,7 @@ export const OrganizerLayout: React.FC<Props> = ({ activeSection, setActiveSecti
 
         {/* Right Section: Quick Primary Host Action + Profile */}
         <div className="flex items-center gap-3">
+          <WorkspaceSwitcher />
           
           <button
             onClick={() => setActiveSection('create_event')}

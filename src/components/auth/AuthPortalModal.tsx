@@ -1387,17 +1387,6 @@ export const AuthPortalModal: React.FC = () => {
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
-
-          {/* Separated Protected Admin & Reviewer Entry */}
-          <a
-            href="/admin"
-            className="text-[11px] font-semibold text-slate-400 hover:text-slate-700 flex items-center gap-1 hover:underline transition-colors"
-            title="Protected Platform Reviewer & Root Super Admin Entrance"
-          >
-            <Lock className="w-3 h-3 text-slate-400" />
-            <span>Platform Reviewer & Admin Console →</span>
-          </a>
-
         </div>
 
       </div>

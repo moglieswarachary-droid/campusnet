@@ -15,9 +15,29 @@ export const WorkspaceView: React.FC = () => {
   const { teamId } = useParams<{ teamId?: string }>();
   
   const activeTeam = (teamId ? teams.find(t => t.id.toLowerCase() === teamId.toLowerCase()) : null) || teams[0];
-  const activeProject = projects.find(p => p.id === activeTeam?.projectId) || projects[0];
+  const activeProject = (activeTeam ? projects.find(p => p.id === activeTeam.projectId) : null) || projects[0] || {
+    id: 'proj-default',
+    title: 'Academic Project Workspace',
+    institution: 'CampusNet Innovation Network',
+    progressPercent: 0,
+    githubUrl: 'https://github.com'
+  };
 
   const [activeTab, setActiveTabState] = useState<'overview' | 'tasks' | 'chat' | 'mentor' | 'files'>('overview');
+
+  if (!activeTeam) {
+    return (
+      <div className="py-20 max-w-xl mx-auto px-4 text-center space-y-4 animate-in fade-in">
+        <div className="w-16 h-16 rounded-3xl bg-blue-50 text-campus-blue flex items-center justify-center mx-auto shadow-sm">
+          <Users className="w-8 h-8" />
+        </div>
+        <h2 className="text-xl sm:text-2xl font-bold text-campus-deep-blue">No Active Team Workspace</h2>
+        <p className="text-xs sm:text-sm text-campus-muted-text leading-relaxed">
+          You are not currently enrolled in a team workspace. You can form a new team or join ongoing collegiate projects.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="py-8 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 animate-in fade-in">

@@ -8,7 +8,8 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "start": "node server.js"
+    "start": "node server.js",
+    "test": "node test-portal-routes.mjs && node test-rbac.mjs && node test-verification.mjs && node test-demo-logins.mjs && node test-api-rbac.mjs"
   },
   "dependencies": {
     "canvas-confetti": "^1.9.4",
