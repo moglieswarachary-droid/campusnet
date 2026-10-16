@@ -61,7 +61,8 @@ export const Navbar: React.FC = () => {
   const roles: { role: RoleType; label: string; desc: string; icon: any }[] = [
     { role: 'student', label: 'Student Portal', desc: 'Aarav Sharma (NITK Surathkal)', icon: UserCheck },
     { role: 'mentor', label: 'Faculty Mentor Portal', desc: 'Dr. Arvind Rao (IIT Bombay)', icon: ShieldCheck },
-    { role: 'researcher', label: 'PhD Scholar Portal', desc: 'Kavya Ramanathan (IISc Bangalore)', icon: Sparkles }
+    { role: 'researcher', label: 'PhD Scholar Portal', desc: 'Kavya Ramanathan (IISc Bangalore)', icon: Sparkles },
+    { role: 'organizer', label: 'Institution Host Portal', desc: 'Dr. Anand Kumar (KEC Kuppam)', icon: Building2 }
   ];
 
   // Strictly: Home, Discover, Projects, Events, Mentors, Research
@@ -328,8 +329,12 @@ export const Navbar: React.FC = () => {
                               key={r.role}
                               type="button"
                               onClick={() => {
-                                switchRole(r.role);
                                 setIsRoleMenuOpen(false);
+                                if (r.role === 'organizer') {
+                                  window.location.href = '/organization/events';
+                                } else {
+                                  switchRole(r.role);
+                                }
                               }}
                               className={`w-full text-left px-2.5 py-1.5 rounded-xl text-xs flex items-center justify-between transition-colors cursor-pointer ${
                                 isActive 

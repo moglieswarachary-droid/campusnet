@@ -1,4 +1,13 @@
-export type RoleType = 'student' | 'mentor' | 'researcher' | 'organizer' | 'superadmin';
+export type AppRole = 
+  | 'STUDENT'
+  | 'MENTOR'
+  | 'PHD_RESEARCHER'
+  | 'ORGANIZATION_OWNER'
+  | 'EVENT_MANAGER'
+  | 'PLATFORM_REVIEWER'
+  | 'SUPER_ADMIN';
+
+export type RoleType = 'student' | 'mentor' | 'researcher' | 'organizer' | 'superadmin' | 'event_manager' | 'reviewer';
 
 export type OrganizerPermissionRole = 
   | 'institution_admin' 
@@ -67,6 +76,10 @@ export interface User {
   portfolio?: string;
   idCardVerifiedAt?: string;
   role: RoleType;
+  roles?: AppRole[];
+  activeAppRole?: AppRole;
+  organizationId?: string;
+  managedEventIds?: string[];
   connectionsCount?: number;
   connectedUserIds?: string[];
   savedItemIds?: string[];

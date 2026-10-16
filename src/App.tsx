@@ -40,6 +40,8 @@ import { CampusAIAssistant } from './components/ai/CampusAIAssistant';
 import { DirectMessagingModal } from './components/messaging/DirectMessagingModal';
 import { UserProfileModal } from './components/network/UserProfileModal';
 
+import { ProtectedRoute } from './components/auth/ProtectedRoute';
+
 const RoleDashboardRouter: React.FC = () => {
   const { activeRole } = useApp();
   return (
@@ -53,7 +55,14 @@ const RoleDashboardRouter: React.FC = () => {
 
 const MainContent: React.FC = () => {
   const location = useLocation();
-  const { setActiveTab } = useApp();
+  const { setActiveTab, openAuthModal } = useApp();
+
+  // If visiting /login or query has redirect, trigger the Initial Access Gateway
+  useEffect(() => {
+    if (location.pathname === '/login') {
+      openAuthModal('student', 'login');
+    }
+  }, [location.pathname, openAuthModal]);
 
   // Keep activeTab in sync with current pathname
   useEffect(() => {
@@ -78,6 +87,7 @@ const MainContent: React.FC = () => {
       <Suspense fallback={<LoadingFallback message="Loading CampusNet Experience..." />}>
         <Routes>
           <Route path="/" element={<LandingPageView />} />
+          <Route path="/login" element={<LandingPageView />} />
           <Route path="/discover" element={<DiscoverEcosystemView />} />
           
           <Route path="/projects" element={<ProjectsEcosystemView />} />
@@ -93,11 +103,41 @@ const MainContent: React.FC = () => {
           
           <Route path="/research" element={<ResearchHubView />} />
           
-          <Route path="/workspace" element={<WorkspaceView />} />
-          <Route path="/workspace/:teamId" element={<WorkspaceView />} />
+          {/* Protected Workspace & Collaboration Routes */}
+          <Route 
+            path="/workspace" 
+            element={
+              <ProtectedRoute requiredRoles={['STUDENT', 'MENTOR']}>
+                <WorkspaceView />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/workspace/:teamId" 
+            element={
+              <ProtectedRoute requiredRoles={['STUDENT', 'MENTOR']}>
+                <WorkspaceView />
+              </ProtectedRoute>
+            } 
+          />
           
-          <Route path="/dashboard" element={<RoleDashboardRouter />} />
-          <Route path="/portfolio" element={<StudentPortfolioView />} />
+          {/* Protected Role-Based Dashboards */}
+          <Route 
+            path="/dashboard" 
+            element={
+              <ProtectedRoute requiredRoles={['STUDENT', 'MENTOR', 'PHD_RESEARCHER']}>
+                <RoleDashboardRouter />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/portfolio" 
+            element={
+              <ProtectedRoute requiredRoles={['STUDENT']}>
+                <StudentPortfolioView />
+              </ProtectedRoute>
+            } 
+          />
           
           <Route path="/certificates" element={<CertificateVerifyView />} />
           <Route path="/certificates/:certId" element={<CertificateVerifyView />} />

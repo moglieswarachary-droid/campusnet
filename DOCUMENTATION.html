@@ -923,6 +923,60 @@ QR Payload URL: https://campusnet.in/verify/CN-KEC-AI26-PART-000101</code></pre>
         <li><strong>Domain Allowlists:</strong> External profile URLs are strictly validated against <code>github.com</code>, <code>linkedin.com</code>, <code>x.com</code>, <code>leetcode.com</code>, and <code>vidwan.inflibnet.ac.in</code>.</li>
         <li><strong>File Upload Defense:</strong> 10 MB size limit, PDF/image MIME enforcement, path traversal stripping (<code>../</code>), and blocking of executable formats (<code>.exe</code>, <code>.sh</code>, <code>.php</code>, <code>.js</code>).</li>
       </ul>
+
+      <h2>4. Production Role-Based Access Control (RBAC) System</h2>
+      <p>
+        The platform enforces 7 canonical roles with strict server-side authorization, preventing privilege escalation and cross-tenant data leakage:
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Canonical Role</th>
+            <th>Primary Workspace &amp; Authorized Scope</th>
+            <th>Permissions &amp; Guardrails</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>STUDENT</code></td>
+            <td>Student Innovation Dashboard, Team Studio, Portfolio</td>
+            <td>Project creation, mentorship applications, event participation. Cannot publish events or access admin.</td>
+          </tr>
+          <tr>
+            <td><code>MENTOR</code></td>
+            <td>Faculty Mentor Workspace, Milestone Reviews</td>
+            <td>Team guidance, milestone approvals, mentorship certificate issuance. Vidwan profile synchronization.</td>
+          </tr>
+          <tr>
+            <td><code>PHD_RESEARCHER</code></td>
+            <td>Doctoral Research Workspace</td>
+            <td>Preprint publications, research openings, cross-university laboratory collaboration proposals.</td>
+          </tr>
+          <tr>
+            <td><code>ORGANIZATION_OWNER</code></td>
+            <td>Institution Portal (<code>/organization/events</code>)</td>
+            <td>Manage college events, attendance terminals, judging rubrics, and certificate issuance. Isolated to college ID.</td>
+          </tr>
+          <tr>
+            <td><code>EVENT_MANAGER</code></td>
+            <td>Authorized Event Workspace</td>
+            <td>Event-specific coordination, QR check-in scanning, scoring oversight. Bound to assigned events.</td>
+          </tr>
+          <tr>
+            <td><code>PLATFORM_REVIEWER</code></td>
+            <td>Review Console (<code>/admin/events</code>)</td>
+            <td>National accreditation audits, compliance review of collegiate proposals. Cannot manage user records.</td>
+          </tr>
+          <tr>
+            <td><code>SUPER_ADMIN</code></td>
+            <td>National Governance Console (<code>/admin</code>)</td>
+            <td>Unrestricted governance, institutional accreditation, user suspension, fraud revocation, and audit logs.</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="callout callout-blue">
+        <strong>Multi-Tenant Isolation &amp; Publishing Policy:</strong> Organizers are cryptographically isolated to their assigned <code>organizationId</code>. Only organizations with <code>verificationStatus: 'verified'</code> may publish events directly; unverified organizations can only draft or submit proposals for accreditation review.
+      </div>
     </div>
 
     <!-- ================================================================= -->

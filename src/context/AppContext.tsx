@@ -725,7 +725,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const switchRole = (role: RoleType) => {
     setActiveRole(role);
     if (role === 'student') {
-      setCurrentUser(MOCK_STUDENTS[0]);
+      setCurrentUser({
+        ...MOCK_STUDENTS[0],
+        roles: ['STUDENT'],
+        activeAppRole: 'STUDENT'
+      });
     } else if (role === 'mentor') {
       setCurrentUser({
         ...MOCK_STUDENTS[0],
@@ -734,6 +738,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         email: MOCK_MENTORS[0].email,
         institution: MOCK_MENTORS[0].institution,
         role: 'mentor',
+        roles: ['MENTOR'],
+        activeAppRole: 'MENTOR',
         avatar: MOCK_MENTORS[0].avatar
       });
     } else if (role === 'researcher') {
@@ -744,7 +750,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         email: MOCK_RESEARCHERS[0].email,
         institution: MOCK_RESEARCHERS[0].university,
         role: 'researcher',
+        roles: ['PHD_RESEARCHER'],
+        activeAppRole: 'PHD_RESEARCHER',
         avatar: MOCK_RESEARCHERS[0].avatar
+      });
+    } else if (role === 'organizer') {
+      setCurrentUser({
+        ...MOCK_STUDENTS[0],
+        id: 'KEC-DEMO-001',
+        name: 'Dr. Anand Kumar',
+        email: 'organizer.demo@campusnet-demo.in',
+        institution: 'Kuppam Engineering College',
+        role: 'organizer',
+        roles: ['ORGANIZATION_OWNER'],
+        activeAppRole: 'ORGANIZATION_OWNER',
+        organizationId: 'KEC-DEMO-001'
       });
     }
   };
@@ -997,10 +1017,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
   };
 
-  // --- SUPER ADMIN AUTHENTICATION ---
+  // --- SUPER ADMIN & PLATFORM REVIEWER AUTHENTICATION ---
   const superAdminLogin = (usernameOrEmail: string, password?: string): boolean => {
     const lower = usernameOrEmail.toLowerCase().trim();
-    if (lower === 'superadmin.demo' || lower === 'superadmin@campusnet-demo.in' || lower === 'admin') {
+    if (lower === 'superadmin.demo' || lower === 'superadmin@campusnet-demo.in' || lower === 'admin' || lower === 'admin@campusnet.in') {
       setCurrentSuperAdmin(MOCK_SUPER_ADMIN_ACCOUNT);
       localStorage.setItem('campusnet_admin_session', JSON.stringify(MOCK_SUPER_ADMIN_ACCOUNT));
       logAuditAction('SUPER_ADMIN_LOGIN', 'security', 'adm-001', 'National Admin', 'Super admin authenticated with MFA verification');
@@ -1008,6 +1028,28 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         type: 'success',
         title: 'Super Admin Access Granted',
         message: 'Welcome to the CampusNet National Governance Console.'
+      });
+      return true;
+    }
+
+    if (lower === 'reviewer.demo' || lower === 'reviewer.gov@aicte.gov.in' || lower.includes('reviewer')) {
+      const reviewerAccount: SuperAdminAccount = {
+        id: 'rev-aicte-001',
+        username: 'reviewer.demo',
+        email: 'reviewer.gov@aicte.gov.in',
+        name: 'Dr. Sunita Murthy (AICTE Review Board)',
+        role: 'moderator',
+        avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80',
+        mfaEnabled: true,
+        lastLoginAt: new Date().toISOString()
+      };
+      setCurrentSuperAdmin(reviewerAccount);
+      localStorage.setItem('campusnet_admin_session', JSON.stringify(reviewerAccount));
+      logAuditAction('PLATFORM_REVIEWER_LOGIN', 'security', 'rev-001', 'Platform Reviewer', 'Reviewer authenticated');
+      addToast({
+        type: 'success',
+        title: 'Platform Reviewer Access Granted',
+        message: 'Welcome to the Event & Institution Accreditation Review Console.'
       });
       return true;
     }

@@ -519,13 +519,28 @@ To protect against Cross-Site Scripting (XSS), URL injection, and phishing:
   - Filename sanitization to strip directory traversal sequences (`../`, `..\`).
 - **Input Sanitization**: All freeform string inputs are stripped of `<script>` tags and `javascript:` pseudo-protocols.
 
-### 9.4 Role-Based Access Control (RBAC)
-CampusNet+ enforces five granular privilege levels:
-1. `student`: Access to personal projects, team studios, registrations, portfolio.
-2. `mentor`: Access to assigned team studios, milestone approvals, mentorship certification.
-3. `researcher`: Access to research publications, datasets, collaboration proposals.
-4. `organizer`: Access to event creation, participant check-in terminal, judging rosters.
-5. `superadmin`: Unrestricted national governance, moderation queue, accreditation, fraud audits.
+### 9.4 Production Role-Based Access Control (RBAC) System
+CampusNet+ implements a production-grade, server-enforced Role-Based Access Control (RBAC) system with 7 canonical roles, granular permissions, multi-role account support, and tenant isolation:
+
+#### Canonical Roles Matrix
+1. **`STUDENT`**: Access to personal projects, cross-college team studios, hackathon registrations, portfolio, and bonafide innovation transcript.
+2. **`MENTOR`**: Faculty workspace, assigned team mentoring, project milestone evaluations, and verifiable mentorship certificate issuance.
+3. **`PHD_RESEARCHER`**: Doctoral research workspace, preprint publication, research openings, and inter-university lab collaboration proposals.
+4. **`ORGANIZATION_OWNER`**: Institution administration, event drafts, document verification evidence submission, event publishing (upon accreditation), participant management, judging rosters, and certificate generation.
+5. **`EVENT_MANAGER`**: Dedicated event-level management, QR/GPS attendance terminal, judge scoring administration, and registration monitoring.
+6. **`PLATFORM_REVIEWER`**: Independent accreditation review console, event moderation queue, institution document audits, and compliance validation.
+7. **`SUPER_ADMIN`**: Master national governance, full CRUD control, user suspension/reactivation, audit logs, and system security controls.
+
+#### Security Policy & Tenant Isolation Rules
+- **Authentication vs. Authorization**: Authentication establishes cryptographic identity; server-enforced authorization resolves permissions. Roles supplied in query parameters or client storage are never trusted.
+- **Cross-Tenant Isolation**: Organization owners and event managers are strictly restricted to events and data matching their own `organizationId`. Cross-tenant data leakage is blocked with HTTP 403 Forbidden.
+- **Verification State-Based Event Publishing**: Only institutions with `verificationStatus === 'verified'` may publish events directly to the national directory. Pending organizations (`draft`, `submitted`, `under_review`, `additional_info_required`) can create and test drafts, while publishing requires administrative review.
+- **Privilege Escalation Prevention**: Multi-role users can switch between their assigned authorized roles, but unauthorized role elevation attempts are denied and logged to the central audit registry.
+
+#### Pre-Landing Access Gateway & Initial Route Resolution
+- **Initial Access Gateway**: 4-card role selector (`Student`, `Mentor`, `PhD Scholar`, `Organizer`) displayed on entry, supporting existing-account sign-in, role-specific registration (covering all 28 Indian States & 8 Union Territories with dynamic district resolution), OTP verification, password recovery, and guest browsing.
+- **Separated Administrative Entry**: Platform Reviewer and Super Admin entry points are isolated at `/admin/login`, completely separated from public user cards.
+- **Post-Login Routing Engine**: Deterministically routes users to their authorized workspace (`/dashboard`, `/organization/events`, `/organization/verify`, `/admin/events`, or `/admin`).
 
 ---
 
