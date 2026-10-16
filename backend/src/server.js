@@ -751,6 +751,20 @@ const server = http.createServer(async (req, res) => {
     }
 
     try {
+      // GET /api/health (System & Database Health Check)
+      if (pathname === '/api/health' && req.method === 'GET') {
+        sendJson(res, 200, {
+          status: 'ok',
+          uptime: Math.round(process.uptime()),
+          timestamp: new Date().toISOString(),
+          database: {
+            connected: isPrismaConnected,
+            provider: 'Neon PostgreSQL (Prisma)'
+          }
+        });
+        return;
+      }
+
       // POST /api/auth/login
       if (pathname === '/api/auth/login' && req.method === 'POST') {
         const body = await parseJsonBody(req);
