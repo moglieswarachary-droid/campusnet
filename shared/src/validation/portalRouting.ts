@@ -44,30 +44,38 @@ export const getPortalFromEnvironment = (pathname: string, search: string): Port
     return 'mentor';
   }
 
-  // 4. Research Portal Namespace
-  if (cleanPath.startsWith('/researcher') || cleanPath.startsWith('/scholar')) {
+  // 4. Research Portal Namespace (canonical /research/login as well as /researcher and /scholar)
+  if (
+    cleanPath === '/research/login' ||
+    cleanPath.startsWith('/research/login/') ||
+    cleanPath.startsWith('/researcher') || 
+    cleanPath.startsWith('/scholar')
+  ) {
     return 'researcher';
   }
 
-  // 5. Organization Portal Namespace
+  // 5. Organization & Event Manager Portal Namespace
   if (
     cleanPath.startsWith('/organization') ||
     cleanPath.startsWith('/organizer') || 
+    cleanPath.startsWith('/event-manager') ||
     cleanPath.startsWith('/portal/organizer') || 
     cleanSearch.includes('portal=organizer')
   ) {
     return 'organizer';
   }
 
-  // 6. Admin Portal Namespace
+  // 6. Admin, Platform Reviewer & Super Admin Portal Namespace
   if (
     cleanPath.startsWith('/admin') || 
+    cleanPath.startsWith('/super-admin') ||
+    cleanPath.startsWith('/reviewer') ||
     cleanPath.startsWith('/portal/admin') || 
     cleanSearch.includes('portal=admin')
   ) {
     return 'admin';
   }
 
-  // 7. Shared CampusNet+ Ecosystem (public landing, events, projects, mentors, research, etc.)
+  // 7. Shared CampusNet+ Ecosystem (public landing, events, projects, mentors, research hub, etc.)
   return 'public';
 };

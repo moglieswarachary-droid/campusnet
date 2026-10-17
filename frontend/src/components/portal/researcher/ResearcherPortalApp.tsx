@@ -283,6 +283,7 @@ export const ResearcherPortalApp: React.FC = () => {
   // Auth routes
   const isAuthRoute =
     location.pathname === '/researcher/login' ||
+    location.pathname === '/research/login' ||
     location.pathname === '/researcher/register' ||
     location.pathname === '/researcher/forgot-password';
 

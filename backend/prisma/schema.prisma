@@ -226,6 +226,7 @@ model User {
   attendanceRecords                AttendanceRecord[]         @relation("UserAttendanceRecords")
 
   @@index([email])
+  @@index([mobile])
   @@index([institutionId])
   @@index([organizationId])
   @@index([activeRole])
@@ -233,8 +234,38 @@ model User {
 }
 
 // --------------------------------------------------------
-// 3. SESSIONS & REFRESH TOKENS (PREPARED FOR FUTURE AUTH)
+// 3. SESSIONS, REFRESH TOKENS & OTP CHALLENGES
 // --------------------------------------------------------
+
+enum OtpChannel {
+  EMAIL
+  SMS
+}
+
+enum OtpPurpose {
+  LOGIN
+  PASSWORD_RECOVERY
+  VERIFICATION
+}
+
+model OtpChallenge {
+  id                    String                 @id @default(uuid())
+  identifier            String                 // Normalized email address or E.164 phone number
+  channel               OtpChannel             @default(EMAIL)
+  purpose               OtpPurpose             @default(LOGIN)
+  tokenHash             String                 // SHA-256 digest of 6-digit cryptographic OTP
+  expiresAt             DateTime
+  attempts              Int                    @default(0)
+  maxAttempts           Int                    @default(5)
+  consumedAt            DateTime?              // Timestamp of atomic consumption; prevents replay
+  ipAddress             String?
+  userAgent             String?
+  createdAt             DateTime               @default(now())
+
+  @@index([identifier, purpose])
+  @@index([tokenHash])
+  @@index([expiresAt])
+}
 
 model Session {
   id                    String                 @id @default(uuid())

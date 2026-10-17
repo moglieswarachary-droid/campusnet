@@ -26,6 +26,8 @@ import {
 
 import { realtimeClient } from '../utils/realtimeClient';
 
+export type { AuditLogEntry };
+
 export type NavigationTab = 
   | 'home' 
   | 'discover' 
@@ -103,6 +105,7 @@ interface AppContextType {
 
   // Organizer Portal State & Methods
   currentOrganizer: OrganizerAccount | null;
+  setCurrentOrganizer: React.Dispatch<React.SetStateAction<OrganizerAccount | null>>;
   organizers: OrganizerAccount[];
   organizerLogin: (emailOrId: string, password?: string) => boolean;
   registerOrganizer: (data: NewOrganizationPayload) => boolean;
@@ -114,6 +117,7 @@ interface AppContextType {
   
   // Super Admin Portal State & Methods
   currentSuperAdmin: SuperAdminAccount | null;
+  setCurrentSuperAdmin: React.Dispatch<React.SetStateAction<SuperAdminAccount | null>>;
   superAdminLogin: (usernameOrEmail: string, password?: string) => boolean;
   superAdminLogout: () => void;
   
@@ -620,6 +624,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           setTeams(teamData.teams);
           localStorage.setItem('campusnet_teams', JSON.stringify(teamData.teams));
         }
+      }
+
+      if (token) {
+        fetch('/api/admin/audit-logs', { headers }).then(async res => {
+          if (res.ok) {
+            const data = await res.json();
+            if (Array.isArray(data.auditLogs) && data.auditLogs.length > 0) {
+              setAuditLogs(data.auditLogs);
+              localStorage.setItem('campusnet_audit_logs', JSON.stringify(data.auditLogs));
+            }
+          }
+        }).catch(() => null);
       }
     } catch (e) {
       console.warn('[AppContext] API fetch notice:', e);
@@ -2842,6 +2858,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
         // Organizer Portal
         currentOrganizer,
+        setCurrentOrganizer,
         organizers,
         organizerLogin,
         registerOrganizer,
@@ -2853,6 +2870,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         
         // Super Admin Portal
         currentSuperAdmin,
+        setCurrentSuperAdmin,
         superAdminLogin,
         superAdminLogout,
         

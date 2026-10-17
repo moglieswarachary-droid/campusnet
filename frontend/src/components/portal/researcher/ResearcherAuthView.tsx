@@ -7,6 +7,25 @@ import {
   KeyRound, User, AlertCircle, RefreshCw, Compass, Key
 } from 'lucide-react';
 
+import { PortalOtpLoginView, DemoPersona } from '../../auth/PortalOtpLoginView';
+
+const RESEARCHER_DEMO_PERSONAS: DemoPersona[] = [
+  {
+    name: 'Dr. Vikram Research',
+    roleDescription: 'Doctoral Scholar (IISc Bengaluru)',
+    email: 'vikram.research@iisc.ac.in',
+    mobile: '+91 98765 43212',
+    badge: 'PhD Scholar'
+  },
+  {
+    name: 'Pooja Sundaram',
+    roleDescription: 'Neuromorphic Computing Lab (IISc)',
+    email: 'pooja.sundaram@iisc.ac.in',
+    mobile: '+91 98765 43222',
+    badge: 'PhD Scholar'
+  }
+];
+
 interface Props {
   mode?: 'login' | 'register' | 'forgot-password';
 }
@@ -16,6 +35,7 @@ export const ResearcherAuthView: React.FC<Props> = ({ mode = 'login' }) => {
   const location = useLocation();
   const { switchRole, setCurrentUser, addToast, researchers } = useApp();
 
+  const [showPasswordLogin, setShowPasswordLogin] = useState(false);
   const [currentMode, setCurrentMode] = useState<'login' | 'register' | 'forgot-password'>(() => {
     if (typeof window !== 'undefined') {
       if (window.location.pathname.includes('register')) return 'register';
@@ -166,6 +186,23 @@ export const ResearcherAuthView: React.FC<Props> = ({ mode = 'login' }) => {
     navigate('/researcher/dashboard');
   };
 
+  if (currentMode === 'login' && !showPasswordLogin) {
+    return (
+      <PortalOtpLoginView
+        portal="researcher"
+        portalTitle="PhD Scholar & Research Portal"
+        portalSubtitle="Publish research pre-prints, recruit research assistants, and collaborate across laboratories."
+        portalBadge="Level 3: Research"
+        portalIcon={BookOpen}
+        accentColor="purple"
+        registerUrl="/researcher/register"
+        registerLabel="Onboard as PhD Scholar →"
+        onFallbackPassword={() => setShowPasswordLogin(true)}
+        demoPersonas={RESEARCHER_DEMO_PERSONAS}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8 font-sans selection:bg-purple-700 selection:text-white">
       {/* Top Back Navigation */}
@@ -203,6 +240,20 @@ export const ResearcherAuthView: React.FC<Props> = ({ mode = 'login' }) => {
       <div className="mt-6 sm:mx-auto sm:w-full sm:max-w-md px-4">
         <div className="bg-white py-8 px-6 sm:px-10 shadow-xl shadow-slate-200/50 rounded-2xl border border-slate-200 space-y-6">
           
+          {/* Switch to OTP banner if on password login */}
+          {currentMode === 'login' && showPasswordLogin && (
+            <div className="p-3 bg-purple-50 border border-purple-200 rounded-xl flex items-center justify-between text-xs">
+              <span className="text-purple-800 font-medium">Using legacy password login</span>
+              <button
+                type="button"
+                onClick={() => setShowPasswordLogin(false)}
+                className="font-bold text-purple-700 hover:underline cursor-pointer"
+              >
+                Use Passwordless OTP →
+              </button>
+            </div>
+          )}
+
           {/* Segmented Mode Switcher: Sign In vs Sign Up */}
           {!isOtpStep && currentMode !== 'forgot-password' && (
             <div className="grid grid-cols-2 p-1 bg-slate-100 rounded-xl border border-slate-200/80 text-xs font-bold">

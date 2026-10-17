@@ -7,6 +7,32 @@ import {
   KeyRound, User, BookOpen, AlertCircle, RefreshCw, Key
 } from 'lucide-react';
 
+import { PortalOtpLoginView, DemoPersona } from '../../auth/PortalOtpLoginView';
+
+const STUDENT_DEMO_PERSONAS: DemoPersona[] = [
+  {
+    name: 'Aarav Sharma',
+    roleDescription: 'Student Innovator & Event Manager (NITK)',
+    email: 'aarav.sharma@nitk.edu.in',
+    mobile: '+91 98765 43210',
+    badge: 'Dual Role'
+  },
+  {
+    name: 'Rohan Gupta',
+    roleDescription: 'B.Tech CS Undergrad (IITB)',
+    email: 'rohan.gupta@iitb.ac.in',
+    mobile: '+91 98765 43220',
+    badge: 'Student'
+  },
+  {
+    name: 'Suspended Account Test',
+    roleDescription: 'Disciplinary Suspension (Expected 403)',
+    email: 'suspended.student@nitk.edu.in',
+    mobile: '+91 98765 43299',
+    badge: 'Suspended'
+  }
+];
+
 interface Props {
   mode?: 'login' | 'register' | 'forgot-password';
 }
@@ -16,6 +42,7 @@ export const StudentAuthView: React.FC<Props> = ({ mode = 'login' }) => {
   const location = useLocation();
   const { switchRole, setCurrentUser, addToast, students } = useApp();
 
+  const [showPasswordLogin, setShowPasswordLogin] = useState(false);
   const [currentMode, setCurrentMode] = useState<'login' | 'register' | 'forgot-password'>(() => {
     if (typeof window !== 'undefined') {
       if (window.location.pathname.includes('register')) return 'register';
@@ -167,6 +194,23 @@ export const StudentAuthView: React.FC<Props> = ({ mode = 'login' }) => {
     navigate('/student/dashboard');
   };
 
+  if (currentMode === 'login' && !showPasswordLogin) {
+    return (
+      <PortalOtpLoginView
+        portal="student"
+        portalTitle="Student Innovator Portal"
+        portalSubtitle="Access hackathon teams, 1-on-1 mentorship, and digital innovation credentials."
+        portalBadge="Level 1: Student"
+        portalIcon={GraduationCap}
+        accentColor="blue"
+        registerUrl="/student/register"
+        registerLabel="Create Student Account →"
+        onFallbackPassword={() => setShowPasswordLogin(true)}
+        demoPersonas={STUDENT_DEMO_PERSONAS}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8 font-sans selection:bg-campus-blue selection:text-white">
       {/* Top Back to Gateway Navigation */}
@@ -204,6 +248,20 @@ export const StudentAuthView: React.FC<Props> = ({ mode = 'login' }) => {
       <div className="mt-6 sm:mx-auto sm:w-full sm:max-w-md px-4">
         <div className="bg-white py-8 px-6 sm:px-10 shadow-xl shadow-slate-200/50 rounded-2xl border border-slate-200 space-y-6">
           
+          {/* Switch to OTP banner if on password login */}
+          {currentMode === 'login' && showPasswordLogin && (
+            <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl flex items-center justify-between text-xs">
+              <span className="text-blue-800 font-medium">Using legacy password login</span>
+              <button
+                type="button"
+                onClick={() => setShowPasswordLogin(false)}
+                className="font-bold text-blue-700 hover:underline cursor-pointer"
+              >
+                Use Passwordless OTP →
+              </button>
+            </div>
+          )}
+
           {/* Segmented Mode Switcher: Sign In vs Sign Up */}
           {!isOtpStep && currentMode !== 'forgot-password' && (
             <div className="grid grid-cols-2 p-1 bg-slate-100 rounded-xl border border-slate-200/80 text-xs font-bold">

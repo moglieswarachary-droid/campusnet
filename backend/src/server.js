@@ -20,8 +20,15 @@ import {
   formatPrismaProject,
   formatPrismaTeam
 } from './services/projectService.js';
+import {
+  normalizeContact,
+  isValidContact,
+  sendOtpEmail,
+  sendOtpSms,
+  getTestDispatchedOtp
+} from './services/otpDeliveryService.js';
 
-let isPrismaConnected = Boolean(process.env.DATABASE_URL);
+let isPrismaConnected = false;
 
 const DIST_DIR = fs.existsSync(path.join(__dirname, 'dist'))
   ? path.join(__dirname, 'dist')
@@ -55,9 +62,10 @@ const MIME_TYPES = {
 // Rate Limiter store: IP -> { count, windowStart }
 const rateLimitMap = new Map();
 const RATE_LIMIT_WINDOW_MS = 60000; // 1 minute
-const MAX_REQUESTS_PER_WINDOW = 60;
+const MAX_REQUESTS_PER_WINDOW = process.env.NODE_ENV === 'production' ? 60 : 1000;
 
 function checkRateLimit(ip) {
+  if (process.env.NODE_ENV !== 'production') return true;
   const now = Date.now();
   const entry = rateLimitMap.get(ip) || { count: 0, windowStart: now };
   if (now - entry.windowStart > RATE_LIMIT_WINDOW_MS) {
@@ -116,17 +124,20 @@ let USERS_DB = [
   {
     id: 'usr-std-001',
     email: 'aarav.sharma@nitk.edu.in',
+    mobile: '+919876543210',
     name: 'Aarav Sharma',
     passwordHash: 'CampusNet@Demo2026',
     roles: ['STUDENT'],
     activeRole: 'STUDENT',
     institution: 'NITK Surathkal',
     department: 'Computer Science & Engineering',
+    status: 'ACTIVE',
     verified: true
   },
   {
     id: 'usr-std-002',
     email: 'pooja.iyer@ceg.annauniv.edu',
+    mobile: '+919845112345',
     name: 'Pooja Iyer',
     passwordHash: 'CampusNet@Demo2026',
     roles: ['STUDENT'],
@@ -134,11 +145,13 @@ let USERS_DB = [
     institution: 'CEG Anna University',
     department: 'ECE',
     studentId: '2023ECE088',
+    status: 'ACTIVE',
     verified: true
   },
   {
     id: 'usr-multi-001',
     email: 'karthik.raja@campusnet.in',
+    mobile: '+919820067890',
     name: 'Karthik Raja',
     passwordHash: 'CampusNet@Demo2026',
     roles: ['STUDENT', 'EVENT_MANAGER'], // Multi-role authorized account!
@@ -146,33 +159,52 @@ let USERS_DB = [
     institution: 'Kuppam Engineering College',
     organizationId: 'KEC-DEMO-001',
     managedEventIds: ['ev-001'],
+    status: 'ACTIVE',
     verified: true
   },
   {
     id: 'usr-mnt-001',
     email: 'arvind.rao@iitb.ac.in',
+    mobile: '+919812345678',
     name: 'Dr. Arvind Rao',
     passwordHash: 'CampusNet@Demo2026',
     roles: ['MENTOR'],
     activeRole: 'MENTOR',
     institution: 'IIT Bombay',
     department: 'Electrical Engineering & Robotics',
+    status: 'ACTIVE',
+    verified: true
+  },
+  {
+    id: 'usr-mnt-002',
+    email: 'priya.mentor@nitk.edu.in',
+    mobile: '+919876543211',
+    name: 'Dr. Priya Sundaram',
+    passwordHash: 'CampusNet@Demo2026',
+    roles: ['MENTOR'],
+    activeRole: 'MENTOR',
+    institution: 'NITK Surathkal',
+    department: 'Electronics & Communication',
+    status: 'ACTIVE',
     verified: true
   },
   {
     id: 'usr-mnt-multi-001',
     email: 'meenakshi.s@campusnet.in',
+    mobile: '+919876501234',
     name: 'Dr. Meenakshi Sundaram',
     passwordHash: 'CampusNet@Demo2026',
     roles: ['MENTOR', 'PLATFORM_REVIEWER'], // Multi-role authorized account!
     activeRole: 'MENTOR',
     institution: 'Anna University',
     department: 'Computer Science',
+    status: 'ACTIVE',
     verified: true
   },
   {
     id: 'usr-res-001',
     email: 'kavya.r@iisc.ac.in',
+    mobile: '+919988776655',
     name: 'Kavya Ramanathan',
     passwordHash: 'CampusNet@Demo2026',
     roles: ['PHD_RESEARCHER'],
@@ -180,6 +212,21 @@ let USERS_DB = [
     institution: 'Indian Institute of Science (IISc)',
     department: 'Computational and Data Sciences',
     scholarId: 'IISC-PHD-2024-09',
+    status: 'ACTIVE',
+    verified: true
+  },
+  {
+    id: 'usr-res-002',
+    email: 'vikram.research@iisc.ac.in',
+    mobile: '+919876543212',
+    name: 'Dr. Vikram Sen',
+    passwordHash: 'CampusNet@Demo2026',
+    roles: ['PHD_RESEARCHER'],
+    activeRole: 'PHD_RESEARCHER',
+    institution: 'Indian Institute of Science (IISc)',
+    department: 'Supercomputing Education and Research Centre',
+    scholarId: 'IISC-PHD-2024-12',
+    status: 'ACTIVE',
     verified: true
   },
   // 5 Verified Demo Colleges
@@ -187,6 +234,7 @@ let USERS_DB = [
     id: 'KEC-DEMO-001',
     email: 'organizer.demo@campusnet-demo.in',
     alternateEmail: 'suresh.babu@kec.ac.in',
+    mobile: '+919443210987',
     name: 'Dr. Anand Kumar',
     passwordHash: 'CampusNet@Demo2026',
     roles: ['ORGANIZATION_OWNER'],
@@ -194,11 +242,40 @@ let USERS_DB = [
     institution: 'Kuppam Engineering College',
     organizationId: 'KEC-DEMO-001',
     verificationStatus: 'verified',
+    status: 'ACTIVE',
+    verified: true
+  },
+  {
+    id: 'NITK-ORG-001',
+    email: 'techfest@nitk.edu.in',
+    mobile: '+919876543213',
+    name: 'Incident NITK Cultural & Tech Committee',
+    passwordHash: 'CampusNet@Demo2026',
+    roles: ['ORGANIZATION_OWNER'],
+    activeRole: 'ORGANIZATION_OWNER',
+    institution: 'NITK Surathkal',
+    organizationId: 'NITK-ORG-001',
+    verificationStatus: 'verified',
+    status: 'ACTIVE',
+    verified: true
+  },
+  {
+    id: 'usr-evm-001',
+    email: 'neha.events@nitk.edu.in',
+    mobile: '+919876543214',
+    name: 'Neha Deshmukh',
+    passwordHash: 'CampusNet@Demo2026',
+    roles: ['EVENT_MANAGER'],
+    activeRole: 'EVENT_MANAGER',
+    institution: 'NITK Surathkal',
+    organizationId: 'NITK-ORG-001',
+    status: 'ACTIVE',
     verified: true
   },
   {
     id: 'IITB-ORG-002',
     email: 'techfest.coord@iitb.ac.in',
+    mobile: '+919820123456',
     name: 'Rohan Varma',
     passwordHash: 'CampusNet@Demo2026',
     roles: ['ORGANIZATION_OWNER'],
@@ -206,11 +283,13 @@ let USERS_DB = [
     institution: 'IIT Bombay',
     organizationId: 'IITB-ORG-002',
     verificationStatus: 'verified',
+    status: 'ACTIVE',
     verified: true
   },
   {
     id: 'CNU-DEMO-003',
     email: 'iisc.events@campusnet-demo.in',
+    mobile: '+919845012345',
     name: 'Prof. Sudhir Sen',
     passwordHash: 'CampusNet@Demo2026',
     roles: ['ORGANIZATION_OWNER'],
@@ -218,11 +297,13 @@ let USERS_DB = [
     institution: 'Indian Institute of Science (IISc)',
     organizationId: 'CNU-DEMO-003',
     verificationStatus: 'verified',
+    status: 'ACTIVE',
     verified: true
   },
   {
     id: 'NITW-DEMO-004',
     email: 'nitw.techno@campusnet-demo.in',
+    mobile: '+919849012345',
     name: 'Dr. K. Rajeshwar',
     passwordHash: 'CampusNet@Demo2026',
     roles: ['ORGANIZATION_OWNER'],
@@ -230,11 +311,13 @@ let USERS_DB = [
     institution: 'NIT Warangal',
     organizationId: 'NITW-DEMO-004',
     verificationStatus: 'verified',
+    status: 'ACTIVE',
     verified: true
   },
   {
     id: 'ANNA-DEMO-005',
     email: 'annauniv.conclave@campusnet-demo.in',
+    mobile: '+919444012345',
     name: 'Dr. Priya Sundaram',
     passwordHash: 'CampusNet@Demo2026',
     roles: ['ORGANIZATION_OWNER'],
@@ -242,12 +325,14 @@ let USERS_DB = [
     institution: 'Anna University (CEG Campus)',
     organizationId: 'ANNA-DEMO-005',
     verificationStatus: 'verified',
+    status: 'ACTIVE',
     verified: true
   },
   // Pending Organization Scenario Account
   {
     id: 'ORG-PENDING-006',
     email: 'apex.events@campusnet-demo.in',
+    mobile: '+919888012345',
     name: 'Prof. R. Venkatesh',
     passwordHash: 'CampusNet@Demo2026',
     roles: ['ORGANIZATION_OWNER'],
@@ -255,39 +340,79 @@ let USERS_DB = [
     institution: 'Apex Institute of Technology',
     organizationId: 'ORG-PENDING-006',
     verificationStatus: 'under_review', // Pending verification! Cannot publish directly
+    status: 'ACTIVE',
     verified: false
   },
   // Platform Reviewer Account
   {
     id: 'rev-aicte-001',
     email: 'reviewer.gov@aicte.gov.in',
+    alternateEmail: 'sunita.reviewer@aicte.gov.in',
+    mobile: '+919811012345',
     name: 'Dr. Sunita Murthy',
     passwordHash: 'CampusNet@Demo2026',
     roles: ['PLATFORM_REVIEWER'],
     activeRole: 'PLATFORM_REVIEWER',
     institution: 'National Accreditation & Academic Review Board',
+    status: 'ACTIVE',
     verified: true
   },
   // Platform Super Admin Account
   {
     id: 'adm-root-001',
     email: 'admin@campusnet.in',
+    alternateEmail: 'rajesh.superadmin@campusnet.gov.in',
+    mobile: '+919800012345',
     name: 'CampusNet National Root Administrator',
     passwordHash: 'CampusNet@Demo2026',
     roles: ['SUPER_ADMIN'],
     activeRole: 'SUPER_ADMIN',
     institution: 'CampusNet Central Command',
+    status: 'ACTIVE',
     verified: true
+  },
+  // Explicitly Suspended Test Account (for security regression testing)
+  {
+    id: 'usr-suspended-001',
+    email: 'suspended.student@campusnet-demo.in',
+    alternateEmail: 'suspended.student@nitk.edu.in',
+    mobile: '+919999900000',
+    name: 'Suspended Candidate',
+    passwordHash: 'CampusNet@Demo2026',
+    roles: ['STUDENT'],
+    activeRole: 'STUDENT',
+    institution: 'Suspended Institution',
+    status: 'SUSPENDED',
+    verified: false
   }
 ];
 
 // Active Server Sessions Store: token -> { userId, expiresAt }
 const SESSIONS = new Map();
 
-// Password Recovery OTP Store: email -> { tokenHash, expiresAt, attempts }
-const OTP_STORE = new Map();
-const OTP_MAX_ATTEMPTS = 5;
-const OTP_EXPIRY_MS = 10 * 60 * 1000; // 10 minutes
+// Passwordless OTP Authentication & Challenge Store
+// Key: normalized identifier (email or E.164 phone) -> { tokenHash, expiresAt, attempts, maxAttempts, lastRequestedAt, channel, purpose, portal, consumedAt }
+const OTP_CHALLENGES = new Map();
+const OTP_STORE = OTP_CHALLENGES; // Backward compatibility alias for existing password recovery tests
+const OTP_MAX_ATTEMPTS = parseInt(process.env.OTP_MAX_ATTEMPTS || '5', 10);
+const OTP_EXPIRY_MS = parseInt(process.env.OTP_EXPIRY_SECONDS || '300', 10) * 1000; // 5 minutes default
+const OTP_COOLDOWN_MS = parseInt(process.env.OTP_RESEND_COOLDOWN_SECONDS || '60', 10) * 1000; // 60 seconds
+
+// Per-contact rate limiter to prevent OTP flooding
+const contactRateLimits = new Map();
+const MAX_OTP_REQUESTS_PER_CONTACT = 5;
+const CONTACT_RATE_WINDOW_MS = 10 * 60 * 1000; // 10 minutes
+
+function checkContactOtpRateLimit(contact) {
+  const now = Date.now();
+  const timestamps = (contactRateLimits.get(contact) || []).filter(t => now - t < CONTACT_RATE_WINDOW_MS);
+  if (timestamps.length >= MAX_OTP_REQUESTS_PER_CONTACT) {
+    return false;
+  }
+  timestamps.push(now);
+  contactRateLimits.set(contact, timestamps);
+  return true;
+}
 
 // Projects & Teams Stores
 let PROJECTS_DB = [
@@ -528,9 +653,23 @@ function loadStoreFromDisk() {
     if (fs.existsSync(STORE_PATH)) {
       const data = JSON.parse(fs.readFileSync(STORE_PATH, 'utf-8'));
       if (Array.isArray(data.users) && data.users.length > 0) {
-        const existingIds = new Set(data.users.map(u => u.id));
-        const missingSeeds = USERS_DB.filter(u => !existingIds.has(u.id));
-        USERS_DB = [...data.users, ...missingSeeds];
+        const fileUserMap = new Map(data.users.map(u => [u.id, u]));
+        const mergedSeeds = USERS_DB.map(seed => {
+          const fileUser = fileUserMap.get(seed.id);
+          if (fileUser) {
+            return {
+              ...seed,
+              ...fileUser,
+              alternateEmail: seed.alternateEmail || fileUser.alternateEmail,
+              mobile: seed.mobile || fileUser.mobile,
+              roles: seed.roles || fileUser.roles
+            };
+          }
+          return seed;
+        });
+        const seedIds = new Set(USERS_DB.map(u => u.id));
+        const extraFileUsers = data.users.filter(u => !seedIds.has(u.id));
+        USERS_DB = [...mergedSeeds, ...extraFileUsers];
       }
       if (Array.isArray(data.mentorshipRequests)) MENTORSHIP_REQUESTS_DB = data.mentorshipRequests;
       if (Array.isArray(data.researchCollaborations)) RESEARCH_COLLABORATIONS_DB = data.researchCollaborations;
@@ -615,6 +754,65 @@ function broadcastRealtimeNotification({ type, title, message, targetRole, targe
     details: message
   });
   persistStoreToDisk();
+}
+
+// Universal Platform Activity Audit Logger
+// Ensures every single activity across CampusNet is captured and broadcast in real time to high-level authorities
+function logPlatformActivity({ actorId, actorName, actorRole, action, targetType, targetId, targetName, details, ipAddress }) {
+  const logEntry = {
+    id: `aud-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+    actorId: actorId || 'system',
+    actorName: actorName || 'System / Platform Engine',
+    actorRole: actorRole || 'SYSTEM',
+    action: action || 'ACTIVITY',
+    targetType: targetType || 'platform',
+    targetId: targetId || 'global',
+    targetName: targetName || 'CampusNet Network',
+    timestamp: new Date().toISOString(),
+    details: details || '',
+    ipAddress: ipAddress || 'Internal TLS'
+  };
+
+  AUDIT_LOGS.unshift(logEntry);
+  if (AUDIT_LOGS.length > 1000) {
+    AUDIT_LOGS.pop();
+  }
+  persistStoreToDisk();
+
+  if (isPrismaConnected) {
+    try {
+      prisma.auditLog.create({
+        data: {
+          id: logEntry.id,
+          actorId: actorId && (actorId.startsWith('usr-') || actorId.startsWith('adm-') || actorId.startsWith('rev-')) ? actorId : undefined,
+          actorName: logEntry.actorName,
+          actorRole: logEntry.actorRole,
+          action: logEntry.action,
+          targetType: logEntry.targetType,
+          targetId: logEntry.targetId,
+          targetName: logEntry.targetName,
+          details: logEntry.details,
+          ipAddress: logEntry.ipAddress
+        }
+      }).catch(() => {});
+    } catch {}
+  }
+
+  // Real-time broadcast to connected Super Admins and Reviewers
+  try {
+    const payloadString = `event: audit_log\ndata: ${JSON.stringify(logEntry)}\n\n`;
+    for (const client of SSE_CLIENTS) {
+      if (client.role === 'SUPER_ADMIN' || client.role === 'PLATFORM_REVIEWER') {
+        try {
+          client.res.write(payloadString);
+        } catch {
+          SSE_CLIENTS.delete(client);
+        }
+      }
+    }
+  } catch {}
+
+  return logEntry;
 }
 
 // SSE Connection Heartbeat
@@ -765,6 +963,436 @@ const server = http.createServer(async (req, res) => {
         return;
       }
 
+      // POST /api/auth/otp/request (Passwordless OTP Challenge Dispatch)
+      if (pathname === '/api/auth/otp/request' && req.method === 'POST') {
+        const body = await parseJsonBody(req);
+        const { channel, identifier, portal = 'student' } = body;
+        const channelLower = (channel || '').toString().toLowerCase().trim();
+        let validChannel = (channelLower === 'sms' || channelLower === 'phone') ? 'sms' : 'email';
+        if (!channel && identifier && !identifier.includes('@') && /^\+?\d{10,15}$/.test(identifier.replace(/[\s\-\(\)]/g, ''))) {
+          validChannel = 'sms';
+        }
+
+        if (!identifier || typeof identifier !== 'string') {
+          sendJson(res, 400, { error: 'A valid email address or phone number is required.' });
+          return;
+        }
+
+        if (!isValidContact(identifier, validChannel)) {
+          sendJson(res, 400, { 
+            error: validChannel === 'sms' 
+              ? 'Invalid phone number format. Please provide a 10-digit number or international +country code format.'
+              : 'Invalid email address format. Please provide a valid institutional or personal email.'
+          });
+          return;
+        }
+
+        const normalizedContact = normalizeContact(identifier, validChannel);
+
+        // 1. IP Rate Limiting
+        if (!checkRateLimit(clientIp)) {
+          sendJson(res, 429, { error: 'Too many requests from this IP. Please wait a moment.' });
+          return;
+        }
+
+        // 2. Per-Contact Rate Limiting (Flooding prevention)
+        if (!checkContactOtpRateLimit(normalizedContact)) {
+          sendJson(res, 429, { error: 'Too many OTP requests for this contact. Please try again after 10 minutes.' });
+          return;
+        }
+
+        // 3. Resend Cooldown Enforcement
+        const existingChallenge = OTP_CHALLENGES.get(normalizedContact);
+        if (existingChallenge && existingChallenge.lastRequestedAt && (Date.now() - existingChallenge.lastRequestedAt < OTP_COOLDOWN_MS)) {
+          const remainingSeconds = Math.ceil((OTP_COOLDOWN_MS - (Date.now() - existingChallenge.lastRequestedAt)) / 1000);
+          sendJson(res, 429, { 
+            error: `Please wait ${remainingSeconds} seconds before requesting a new verification code.`,
+            cooldownRemaining: remainingSeconds
+          });
+          return;
+        }
+
+        // 4. Cryptographically secure random 6-digit OTP
+        const generatedOtp = crypto.randomInt(100000, 1000000).toString();
+        const tokenHash = crypto.createHash('sha256').update(generatedOtp).digest('hex');
+        const expiresAt = Date.now() + OTP_EXPIRY_MS;
+
+        OTP_CHALLENGES.set(normalizedContact, {
+          tokenHash,
+          expiresAt,
+          attempts: 0,
+          maxAttempts: OTP_MAX_ATTEMPTS,
+          lastRequestedAt: Date.now(),
+          channel: validChannel,
+          purpose: 'LOGIN',
+          portal,
+          consumedAt: null
+        });
+
+        if (isPrismaConnected) {
+          try {
+            await prisma.otpChallenge.create({
+              data: {
+                identifier: normalizedContact,
+                channel: validChannel === 'sms' ? 'SMS' : 'EMAIL',
+                purpose: 'LOGIN',
+                tokenHash,
+                expiresAt: new Date(expiresAt),
+                attempts: 0,
+                maxAttempts: OTP_MAX_ATTEMPTS,
+                ipAddress: clientIp
+              }
+            });
+          } catch (e) {
+            console.warn('[Prisma] OTP challenge persistence notice:', e.message);
+          }
+        }
+
+        // 5. Dispatch via Delivery Provider Abstraction
+        let dispatchResult;
+        if (validChannel === 'sms') {
+          dispatchResult = await sendOtpSms({ to: normalizedContact, otp: generatedOtp, purpose: 'LOGIN', portal });
+        } else {
+          dispatchResult = await sendOtpEmail({ to: normalizedContact, otp: generatedOtp, purpose: 'LOGIN', portal });
+        }
+
+        if (!dispatchResult.success) {
+          if (dispatchResult.error === 'EMAIL_PROVIDER_UNCONFIGURED' || dispatchResult.error === 'SMS_PROVIDER_UNCONFIGURED') {
+            sendJson(res, 503, { error: 'Authentication delivery service is temporarily unconfigured. Please contact platform support.' });
+            return;
+          }
+          sendJson(res, 500, { error: 'Failed to deliver verification code. Please try again later.' });
+          return;
+        }
+
+        let existingUser = null;
+        if (validChannel === 'sms') {
+          const rawDigits = normalizedContact.replace(/^\+91/, '').replace(/^\+/, '');
+          existingUser = USERS_DB.find(u => {
+            const uMobile = (u.mobile || '').replace(/[\s\-\(\)]/g, '');
+            return uMobile === normalizedContact || 
+                   uMobile === `+91${rawDigits}` || 
+                   uMobile.endsWith(rawDigits);
+          });
+        } else {
+          existingUser = USERS_DB.find(u => 
+            (u.email && u.email.toLowerCase() === normalizedContact) || 
+            (u.alternateEmail && u.alternateEmail.toLowerCase() === normalizedContact)
+          );
+        }
+        if (!existingUser) {
+          const rawDigits = normalizedContact.replace(/^\+91/, '').replace(/^\+/, '');
+          existingUser = USERS_DB.find(u => {
+            const uMobile = (u.mobile || '').replace(/[\s\-\(\)]/g, '');
+            return uMobile === normalizedContact || 
+                   uMobile === `+91${rawDigits}` || 
+                   uMobile.endsWith(rawDigits) ||
+                   (u.email && u.email.toLowerCase() === normalizedContact) || 
+                   (u.alternateEmail && u.alternateEmail.toLowerCase() === normalizedContact);
+          });
+        }
+
+        // 6. Return enumeration-safe response (never leaks account existence or OTP code in prod)
+        const responseData = {
+          success: true,
+          message: 'If an account is associated with this contact, a verification code has been dispatched.',
+          channel: validChannel,
+          cooldownSeconds: Math.round(OTP_COOLDOWN_MS / 1000)
+        };
+
+        if (process.env.NODE_ENV !== 'production' && existingUser) {
+          responseData.mockOtp = generatedOtp;
+        }
+
+        sendJson(res, 200, responseData);
+        return;
+      }
+
+      // POST /api/auth/otp/verify (Verification, Atomic Consumption, & Server-Side RBAC Enforcement)
+      if (pathname === '/api/auth/otp/verify' && req.method === 'POST') {
+        const body = await parseJsonBody(req);
+        const { channel, identifier, otp, code, portal = 'student' } = body;
+        const otpValue = (otp || code || '').toString().trim();
+        const channelLower = (channel || '').toString().toLowerCase().trim();
+        let validChannel = (channelLower === 'sms' || channelLower === 'phone') ? 'sms' : 'email';
+        if (!channel && identifier && !identifier.includes('@') && /^\+?\d{10,15}$/.test(identifier.replace(/[\s\-\(\)]/g, ''))) {
+          validChannel = 'sms';
+        }
+
+        if (!identifier || !otpValue) {
+          sendJson(res, 400, { error: 'A contact identifier and 6-digit verification code are required.' });
+          return;
+        }
+
+        let normalizedContact = normalizeContact(identifier, validChannel);
+        let challenge = OTP_CHALLENGES.get(normalizedContact);
+
+        if (!challenge && validChannel === 'email') {
+          const altContact = normalizeContact(identifier, 'sms');
+          if (OTP_CHALLENGES.has(altContact)) {
+            normalizedContact = altContact;
+            validChannel = 'sms';
+            challenge = OTP_CHALLENGES.get(altContact);
+          }
+        } else if (!challenge && validChannel === 'sms') {
+          const altContact = normalizeContact(identifier, 'email');
+          if (OTP_CHALLENGES.has(altContact)) {
+            normalizedContact = altContact;
+            validChannel = 'email';
+            challenge = OTP_CHALLENGES.get(altContact);
+          }
+        }
+
+        if (!challenge) {
+          sendJson(res, 400, { error: 'Invalid or expired verification code.' });
+          return;
+        }
+
+        if (challenge.consumedAt) {
+          sendJson(res, 400, { error: 'Verification code has already been consumed. Please request a new code.' });
+          return;
+        }
+
+        if (Date.now() > challenge.expiresAt) {
+          OTP_CHALLENGES.delete(normalizedContact);
+          sendJson(res, 400, { error: 'Verification code has expired. Please request a new code.' });
+          return;
+        }
+
+        if (challenge.attempts >= challenge.maxAttempts) {
+          OTP_CHALLENGES.delete(normalizedContact);
+          sendJson(res, 400, { error: 'Too many failed verification attempts. This code has been invalidated.' });
+          return;
+        }
+
+        // Constant-time hash verification against stored digest
+        const candidateHash = crypto.createHash('sha256').update(otpValue).digest('hex');
+        const isMatch = candidateHash.length === challenge.tokenHash.length &&
+          crypto.timingSafeEqual(Buffer.from(candidateHash, 'hex'), Buffer.from(challenge.tokenHash, 'hex'));
+
+        if (!isMatch) {
+          challenge.attempts++;
+          sendJson(res, 400, { 
+            error: 'Invalid verification code.',
+            attemptsRemaining: Math.max(0, challenge.maxAttempts - challenge.attempts)
+          });
+          return;
+        }
+
+        // Atomic Consumption: mark consumed immediately to prevent replay and concurrent verification race conditions
+        challenge.consumedAt = new Date().toISOString();
+        OTP_CHALLENGES.delete(normalizedContact);
+
+        if (isPrismaConnected) {
+          try {
+            await prisma.otpChallenge.updateMany({
+              where: {
+                identifier: normalizedContact,
+                purpose: 'LOGIN',
+                consumedAt: null
+              },
+              data: {
+                consumedAt: new Date()
+              }
+            });
+          } catch (e) {
+            console.warn('[Prisma] OTP consumed update notice:', e.message);
+          }
+        }
+
+        // Resolve user account by registered email or mobile
+        let user;
+        if (validChannel === 'sms') {
+          const rawDigits = normalizedContact.replace(/^\+91/, '').replace(/^\+/, '');
+          user = USERS_DB.find(u => {
+            const uMobile = (u.mobile || '').replace(/[\s\-\(\)]/g, '');
+            return uMobile === normalizedContact || 
+                   uMobile === `+91${rawDigits}` || 
+                   uMobile.endsWith(rawDigits);
+          });
+        } else {
+          user = USERS_DB.find(u => 
+            (u.email && u.email.toLowerCase() === normalizedContact) || 
+            (u.alternateEmail && u.alternateEmail.toLowerCase() === normalizedContact)
+          );
+        }
+
+        if (!user) {
+          const rawDigits = normalizedContact.replace(/^\+91/, '').replace(/^\+/, '');
+          user = USERS_DB.find(u => {
+            const uMobile = (u.mobile || '').replace(/[\s\-\(\)]/g, '');
+            return uMobile === normalizedContact || 
+                   uMobile === `+91${rawDigits}` || 
+                   uMobile.endsWith(rawDigits) ||
+                   (u.email && u.email.toLowerCase() === normalizedContact) || 
+                   (u.alternateEmail && u.alternateEmail.toLowerCase() === normalizedContact);
+          });
+        }
+
+        if (!user) {
+          sendJson(res, 404, { error: 'No account is registered with this verified contact. Please check your credentials or register.' });
+          return;
+        }
+
+        // Enforce account status check
+        if (user.status === 'SUSPENDED') {
+          sendJson(res, 403, { error: 'Account Suspended: This account has been deactivated. Please contact platform administration.' });
+          return;
+        }
+
+        // Server-Side RBAC Enforcement: Validate requested portal against authorized user roles
+        const rawPortal = (portal || '').toLowerCase().trim();
+        let canonicalPortal = rawPortal;
+        let targetRole = null;
+
+        if (rawPortal === 'student') {
+          canonicalPortal = 'student';
+          if (!user.roles.includes('STUDENT')) {
+            sendJson(res, 403, { error: 'Access Denied (RBAC): You do not possess the STUDENT role required for this portal.' });
+            return;
+          }
+          targetRole = 'STUDENT';
+        } else if (rawPortal === 'mentor') {
+          canonicalPortal = 'mentor';
+          if (!user.roles.includes('MENTOR')) {
+            sendJson(res, 403, { error: 'Access Denied (RBAC): You do not possess the MENTOR role required for this portal.' });
+            return;
+          }
+          targetRole = 'MENTOR';
+        } else if (rawPortal === 'research' || rawPortal === 'researcher' || rawPortal === 'scholar') {
+          canonicalPortal = rawPortal === 'research' ? 'research' : 'researcher';
+          if (!user.roles.includes('PHD_RESEARCHER')) {
+            sendJson(res, 403, { error: 'Access Denied (RBAC): You do not possess the PHD_RESEARCHER role required for this portal.' });
+            return;
+          }
+          targetRole = 'PHD_RESEARCHER';
+        } else if (rawPortal === 'organization' || rawPortal === 'organizer') {
+          canonicalPortal = 'organization';
+          if (!user.roles.includes('ORGANIZATION_OWNER') && !user.roles.includes('SUPER_ADMIN')) {
+            sendJson(res, 403, { error: 'Access Denied (RBAC): You do not possess the ORGANIZATION_OWNER role required for this portal.' });
+            return;
+          }
+          targetRole = user.roles.includes('ORGANIZATION_OWNER') ? 'ORGANIZATION_OWNER' : 'SUPER_ADMIN';
+        } else if (rawPortal === 'event-manager' || rawPortal === 'event_manager') {
+          canonicalPortal = rawPortal;
+          if (!user.roles.includes('EVENT_MANAGER') && !user.roles.includes('ORGANIZATION_OWNER') && !user.roles.includes('SUPER_ADMIN')) {
+            sendJson(res, 403, { error: 'Access Denied (RBAC): You do not possess the EVENT_MANAGER role required for this portal.' });
+            return;
+          }
+          targetRole = user.roles.includes('EVENT_MANAGER') ? 'EVENT_MANAGER' : (user.roles.includes('ORGANIZATION_OWNER') ? 'ORGANIZATION_OWNER' : 'SUPER_ADMIN');
+        } else if (rawPortal === 'reviewer' || rawPortal === 'platform-reviewer' || rawPortal === 'platform_reviewer') {
+          canonicalPortal = rawPortal;
+          if (!user.roles.includes('PLATFORM_REVIEWER') && !user.roles.includes('SUPER_ADMIN')) {
+            logPlatformActivity({
+              actorId: user.id,
+              actorName: user.name,
+              actorRole: user.activeRole || user.roles[0],
+              action: 'UNAUTHORIZED_AUTHORITY_LOGIN_ATTEMPT',
+              targetType: 'security',
+              targetId: 'portal-reviewer',
+              targetName: 'Platform Reviewer Console',
+              details: `Unauthorized access blocked: User ${user.email} (${(user.roles || []).join(', ')}) attempted login to Platform Reviewer console without statutory authority role.`,
+              ipAddress: clientIp
+            });
+            sendJson(res, 403, { error: 'Access Denied (RBAC): Strictly restricted to high-level statutory authority accounts with PLATFORM_REVIEWER role.' });
+            return;
+          }
+          targetRole = user.roles.includes('PLATFORM_REVIEWER') ? 'PLATFORM_REVIEWER' : 'SUPER_ADMIN';
+        } else if (rawPortal === 'super-admin' || rawPortal === 'super_admin' || rawPortal === 'admin') {
+          canonicalPortal = rawPortal;
+          if (!user.roles.includes('SUPER_ADMIN')) {
+            logPlatformActivity({
+              actorId: user.id,
+              actorName: user.name,
+              actorRole: user.activeRole || user.roles[0],
+              action: 'UNAUTHORIZED_AUTHORITY_LOGIN_ATTEMPT',
+              targetType: 'security',
+              targetId: 'portal-super-admin',
+              targetName: 'Super Administrator Governance Console',
+              details: `Unauthorized access blocked: User ${user.email} (${(user.roles || []).join(', ')}) attempted login to Super Administrator console without Level-5 authority role.`,
+              ipAddress: clientIp
+            });
+            sendJson(res, 403, { error: 'Access Denied (RBAC): Strictly restricted to high-level national governance accounts with SUPER_ADMIN role.' });
+            return;
+          }
+          targetRole = 'SUPER_ADMIN';
+        } else {
+          // If no specific portal requested, default to user's activeRole or primary role
+          targetRole = user.activeRole || user.roles[0] || 'STUDENT';
+          canonicalPortal = targetRole.toLowerCase();
+        }
+
+        // Issue 256-bit cryptographically secure session token
+        user.activeRole = targetRole;
+        const token = crypto.randomBytes(32).toString('hex');
+        const expiresAt = Date.now() + (24 * 60 * 60 * 1000); // 24 hours
+        SESSIONS.set(token, { userId: user.id, expiresAt });
+
+        if (isPrismaConnected) {
+          try {
+            const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+            await prisma.session.create({
+              data: {
+                userId: user.id,
+                tokenHash,
+                expiresAt: new Date(expiresAt),
+                ipAddress: clientIp
+              }
+            });
+            await prisma.user.update({
+              where: { id: user.id },
+              data: { activeRole: targetRole, lastLoginAt: new Date() }
+            }).catch(() => {});
+          } catch (e) {
+            console.warn('[Prisma] OTP login session notice:', e.message);
+          }
+        }
+
+        logPlatformActivity({
+          actorId: user.id,
+          actorName: user.name,
+          actorRole: targetRole,
+          action: 'USER_OTP_LOGIN',
+          targetType: 'auth',
+          targetId: user.id,
+          targetName: user.email,
+          details: `User authenticated via ${validChannel.toUpperCase()} OTP into ${canonicalPortal || targetRole} portal`,
+          ipAddress: clientIp
+        });
+
+        let redirectUrl = `/${canonicalPortal}/dashboard`;
+        if (canonicalPortal === 'event_manager' || canonicalPortal === 'event-manager') {
+          redirectUrl = '/organization/events';
+        } else if (canonicalPortal === 'reviewer' || canonicalPortal === 'platform-reviewer' || canonicalPortal === 'platform_reviewer' || canonicalPortal === 'super_admin' || canonicalPortal === 'super-admin' || canonicalPortal === 'admin') {
+          redirectUrl = '/admin';
+        } else if (canonicalPortal === 'researcher' || canonicalPortal === 'research') {
+          redirectUrl = '/researcher/dashboard';
+        }
+
+        // Return sanitized user object
+        sendJson(res, 200, {
+          success: true,
+          token,
+          user: {
+            id: user.id,
+            email: user.email,
+            mobile: user.mobile,
+            name: user.name,
+            roles: user.roles,
+            activeRole: targetRole,
+            institution: user.institution,
+            department: user.department,
+            organizationId: user.organizationId,
+            verificationStatus: user.verificationStatus,
+            permissions: SERVER_ROLE_PERMISSIONS[targetRole] || []
+          },
+          authorizedPortal: canonicalPortal,
+          activeAppRole: targetRole,
+          redirectUrl
+        });
+        return;
+      }
+
       // POST /api/auth/login
       if (pathname === '/api/auth/login' && req.method === 'POST') {
         const body = await parseJsonBody(req);
@@ -782,6 +1410,23 @@ const server = http.createServer(async (req, res) => {
           return;
         }
 
+        // Suspended Account Defense
+        if (user.status === 'SUSPENDED') {
+          logPlatformActivity({
+            actorId: user.id,
+            actorName: user.name,
+            actorRole: user.activeRole || user.roles[0],
+            action: 'SUSPENDED_LOGIN_ATTEMPT',
+            targetType: 'security',
+            targetId: user.id,
+            targetName: user.email,
+            details: `Suspended account access blocked for ${user.email}`,
+            ipAddress: clientIp
+          });
+          sendJson(res, 403, { error: 'Account Suspended: Access denied.' });
+          return;
+        }
+
         // Strict credential verification: require valid non-empty password string
         if (!password || typeof password !== 'string') {
           sendJson(res, 401, { error: 'Invalid password provided.' });
@@ -792,6 +1437,39 @@ const server = http.createServer(async (req, res) => {
         const verification = await verifyPassword(user.passwordHash, password);
         if (!verification.valid) {
           sendJson(res, 401, { error: 'Invalid password provided.' });
+          return;
+        }
+
+        // Authority Portal Authorization Gate: Strictly check high-level authorities
+        const reqPortal = (body.portal || '').toLowerCase().trim();
+        if ((reqPortal === 'reviewer' || reqPortal === 'platform-reviewer') && !user.roles.includes('PLATFORM_REVIEWER') && !user.roles.includes('SUPER_ADMIN')) {
+          logPlatformActivity({
+            actorId: user.id,
+            actorName: user.name,
+            actorRole: user.activeRole,
+            action: 'UNAUTHORIZED_AUTHORITY_LOGIN_ATTEMPT',
+            targetType: 'security',
+            targetId: 'portal-reviewer',
+            targetName: 'Platform Reviewer Console',
+            details: `Unauthorized password login blocked: User ${user.email} attempted access to Platform Reviewer console without statutory authority role.`,
+            ipAddress: clientIp
+          });
+          sendJson(res, 403, { error: 'Access Denied: High-level statutory clearance required.' });
+          return;
+        }
+        if ((reqPortal === 'super-admin' || reqPortal === 'super_admin' || reqPortal === 'admin') && !user.roles.includes('SUPER_ADMIN')) {
+          logPlatformActivity({
+            actorId: user.id,
+            actorName: user.name,
+            actorRole: user.activeRole,
+            action: 'UNAUTHORIZED_AUTHORITY_LOGIN_ATTEMPT',
+            targetType: 'security',
+            targetId: 'portal-super-admin',
+            targetName: 'Super Admin Console',
+            details: `Unauthorized password login blocked: User ${user.email} attempted access to Super Administrator console without Level-5 authority role.`,
+            ipAddress: clientIp
+          });
+          sendJson(res, 403, { error: 'Access Denied: Root national governance clearance required.' });
           return;
         }
 
@@ -862,8 +1540,7 @@ const server = http.createServer(async (req, res) => {
           }
         }
 
-        AUDIT_LOGS.push({
-          id: `aud-${Date.now()}`,
+        logPlatformActivity({
           actorId: user.id,
           actorName: user.name,
           actorRole: user.activeRole,
@@ -871,8 +1548,8 @@ const server = http.createServer(async (req, res) => {
           targetType: 'auth',
           targetId: user.id,
           targetName: user.email,
-          timestamp: new Date().toISOString(),
-          details: `User logged in successfully with active role ${user.activeRole}`
+          details: `User logged in successfully with active role ${user.activeRole}`,
+          ipAddress: clientIp
         });
 
         sendJson(res, 200, {
@@ -904,6 +1581,24 @@ const server = http.createServer(async (req, res) => {
           return;
         }
 
+        const assignedRole = role.toUpperCase();
+        // Authority Defense: Disallow self-registration for Level-4 & Level-5 authorities
+        if (assignedRole === 'SUPER_ADMIN' || assignedRole === 'PLATFORM_REVIEWER') {
+          logPlatformActivity({
+            actorId: 'reg-defense',
+            actorName: name,
+            actorRole: 'ANONYMOUS',
+            action: 'UNAUTHORIZED_AUTHORITY_REGISTRATION_ATTEMPT',
+            targetType: 'security',
+            targetId: assignedRole,
+            targetName: 'Authority Self-Registration Defense',
+            details: `Blocked attempt to self-register high-level authority account as ${assignedRole} for email ${email}`,
+            ipAddress: clientIp
+          });
+          sendJson(res, 403, { error: 'Self-registration for high-level statutory or national governance authorities is strictly prohibited. Accounts are provisioned through institutional appointment only.' });
+          return;
+        }
+
         let passwordToHash = password;
         if (password) {
           const passValidation = validatePasswordStrength(password);
@@ -927,7 +1622,6 @@ const server = http.createServer(async (req, res) => {
         }
 
         const passwordHash = await hashPassword(passwordToHash);
-        const assignedRole = role.toUpperCase();
         const newId = `usr-${assignedRole.toLowerCase()}-${Date.now()}`;
         const newUser = {
           id: newId,
@@ -980,8 +1674,7 @@ const server = http.createServer(async (req, res) => {
           }
         }
 
-        AUDIT_LOGS.push({
-          id: `aud-${Date.now()}`,
+        logPlatformActivity({
           actorId: newId,
           actorName: name,
           actorRole: assignedRole,
@@ -989,8 +1682,8 @@ const server = http.createServer(async (req, res) => {
           targetType: 'user',
           targetId: newId,
           targetName: lowerEmail,
-          timestamp: new Date().toISOString(),
-          details: `New account registered under role ${assignedRole}`
+          details: `New account registered under role ${assignedRole}`,
+          ipAddress: clientIp
         });
 
         sendJson(res, 201, {
@@ -1669,6 +2362,17 @@ const server = http.createServer(async (req, res) => {
           }
 
           MENTORSHIP_REQUESTS_DB.push(newRequest);
+          logPlatformActivity({
+            actorId: auth.user.id,
+            actorName: auth.user.name,
+            actorRole: auth.user.activeRole,
+            action: 'MENTORSHIP_REQUEST_SUBMITTED',
+            targetType: 'mentorship',
+            targetId: newRequest.id,
+            targetName: newRequest.projectTitle,
+            details: `Mentorship request submitted by ${auth.user.name} to ${newRequest.mentorName} for "${newRequest.projectTitle}"`,
+            ipAddress: clientIp
+          });
           sendJson(res, 201, { success: true, request: newRequest });
           return;
         }
@@ -1711,6 +2415,18 @@ const server = http.createServer(async (req, res) => {
               console.warn('[Prisma] Mentorship update notice:', e.message);
             }
           }
+
+          logPlatformActivity({
+            actorId: auth.user.id,
+            actorName: auth.user.name,
+            actorRole: auth.user.activeRole,
+            action: reqItem.status === 'accepted' ? 'MENTORSHIP_REQUEST_ACCEPTED' : 'MENTORSHIP_REQUEST_DECLINED',
+            targetType: 'mentorship',
+            targetId: reqItem.id,
+            targetName: reqItem.projectTitle,
+            details: `Mentorship request for "${reqItem.projectTitle}" updated to ${reqItem.status} by ${auth.user.name}`,
+            ipAddress: clientIp
+          });
         }
         sendJson(res, 200, { success: true, request: reqItem });
         return;
@@ -1772,6 +2488,18 @@ const server = http.createServer(async (req, res) => {
 
           RESEARCH_COLLABORATIONS_DB.push(newCollab);
           persistStoreToDisk();
+
+          logPlatformActivity({
+            actorId: auth.user.id,
+            actorName: auth.user.name,
+            actorRole: auth.user.activeRole,
+            action: 'RESEARCH_COLLABORATION_PROPOSED',
+            targetType: 'research',
+            targetId: newCollab.id,
+            targetName: newCollab.projectTitle,
+            details: `Research collaboration proposed by ${auth.user.name} to ${newCollab.collaboratorName} on "${newCollab.projectTitle}"`,
+            ipAddress: clientIp
+          });
 
           // Real-time broadcast to invited collaborator
           broadcastRealtimeNotification({
@@ -1964,35 +2692,87 @@ const server = http.createServer(async (req, res) => {
             payload: newReg
           });
 
+          logPlatformActivity({
+            actorId: auth.user.id,
+            actorName: auth.user.name,
+            actorRole: auth.user.activeRole,
+            action: 'EVENT_REGISTRATION',
+            targetType: 'event',
+            targetId: eventId,
+            targetName: newReg.teamName,
+            details: `Student ${auth.user.name} registered for event ${eventId} with team "${newReg.teamName}"`,
+            ipAddress: clientIp
+          });
+
           sendJson(res, 201, { success: true, registration: newReg });
           return;
         }
       }
 
-      // GET /api/admin/audit-logs
+      // GET /api/admin/audit-logs - Unified Activity Audit Trail for High-Level Authorities
       if (pathname === '/api/admin/audit-logs' && req.method === 'GET') {
         const auth = await authenticateSession(req);
         if (!auth || (auth.user.activeRole !== 'SUPER_ADMIN' && auth.user.activeRole !== 'PLATFORM_REVIEWER')) {
-          sendJson(res, 403, { error: 'Access Denied: Administrative privilege required.' });
+          sendJson(res, 403, { error: 'Access Denied: High-level statutory/administrative privilege required.' });
           return;
         }
+
+        let combinedLogs = [...AUDIT_LOGS];
 
         if (isPrismaConnected) {
           try {
             const dbLogs = await prisma.auditLog.findMany({
               orderBy: { timestamp: 'desc' },
-              take: 50
+              take: 200
             });
             if (dbLogs && dbLogs.length > 0) {
-              sendJson(res, 200, { auditLogs: dbLogs });
-              return;
+              const memoryIds = new Set(AUDIT_LOGS.map(l => l.id));
+              for (const log of dbLogs) {
+                if (!memoryIds.has(log.id)) {
+                  combinedLogs.push({
+                    id: log.id,
+                    actorId: log.actorId || 'system',
+                    actorName: log.actorName,
+                    actorRole: log.actorRole,
+                    action: log.action,
+                    targetType: log.targetType,
+                    targetId: log.targetId,
+                    targetName: log.targetName,
+                    timestamp: log.timestamp instanceof Date ? log.timestamp.toISOString() : new Date(log.timestamp).toISOString(),
+                    details: log.details,
+                    ipAddress: log.ipAddress || 'Internal TLS'
+                  });
+                }
+              }
             }
           } catch (e) {
             console.warn('[Prisma] Audit log query notice:', e.message);
           }
         }
 
-        sendJson(res, 200, { auditLogs: AUDIT_LOGS });
+        combinedLogs.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+        sendJson(res, 200, { auditLogs: combinedLogs });
+        return;
+      }
+
+      // POST /api/admin/audit-logs - Report Platform Activity Event
+      if (pathname === '/api/admin/audit-logs' && req.method === 'POST') {
+        const auth = await authenticateSession(req);
+        const body = await parseJsonBody(req);
+
+        const newLog = logPlatformActivity({
+          actorId: auth?.user?.id || body.actorId || 'client-reporter',
+          actorName: auth?.user?.name || body.actorName || 'User Action',
+          actorRole: auth?.user?.activeRole || body.actorRole || 'PUBLIC',
+          action: body.action || 'CLIENT_ACTIVITY',
+          targetType: body.targetType || 'ui',
+          targetId: body.targetId || 'app',
+          targetName: body.targetName || 'CampusNet Ecosystem',
+          details: body.details || 'User triggered platform event',
+          ipAddress: clientIp
+        });
+
+        sendJson(res, 201, { success: true, log: newLog });
         return;
       }
 
@@ -2245,8 +3025,7 @@ const server = http.createServer(async (req, res) => {
         };
 
         PROJECTS_DB.unshift(newProjRecord);
-        AUDIT_LOGS.push({
-          id: `aud-${Date.now()}`,
+        logPlatformActivity({
           actorId: auth.user.id,
           actorName: auth.user.name,
           actorRole: auth.user.activeRole,
@@ -2254,8 +3033,8 @@ const server = http.createServer(async (req, res) => {
           targetType: 'project',
           targetId: newProjectId,
           targetName: title.trim(),
-          timestamp: new Date().toISOString(),
-          details: `Created project "${title.trim()}" in domain ${domain.trim()}`
+          details: `Created project "${title.trim()}" in domain ${domain.trim()}`,
+          ipAddress: clientIp
         });
 
         persistStoreToDisk();

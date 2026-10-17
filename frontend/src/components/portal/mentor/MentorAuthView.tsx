@@ -8,6 +8,25 @@ import {
   School, GraduationCap, Key
 } from 'lucide-react';
 
+import { PortalOtpLoginView, DemoPersona } from '../../auth/PortalOtpLoginView';
+
+const MENTOR_DEMO_PERSONAS: DemoPersona[] = [
+  {
+    name: 'Dr. Priya Mentor',
+    roleDescription: 'Professor of AI & Robotics (NITK)',
+    email: 'priya.mentor@nitk.edu.in',
+    mobile: '+91 98765 43211',
+    badge: 'Faculty Mentor'
+  },
+  {
+    name: 'Dr. Arvind Rao',
+    roleDescription: 'Associate Professor & Head of Robotics (IITB)',
+    email: 'arvind.rao@iitb.ac.in',
+    mobile: '+91 98765 43221',
+    badge: 'Faculty Mentor'
+  }
+];
+
 interface Props {
   mode?: 'login' | 'register' | 'forgot-password';
 }
@@ -17,6 +36,7 @@ export const MentorAuthView: React.FC<Props> = ({ mode = 'login' }) => {
   const location = useLocation();
   const { switchRole, setCurrentUser, addToast, mentors } = useApp();
 
+  const [showPasswordLogin, setShowPasswordLogin] = useState(false);
   const [currentMode, setCurrentMode] = useState<'login' | 'register' | 'forgot-password'>(() => {
     if (typeof window !== 'undefined') {
       if (window.location.pathname.includes('register')) return 'register';
@@ -167,6 +187,23 @@ export const MentorAuthView: React.FC<Props> = ({ mode = 'login' }) => {
     navigate('/mentor/dashboard');
   };
 
+  if (currentMode === 'login' && !showPasswordLogin) {
+    return (
+      <PortalOtpLoginView
+        portal="mentor"
+        portalTitle="Faculty Mentor Portal"
+        portalSubtitle="Guide student teams, review project milestones, and endorse hackathon solutions."
+        portalBadge="Level 2: Faculty"
+        portalIcon={ShieldCheck}
+        accentColor="amber"
+        registerUrl="/mentor/register"
+        registerLabel="Join as Faculty Mentor →"
+        onFallbackPassword={() => setShowPasswordLogin(true)}
+        demoPersonas={MENTOR_DEMO_PERSONAS}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8 font-sans selection:bg-amber-600 selection:text-white">
       {/* Top Back Navigation */}
@@ -204,6 +241,20 @@ export const MentorAuthView: React.FC<Props> = ({ mode = 'login' }) => {
       <div className="mt-6 sm:mx-auto sm:w-full sm:max-w-md px-4">
         <div className="bg-white py-8 px-6 sm:px-10 shadow-xl shadow-slate-200/50 rounded-2xl border border-slate-200 space-y-6">
           
+          {/* Switch to OTP banner if on password login */}
+          {currentMode === 'login' && showPasswordLogin && (
+            <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl flex items-center justify-between text-xs">
+              <span className="text-amber-800 font-medium">Using legacy password login</span>
+              <button
+                type="button"
+                onClick={() => setShowPasswordLogin(false)}
+                className="font-bold text-amber-700 hover:underline cursor-pointer"
+              >
+                Use Passwordless OTP →
+              </button>
+            </div>
+          )}
+
           {/* Segmented Mode Switcher: Sign In vs Sign Up */}
           {!isOtpStep && currentMode !== 'forgot-password' && (
             <div className="grid grid-cols-2 p-1 bg-slate-100 rounded-xl border border-slate-200/80 text-xs font-bold">

@@ -7,6 +7,42 @@ import {
 } from 'lucide-react';
 
 import { OrganizationRegistrationWizard } from './OrganizationRegistrationWizard';
+import { PortalOtpLoginView, DemoPersona } from '../auth/PortalOtpLoginView';
+import { Calendar } from 'lucide-react';
+
+const ORG_DEMO_PERSONAS: DemoPersona[] = [
+  {
+    name: 'TechFest Conclave Lead',
+    roleDescription: 'National Conclaves & Hackathons (NITK)',
+    email: 'techfest@nitk.edu.in',
+    mobile: '+91 98765 43213',
+    badge: 'Institution Org'
+  },
+  {
+    name: 'Dr. Anand Kumar',
+    roleDescription: 'Dean of Innovation (Kuppam Engg)',
+    email: 'organizer.demo@campusnet-demo.in',
+    mobile: '+91 98765 43223',
+    badge: 'Dean / Coordinator'
+  }
+];
+
+const EVENT_MGR_DEMO_PERSONAS: DemoPersona[] = [
+  {
+    name: 'Neha Events',
+    roleDescription: 'National Hackathons & Symposia Lead (NITK)',
+    email: 'neha.events@nitk.edu.in',
+    mobile: '+91 98765 43214',
+    badge: 'Event Manager'
+  },
+  {
+    name: 'Aarav Sharma',
+    roleDescription: 'Student & Event Lead (Dual Role)',
+    email: 'aarav.sharma@nitk.edu.in',
+    mobile: '+91 98765 43210',
+    badge: 'Event Manager'
+  }
+];
 
 interface Props {
   initialMode?: 'login' | 'register';
@@ -161,9 +197,58 @@ export const OrganizerAuthView: React.FC<Props> = ({ initialMode }) => {
     setResetSent(true);
   };
 
+  const [showPasswordLogin, setShowPasswordLogin] = useState(false);
+  const isEventManager = typeof window !== 'undefined' && window.location.pathname.toLowerCase().startsWith('/event-manager');
+
+  if (mode === 'login' && !showPasswordLogin) {
+    if (isEventManager) {
+      return (
+        <PortalOtpLoginView
+          portal="event_manager"
+          portalTitle="Event Manager Portal"
+          portalSubtitle="Host national hackathons, coordinate judging rubrics, track live QR check-ins, and issue credentials."
+          portalBadge="Level 2: Events"
+          portalIcon={Calendar}
+          accentColor="cyan"
+          onFallbackPassword={() => setShowPasswordLogin(true)}
+          demoPersonas={EVENT_MGR_DEMO_PERSONAS}
+        />
+      );
+    }
+
+    return (
+      <PortalOtpLoginView
+        portal="organization"
+        portalTitle="Institution / Organization Portal"
+        portalSubtitle="Manage institutional verification, oversee campus conclaves, and manage official club memberships."
+        portalBadge="Level 3: Institution"
+        portalIcon={Building2}
+        accentColor="emerald"
+        registerUrl="/organization/register"
+        registerLabel="Register Your Institution →"
+        onFallbackPassword={() => setShowPasswordLogin(true)}
+        demoPersonas={ORG_DEMO_PERSONAS}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 relative overflow-hidden flex flex-col justify-between selection:bg-amber-500 selection:text-slate-950 font-sans">
       
+      {/* Switch to OTP banner if on password login */}
+      {showPasswordLogin && (
+        <div className="relative z-20 bg-emerald-600 text-white px-4 py-2 text-center text-xs font-semibold flex items-center justify-center gap-2 shadow-sm">
+          <span>Using legacy institutional password login.</span>
+          <button
+            type="button"
+            onClick={() => setShowPasswordLogin(false)}
+            className="underline font-bold text-emerald-100 hover:text-white cursor-pointer"
+          >
+            Switch to Passwordless OTP →
+          </button>
+        </div>
+      )}
+
       {/* Soft Ambient Blurred Glowing Orbs in Background */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
         <div className="absolute -top-32 -right-32 w-[30rem] h-[30rem] bg-amber-200/40 rounded-full blur-3xl animate-pulse" />

@@ -1,71 +1,39 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useApp } from '../../context/AppContext';
+
 import { 
   GraduationCap, ShieldCheck, BookOpen, Building2, 
   ArrowRight, Sparkles, Award, Users, CheckCircle2, 
   Compass, ExternalLink, HelpCircle, Lock, ChevronRight,
-  Globe, Search, Layers, FileCheck, Shield, Key
+  Globe, Search, Layers, FileCheck, Shield, Key,
+  Calendar, ShieldAlert, Sparkle, Mail, Phone
 } from 'lucide-react';
 
 export const RbacGatewayView: React.FC = () => {
   const navigate = useNavigate();
-  const { currentUser, currentOrganizer, currentSuperAdmin, activeRole, switchRole } = useApp();
   const [showHelpModal, setShowHelpModal] = useState(false);
-
-  // Determine if there is an active session
-  const isLoggedIn = !!(currentUser || currentOrganizer || currentSuperAdmin);
-  const activeRoleDisplay = currentSuperAdmin 
-    ? 'Super Admin' 
-    : currentOrganizer 
-      ? 'Organization Owner' 
-      : (currentUser?.activeAppRole === 'PHD_RESEARCHER' || currentUser?.role === 'researcher' || activeRole === 'researcher')
-        ? 'PhD Scholar' 
-        : (currentUser?.activeAppRole === 'MENTOR' || currentUser?.role === 'mentor' || activeRole === 'mentor')
-          ? 'Faculty Mentor' 
-          : 'Student Innovator';
-
-  const activeDisplayName = currentSuperAdmin
-    ? (currentSuperAdmin.name || 'Super Admin Executive')
-    : currentOrganizer
-      ? currentOrganizer.coordinatorName
-      : currentUser?.name || 'Active User';
-
-  const handleActiveWorkspaceClick = () => {
-    if (currentSuperAdmin) {
-      navigate('/admin');
-    } else if (currentOrganizer) {
-      navigate('/organization/dashboard');
-    } else if (currentUser?.activeAppRole === 'PHD_RESEARCHER' || currentUser?.role === 'researcher' || activeRole === 'researcher') {
-      navigate('/researcher/dashboard');
-    } else if (currentUser?.activeAppRole === 'MENTOR' || currentUser?.role === 'mentor' || activeRole === 'mentor') {
-      navigate('/mentor/dashboard');
-    } else {
-      navigate('/student/dashboard');
-    }
-  };
-
+  const [searchFilter, setSearchFilter] = useState('');
   const [gatewayIntent, setGatewayIntent] = useState<'login' | 'register'>('login');
 
   const portals = [
     {
       id: 'student',
       title: 'Student / Innovator',
-      badge: 'Undergraduates & Postgraduates',
+      badge: 'Level 1: Undergrad & PG',
       icon: GraduationCap,
       color: 'blue',
       cardBg: 'from-blue-50/50 to-white hover:border-blue-300',
       iconBg: 'bg-blue-600 text-white shadow-blue-500/20',
       badgeBg: 'bg-blue-100 text-blue-800 border-blue-200',
       btnBg: 'bg-campus-blue hover:bg-campus-deep-blue text-white shadow-blue-600/20',
-      description: 'Discover opportunities, build projects, join teams, and grow your academic portfolio.',
+      description: 'Discover opportunities, build projects, join multidisciplinary teams, and build a verifiable portfolio.',
       features: [
         'Team project workspaces & hackathon registrations',
         'Direct 1-on-1 mentorship requests & chat',
         'Verifiable digital innovation transcripts & credentials',
         'Peer collaboration across 500+ colleges nationwide'
       ],
-      signInAction: 'Sign In to Student Portal',
+      signInAction: 'Sign In with OTP',
       signUpAction: 'Create Student Account',
       loginRoute: '/student/login',
       registerRoute: '/student/register',
@@ -74,21 +42,21 @@ export const RbacGatewayView: React.FC = () => {
     {
       id: 'mentor',
       title: 'Faculty / Mentor',
-      badge: 'Professors & Domain Specialists',
+      badge: 'Level 2: Professors & Guides',
       icon: ShieldCheck,
       color: 'amber',
       cardBg: 'from-amber-50/50 to-white hover:border-amber-300',
       iconBg: 'bg-amber-600 text-white shadow-amber-500/20',
       badgeBg: 'bg-amber-100 text-amber-800 border-amber-200',
       btnBg: 'bg-amber-600 hover:bg-amber-700 text-white shadow-amber-600/20',
-      description: 'Guide student teams, review projects, and support academic growth.',
+      description: 'Guide student teams, review project milestones, evaluate hackathons, and support academic growth.',
       features: [
         'Inbox for project guidance & mentorship requests',
         'Milestone evaluations & rubric grading',
         'Issue tamper-proof mentorship certificates',
         'Curate team recommendations for national hackathons'
       ],
-      signInAction: 'Sign In to Mentor Portal',
+      signInAction: 'Sign In with OTP',
       signUpAction: 'Join as Faculty Mentor',
       loginRoute: '/mentor/login',
       registerRoute: '/mentor/register',
@@ -97,50 +65,79 @@ export const RbacGatewayView: React.FC = () => {
     {
       id: 'researcher',
       title: 'PhD Scholar / Researcher',
-      badge: 'Doctoral Scholars & R&D Scientists',
+      badge: 'Level 3: Doctoral Scholars',
       icon: BookOpen,
       color: 'purple',
       cardBg: 'from-purple-50/50 to-white hover:border-purple-300',
       iconBg: 'bg-purple-600 text-white shadow-purple-500/20',
       badgeBg: 'bg-purple-100 text-purple-800 border-purple-200',
       btnBg: 'bg-purple-700 hover:bg-purple-800 text-white shadow-purple-700/20',
-      description: 'Publish research, discover collaborators, and explore innovation opportunities.',
+      description: 'Publish research whitepapers, recruit student RAs, discover collaborators, and track scientific calls.',
       features: [
         'Publish pre-prints & open research whitepapers',
         'Recruit undergraduate Research Assistants (RAs)',
         'Conference presentation tracking & peer discussions',
         'ORCID iD & Vidwan verified scientific indexing'
       ],
-      signInAction: 'Sign In to Research Portal',
+      signInAction: 'Sign In with OTP',
       signUpAction: 'Onboard as PhD Scholar',
-      loginRoute: '/researcher/login',
+      loginRoute: '/research/login',
       registerRoute: '/researcher/register',
       forgotRoute: '/researcher/forgot-password'
     },
     {
       id: 'organization',
-      title: 'Institution / Event Organizer',
-      badge: 'Colleges, Universities & Conclaves',
+      title: 'Institution / College',
+      badge: 'Level 3: Universities & Affiliated',
       icon: Building2,
       color: 'emerald',
       cardBg: 'from-emerald-50/50 to-white hover:border-emerald-300',
       iconBg: 'bg-emerald-600 text-white shadow-emerald-500/20',
       badgeBg: 'bg-emerald-100 text-emerald-800 border-emerald-200',
       btnBg: 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20',
-      description: 'Verify your institution, host academic events, and connect with students nationwide.',
+      description: 'Verify your institution with AISHE/UGC credentials, host academic events, and oversee campus chapters.',
       features: [
         'AISHE / UGC institution verification & audit status',
         'End-to-end hackathon & symposium hosting workflow',
-        'Real-time student team registrations & QR check-in',
+        'Institutional coordinator management & club delegation',
         'Automated verifiable participation certificates'
       ],
-      signInAction: 'Sign In to Institution Portal',
+      signInAction: 'Sign In with OTP',
       signUpAction: 'Register Your Institution',
       loginRoute: '/organization/login',
       registerRoute: '/organization/register',
       forgotRoute: '/organization/forgot-password'
+    },
+    {
+      id: 'event_manager',
+      title: 'Event / Conclave Lead',
+      badge: 'Level 2: Hackathon Leads',
+      icon: Calendar,
+      color: 'cyan',
+      cardBg: 'from-cyan-50/50 to-white hover:border-cyan-300',
+      iconBg: 'bg-cyan-600 text-white shadow-cyan-500/20',
+      badgeBg: 'bg-cyan-100 text-cyan-800 border-cyan-200',
+      btnBg: 'bg-cyan-700 hover:bg-cyan-800 text-white shadow-cyan-700/20',
+      description: 'Host state and national hackathons, manage registrations, track live QR attendance, and coordinate judging.',
+      features: [
+        'State & National hackathon host consoles',
+        'Participant approvals & live QR attendance scanner',
+        'Judge rubric scoring & automated winner rankings',
+        'Verifiable blockchain-ready certificate dispatch'
+      ],
+      signInAction: 'Sign In with OTP',
+      signUpAction: 'Pre-Provisioned Role',
+      loginRoute: '/event-manager/login',
+      registerRoute: undefined,
+      forgotRoute: undefined
     }
   ];
+
+  const filteredPortals = portals.filter(p => 
+    p.title.toLowerCase().includes(searchFilter.toLowerCase()) ||
+    p.description.toLowerCase().includes(searchFilter.toLowerCase()) ||
+    p.badge.toLowerCase().includes(searchFilter.toLowerCase())
+  );
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 flex flex-col font-sans selection:bg-campus-blue selection:text-white">
@@ -163,7 +160,7 @@ export const RbacGatewayView: React.FC = () => {
                 </span>
               </div>
               <p className="text-[11px] text-slate-500 font-medium hidden md:block">
-                National Academic Networking Platform
+                National Academic Networking & Innovation Platform
               </p>
             </div>
           </div>
@@ -175,7 +172,7 @@ export const RbacGatewayView: React.FC = () => {
               className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-campus-blue px-3 py-1.5 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
             >
               <HelpCircle className="w-4 h-4 text-slate-400" />
-              <span>Help & Support</span>
+              <span className="hidden sm:inline">RBAC Architecture</span>
             </button>
 
             <button
@@ -183,7 +180,7 @@ export const RbacGatewayView: React.FC = () => {
               className="inline-flex items-center gap-1.5 text-xs font-bold text-campus-blue bg-blue-50 hover:bg-blue-100/80 border border-blue-200 px-3.5 py-1.5 rounded-lg transition-colors shadow-xs cursor-pointer"
             >
               <Globe className="w-4 h-4" />
-              <span>Browse as Guest</span>
+              <span>Explore as Guest</span>
             </button>
           </div>
         </div>
@@ -196,55 +193,49 @@ export const RbacGatewayView: React.FC = () => {
         <div className="text-center max-w-3xl mx-auto space-y-3 pt-2 sm:pt-4">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-50 border border-blue-200 text-campus-blue text-xs font-semibold shadow-2xs">
             <Shield className="w-3.5 h-3.5" />
-            <span>Dedicated Role-Based Access Gateway</span>
+            <span>Zero-Trust Role-Based Access Gateway</span>
           </div>
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-campus-deep-blue tracking-tight leading-tight">
-            Welcome to CampusNet<span className="text-campus-red">+</span>
+
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-campus-deep-blue tracking-tight">
+            Welcome to Campus<span className="text-campus-red">Net+</span>
           </h1>
-          <p className="text-sm sm:text-base text-slate-600 leading-relaxed max-w-2xl mx-auto">
-            Choose your workspace to sign in or register new credentials across student, mentor, research, and institutional networks.
+
+          <p className="text-sm sm:text-base text-slate-600 max-w-2xl mx-auto leading-relaxed">
+            Choose your authorized institutional portal. Sign in seamlessly with passwordless <strong>Email OTP</strong> or <strong>SMS Mobile OTP</strong>. Access permissions are strictly server-enforced by your verified academic credentials.
           </p>
 
-          {/* Prominent Gateway Intent Switcher (Sign In vs Sign Up) */}
-          <div className="pt-3 flex justify-center">
-            <div className="inline-flex p-1 rounded-2xl bg-slate-200/90 border border-slate-300 shadow-inner">
-              <button
-                type="button"
-                onClick={() => setGatewayIntent('login')}
-                className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 cursor-pointer ${
-                  gatewayIntent === 'login'
-                    ? 'bg-white text-campus-deep-blue shadow-sm'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                <Key className="w-4 h-4 text-campus-blue" />
-                <span>Workspace Sign In</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setGatewayIntent('register')}
-                className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 cursor-pointer ${
-                  gatewayIntent === 'register'
-                    ? 'bg-white text-campus-deep-blue shadow-sm'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                <Sparkles className="w-4 h-4 text-amber-500" />
-                <span>New Registration / Sign Up</span>
-              </button>
+          {/* Quick Filter Bar */}
+          <div className="pt-2 max-w-md mx-auto">
+            <div className="relative">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                value={searchFilter}
+                onChange={e => setSearchFilter(e.target.value)}
+                placeholder="Search across collegiate portals..."
+                className="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-xs font-medium text-slate-800 placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-blue-500 shadow-2xs"
+              />
+              {searchFilter && (
+                <button
+                  onClick={() => setSearchFilter('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-slate-600"
+                >
+                  ✕
+                </button>
+              )}
             </div>
           </div>
         </div>
 
-        {/* The 4 Independent Role Portal Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch">
-          {portals.map((portal) => {
+        {/* 5 Academic & Collegiate Portals Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
+          {filteredPortals.map((portal) => {
             const Icon = portal.icon;
 
             return (
               <div
                 key={portal.id}
-                className={`bg-gradient-to-b ${portal.cardBg} rounded-2xl border border-slate-200 p-6 flex flex-col justify-between shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 relative group`}
+                className={`bg-gradient-to-b ${portal.cardBg} rounded-2xl border border-slate-200 p-6 flex flex-col justify-between shadow-xs hover:shadow-xl transition-all duration-300 hover:-translate-y-1 relative group`}
               >
                 <div>
                   {/* Top Header with Icon and Badge */}
@@ -253,7 +244,7 @@ export const RbacGatewayView: React.FC = () => {
                       <Icon className="w-6 h-6" />
                     </div>
                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${portal.badgeBg}`}>
-                      {portal.id.toUpperCase()}
+                      {portal.badge}
                     </span>
                   </div>
 
@@ -263,7 +254,7 @@ export const RbacGatewayView: React.FC = () => {
                       {portal.title}
                     </h3>
                     <p className="text-xs text-slate-500 font-medium mt-0.5">
-                      {portal.badge}
+                      {portal.loginRoute}
                     </p>
                   </div>
 
@@ -288,88 +279,70 @@ export const RbacGatewayView: React.FC = () => {
                 </div>
 
                 {/* Dual Action Buttons (Sign In & Register) Aligned to Bottom */}
-                <div className="space-y-2.5 pt-2">
-                  {gatewayIntent === 'login' ? (
-                    <>
-                      {/* Primary: Sign In */}
-                      <button
-                        onClick={() => navigate(portal.loginRoute)}
-                        className={`w-full py-2.5 px-4 rounded-xl font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition-all duration-200 cursor-pointer ${portal.btnBg}`}
-                      >
-                        <span>{portal.signInAction}</span>
-                        <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-                      </button>
+                <div className="space-y-2.5 pt-2 border-t border-slate-100">
+                  {/* Primary: Sign In with OTP */}
+                  <button
+                    onClick={() => navigate(portal.loginRoute)}
+                    className={`w-full py-2.5 px-4 rounded-xl font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition-all duration-200 cursor-pointer ${portal.btnBg}`}
+                  >
+                    <Mail className="w-3.5 h-3.5" />
+                    <span>{portal.signInAction}</span>
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                  </button>
 
-                      {/* Secondary: Register */}
-                      <button
-                        onClick={() => navigate(portal.registerRoute)}
-                        className="w-full py-2 px-4 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 transition-all duration-200 shadow-2xs cursor-pointer"
-                      >
-                        <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                        <span>{portal.signUpAction}</span>
-                      </button>
-                    </>
+                  {/* Secondary: Register or Role Badge */}
+                  {portal.registerRoute ? (
+                    <button
+                      onClick={() => navigate(portal.registerRoute)}
+                      className="w-full py-2 px-4 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 transition-all duration-200 shadow-2xs cursor-pointer"
+                    >
+                      <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                      <span>{portal.signUpAction}</span>
+                    </button>
                   ) : (
-                    <>
-                      {/* Primary: Register */}
-                      <button
-                        onClick={() => navigate(portal.registerRoute)}
-                        className={`w-full py-2.5 px-4 rounded-xl font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition-all duration-200 cursor-pointer ${portal.btnBg}`}
-                      >
-                        <span>{portal.signUpAction}</span>
-                        <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-                      </button>
-
-                      {/* Secondary: Sign In */}
-                      <button
-                        onClick={() => navigate(portal.loginRoute)}
-                        className="w-full py-2 px-4 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 transition-all duration-200 shadow-2xs cursor-pointer"
-                      >
-                        <Key className="w-3.5 h-3.5 text-slate-500" />
-                        <span>{portal.signInAction}</span>
-                      </button>
-                    </>
+                    <div className="text-[11px] font-medium text-slate-400 text-center py-1.5 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                      <span>{portal.signUpAction}</span>
+                    </div>
                   )}
 
-                  <div className="flex items-center justify-center text-[11px] text-slate-500 pt-1 border-t border-slate-100">
-                    <button
-                      onClick={() => navigate(portal.forgotRoute)}
-                      className="hover:text-slate-800 hover:underline cursor-pointer"
-                    >
-                      Forgot password?
-                    </button>
-                  </div>
+                  {portal.forgotRoute && (
+                    <div className="flex items-center justify-center text-[11px] text-slate-500 pt-1">
+                      <button
+                        onClick={() => navigate(portal.forgotRoute)}
+                        className="hover:text-slate-800 hover:underline cursor-pointer"
+                      >
+                        Forgot password?
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             );
           })}
         </div>
 
+
         {/* Public Discovery / Browse as Guest Banner */}
         <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-start sm:items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center text-slate-700 shrink-0">
-              <Globe className="w-6 h-6 text-campus-blue" />
+            <div className="w-12 h-12 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center text-campus-blue shrink-0">
+              <Globe className="w-6 h-6" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <h4 className="text-base font-bold text-campus-deep-blue">
-                  Looking to explore public events, hackathons, and research projects?
-                </h4>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                  No Login Required
-                </span>
-              </div>
-              <p className="text-xs text-slate-500 mt-1 max-w-2xl">
-                Browse as Guest to discover published collegiate events, open-source student innovation repositories, PhD research pre-prints, and verified faculty mentors nationwide.
+              <h4 className="text-base font-bold text-campus-deep-blue">
+                Looking to Explore Without an Account?
+              </h4>
+              <p className="text-xs text-slate-600 mt-0.5 max-w-xl">
+                Browse our open academic repository, explore national hackathons, read student research papers, and view live innovation projects before signing in.
               </p>
             </div>
           </div>
+
           <button
             onClick={() => navigate('/landing')}
-            className="w-full md:w-auto shrink-0 inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl border border-campus-blue text-campus-blue hover:bg-blue-50 text-xs font-bold transition-all shadow-xs"
+            className="w-full md:w-auto shrink-0 inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl border border-campus-blue text-campus-blue hover:bg-blue-50 text-xs font-bold transition-all shadow-xs cursor-pointer"
           >
-            <span>Browse as Guest</span>
+            <span>Explore Ecosystem as Guest</span>
             <ArrowRight className="w-4 h-4" />
           </button>
         </div>
@@ -379,18 +352,18 @@ export const RbacGatewayView: React.FC = () => {
           <div className="flex items-center gap-4 flex-wrap">
             <span className="flex items-center gap-1.5">
               <Shield className="w-4 h-4 text-emerald-600" />
-              <span>Server-Enforced RBAC & Multi-Tenant Isolation</span>
+              <span>Zero-Trust Server-Enforced RBAC & Cryptographic OTP</span>
             </span>
             <span className="hidden sm:inline text-slate-300">•</span>
             <span className="flex items-center gap-1.5">
               <FileCheck className="w-4 h-4 text-campus-blue" />
-              <span>All 28 States & 8 Union Territories Supported</span>
+              <span>AISHE, AICTE & UGC Statutory Compliance</span>
             </span>
           </div>
 
           {/* Platform Security Note */}
           <div className="text-[11px] text-slate-400">
-            <span>Enterprise Security • Strict Resource-Level RBAC</span>
+            <span>Argon2id Hash • Anti-Replay Token Expiry • Constant-Time Comparison</span>
           </div>
         </div>
       </main>
@@ -402,11 +375,11 @@ export const RbacGatewayView: React.FC = () => {
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2">
                 <HelpCircle className="w-5 h-5 text-campus-blue" />
-                <h3 className="text-base font-bold text-campus-deep-blue">CampusNet+ Access Guide</h3>
+                <h3 className="text-base font-bold text-campus-deep-blue">CampusNet+ RBAC Security Architecture</h3>
               </div>
               <button
                 onClick={() => setShowHelpModal(false)}
-                className="text-slate-400 hover:text-slate-600 p-1 rounded-lg"
+                className="text-slate-400 hover:text-slate-600 p-1 rounded-lg cursor-pointer"
               >
                 ✕
               </button>
@@ -414,26 +387,31 @@ export const RbacGatewayView: React.FC = () => {
 
             <div className="space-y-3 text-xs text-slate-600 leading-relaxed">
               <p>
-                <strong>Which workspace should I choose?</strong>
+                <strong>Authentication vs. Authorization Principle:</strong>
               </p>
-              <ul className="space-y-2 list-disc list-inside">
-                <li><strong className="text-blue-700">Student Portal:</strong> For university students participating in hackathons, team projects, and seeking mentorship.</li>
-                <li><strong className="text-amber-700">Mentor Portal:</strong> For professors and industry guides reviewing student projects and approving milestones.</li>
-                <li><strong className="text-purple-700">Research Portal:</strong> For PhD scholars publishing whitepapers and hiring student research assistants.</li>
-                <li><strong className="text-emerald-700">Organization Portal:</strong> For college conveners, deans, and hackathon chairs managing events.</li>
+              <div className="p-3 rounded-xl bg-blue-50 border border-blue-100 text-blue-900 text-xs">
+                The OTP is strictly for <strong>authentication</strong> (verifying who you are). It never grants access to a role simply because you selected a portal on the frontend. The backend verifies your registered roles before issuing an access token.
+              </div>
+
+              <p className="font-bold text-slate-800 pt-1">Academic & Statutory Portals Architecture:</p>
+              <ul className="space-y-1.5 list-disc list-inside">
+                <li><strong className="text-blue-700">Student:</strong> Undergraduates and postgraduates building projects and participating in conclaves.</li>
+                <li><strong className="text-amber-700">Mentor:</strong> Professors and specialists evaluating student milestones and guiding teams.</li>
+                <li><strong className="text-purple-700">Research:</strong> Doctoral scholars publishing open papers and managing lab collaborations.</li>
+                <li><strong className="text-emerald-700">Organization:</strong> Accredited universities and colleges hosting regional and national hackathons.</li>
+                <li><strong className="text-cyan-700">Event Manager:</strong> Conclave chairs managing registrations, live QR check-ins, and judging rubrics.</li>
               </ul>
-              <div className="p-3 rounded-xl bg-blue-50 border border-blue-100 text-blue-900 mt-3">
-                <p className="font-semibold">Multi-Role Accounts:</p>
-                <p className="text-[11px] mt-0.5">
-                  If your account possesses multiple authorized roles (e.g. Faculty Mentor + PhD Scholar), you can switch workspaces dynamically using the Workspace Switcher in your portal header.
-                </p>
+              <div className="p-2.5 rounded-xl bg-slate-900 text-slate-200 text-[11px] mt-2 space-y-1 border border-slate-800">
+                <p className="font-bold text-red-400">Restricted Statutory & Governance Clearances:</p>
+                <p>• <strong>Level 4 Reviewer:</strong> AICTE & UGC statutory bodies for institutional audit, guidelines, and compliance.</p>
+                <p>• <strong>Level 5 Super Admin:</strong> Root security authority for system-wide audit trails, policy moderation, and master ledgers.</p>
               </div>
             </div>
 
             <div className="pt-2 flex justify-end">
               <button
                 onClick={() => setShowHelpModal(false)}
-                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold"
+                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold cursor-pointer"
               >
                 Close Guide
               </button>

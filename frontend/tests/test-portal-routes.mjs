@@ -97,11 +97,12 @@ researcherRoutes.forEach(r => {
   assert(getPortalFromEnvironment(r, '') === 'researcher', `Route '${r}' resolves to Research Portal namespace`);
 });
 
-console.log('\n--- 5. Organization Portal Routes (15 Required Routes) ---');
+console.log('\n--- 5. Organization & Event Manager Portal Routes ---');
 const orgRoutes = [
   '/organization/login',
   '/organization/register',
   '/organization/forgot-password',
+  '/event-manager/login',
   '/organization/verification',
   '/organization/verify',
   '/organization/dashboard',
@@ -118,6 +119,12 @@ const orgRoutes = [
 orgRoutes.forEach(r => {
   assert(getPortalFromEnvironment(r, '') === 'organizer', `Route '${r}' resolves to Organization Portal namespace`);
 });
+
+console.log('\n--- 5b. Admin, Reviewer & Super Admin Portal Routes ---');
+assert(getPortalFromEnvironment('/super-admin/login', '') === 'admin', "'/super-admin/login' resolves to Admin Portal namespace");
+assert(getPortalFromEnvironment('/reviewer/login', '') === 'admin', "'/reviewer/login' resolves to Admin Portal namespace");
+assert(getPortalFromEnvironment('/research/login', '') === 'researcher', "'/research/login' resolves to Research Portal namespace");
+assert(getPortalFromEnvironment('/research', '') === 'public', "Public hub '/research' remains in public namespace");
 
 console.log('\n--- 6. Open-Redirect Prevention & Route Validation ---');
 assert(isValidRedirectDestination('/student/dashboard') === true, 'Valid student dashboard redirect allowed');

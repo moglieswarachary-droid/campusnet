@@ -2,15 +2,70 @@ import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { 
   ShieldAlert, ShieldCheck, Lock, User, 
-  ArrowRight, KeyRound, Sparkles, CheckCircle2 
+  ArrowRight, KeyRound, Sparkles, CheckCircle2,
+  FileCheck
 } from 'lucide-react';
+import { PortalOtpLoginView, DemoPersona } from '../auth/PortalOtpLoginView';
+
+const REVIEWER_DEMO_PERSONAS: DemoPersona[] = [
+  {
+    name: 'Dr. Sunita Murthy',
+    roleDescription: 'AICTE Review Board Member',
+    email: 'sunita.reviewer@aicte.gov.in',
+    mobile: '+91 98765 43215',
+    badge: 'AICTE Reviewer'
+  }
+];
+
+const SUPER_ADMIN_DEMO_PERSONAS: DemoPersona[] = [
+  {
+    name: 'Rajesh SuperAdmin',
+    roleDescription: 'Level-5 Platform Governance & Security',
+    email: 'rajesh.superadmin@campusnet.gov.in',
+    mobile: '+91 98765 43216',
+    badge: 'Super Admin'
+  }
+];
 
 export const SuperAdminAuthView: React.FC = () => {
   const { superAdminLogin } = useApp();
 
+  const [showPasswordLogin, setShowPasswordLogin] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [mfaCode, setMfaCode] = useState('');
+
+  const isReviewer = typeof window !== 'undefined' && window.location.pathname.toLowerCase().startsWith('/reviewer');
+
+  if (!showPasswordLogin) {
+    if (isReviewer) {
+      return (
+        <PortalOtpLoginView
+          portal="reviewer"
+          portalTitle="Platform Reviewer Console"
+          portalSubtitle="AICTE & National Innovation Board accreditation, institutional audits, and event moderation."
+          portalBadge="Level 4: Reviewer"
+          portalIcon={FileCheck}
+          accentColor="rose"
+          onFallbackPassword={() => setShowPasswordLogin(true)}
+          demoPersonas={REVIEWER_DEMO_PERSONAS}
+        />
+      );
+    }
+
+    return (
+      <PortalOtpLoginView
+        portal="super_admin"
+        portalTitle="Super Admin Governance Console"
+        portalSubtitle="National innovation platform governance, institution master control, RBAC policy moderation, and audit logs."
+        portalBadge="Level 5: Super Admin"
+        portalIcon={ShieldAlert}
+        accentColor="red"
+        onFallbackPassword={() => setShowPasswordLogin(true)}
+        demoPersonas={SUPER_ADMIN_DEMO_PERSONAS}
+      />
+    );
+  }
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -19,6 +74,18 @@ export const SuperAdminAuthView: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between selection:bg-red-500 selection:text-white">
+      
+      {/* Switch to OTP banner if on password login */}
+      <div className="bg-red-950/60 border-b border-red-500/30 px-4 py-2 text-center text-xs text-red-200 flex items-center justify-center gap-2">
+        <span>Using administrative password + MFA console.</span>
+        <button
+          type="button"
+          onClick={() => setShowPasswordLogin(false)}
+          className="underline font-bold text-red-400 hover:text-white cursor-pointer"
+        >
+          Use Passwordless OTP →
+        </button>
+      </div>
       
       {/* Top Header */}
       <header className="border-b border-red-950/40 bg-slate-950/90 backdrop-blur-md px-6 py-4">
