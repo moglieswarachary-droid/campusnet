@@ -1232,6 +1232,33 @@ const server = http.createServer(async (req, res) => {
           });
         }
 
+        if (!user && isPrismaConnected) {
+          try {
+            const dbUser = normalizedContact.includes('@')
+              ? await prisma.user.findUnique({ where: { email: normalizedContact } })
+              : await prisma.user.findFirst({ where: { mobile: normalizedContact } });
+            if (dbUser) {
+              user = {
+                id: dbUser.id,
+                email: dbUser.email,
+                mobile: dbUser.mobile,
+                name: dbUser.name,
+                roles: Array.isArray(dbUser.roles) ? dbUser.roles : [dbUser.activeRole || 'STUDENT'],
+                activeRole: dbUser.activeRole || 'STUDENT',
+                institution: dbUser.institutionName || 'Academic Network',
+                department: dbUser.department || 'Engineering',
+                status: dbUser.status || 'ACTIVE',
+                verified: true,
+                passwordHash: dbUser.passwordHash,
+                createdAt: dbUser.createdAt ? dbUser.createdAt.toISOString() : new Date().toISOString()
+              };
+              USERS_DB.push(user);
+            }
+          } catch (e) {
+            console.warn('[Prisma] User lookup notice:', e.message);
+          }
+        }
+
         if (!user) {
           const rawPortal = (portal || '').toLowerCase().trim();
           const isAuthorityPortal = ['reviewer', 'platform-reviewer', 'platform_reviewer', 'super-admin', 'super_admin', 'admin', 'aicte'].includes(rawPortal);
@@ -1282,23 +1309,33 @@ const server = http.createServer(async (req, res) => {
 
           if (isPrismaConnected) {
             try {
-              await prisma.user.create({
-                data: {
-                  id: newUserId,
-                  email: user.email,
-                  mobile: user.mobile,
-                  passwordHash: user.passwordHash,
-                  name: user.name,
-                  roles: user.roles,
-                  activeRole: user.activeRole,
-                  institutionName: user.institution,
-                  department: user.department,
-                  status: 'ACTIVE',
-                  verifiedStudent: assignedRole === 'STUDENT',
-                  verifiedMentor: assignedRole === 'MENTOR',
-                  verifiedResearcher: assignedRole === 'PHD_RESEARCHER'
+              if (user.email) {
+                const upserted = await prisma.user.upsert({
+                  where: { email: user.email },
+                  create: {
+                    id: newUserId,
+                    email: user.email,
+                    mobile: user.mobile,
+                    passwordHash: user.passwordHash,
+                    name: user.name,
+                    roles: user.roles,
+                    activeRole: user.activeRole,
+                    institutionName: user.institution,
+                    department: user.department,
+                    status: 'ACTIVE',
+                    verifiedStudent: assignedRole === 'STUDENT',
+                    verifiedMentor: assignedRole === 'MENTOR',
+                    verifiedResearcher: assignedRole === 'PHD_RESEARCHER'
+                  },
+                  update: {
+                    roles: user.roles,
+                    activeRole: user.activeRole
+                  }
+                });
+                if (upserted && upserted.id) {
+                  user.id = upserted.id;
                 }
-              });
+              }
             } catch (e) {
               console.warn('[Prisma] Auto-provision user notice:', e.message);
             }
