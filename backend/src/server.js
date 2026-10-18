@@ -1160,8 +1160,7 @@ const server = http.createServer(async (req, res) => {
           cooldownSeconds: Math.round(OTP_COOLDOWN_MS / 1000)
         };
 
-        const hasRealProvider = !!(process.env.BREVO_API_KEY || process.env.SMTP_PASS || process.env.RESEND_API_KEY || process.env.SENDGRID_API_KEY);
-        if (dispatchResult.mockOtp || process.env.NODE_ENV !== 'production' || process.env.ENABLE_TEST_OTP_PROVIDER === 'true' || !hasRealProvider) {
+        if (process.env.ENABLE_TEST_OTP_PROVIDER === 'true') {
           responseData.mockOtp = generatedOtp;
         }
 
