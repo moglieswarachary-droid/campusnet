@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
+import { INITIAL_CURRENT_USER } from '../../data/mockData';
+import { User as UserType } from '../../types';
 import {
   Mail, Phone, ArrowRight, ArrowLeft, ShieldCheck,
   CheckCircle2, AlertCircle, RefreshCw, Sparkles,
@@ -138,6 +140,7 @@ export const PortalOtpLoginView: React.FC<PortalOtpLoginViewProps> = ({
   // Channel: EMAIL or SMS
   const [channel, setChannel] = useState<'EMAIL' | 'SMS'>('EMAIL');
   const [emailInput, setEmailInput] = useState('');
+  const [nameInput, setNameInput] = useState('');
   const [selectedCountryCode, setSelectedCountryCode] = useState('+91');
   const [phoneInput, setPhoneInput] = useState('');
 
@@ -315,7 +318,8 @@ export const PortalOtpLoginView: React.FC<PortalOtpLoginViewProps> = ({
         body: JSON.stringify({
           identifier: contact,
           code: fullCode,
-          portal
+          portal,
+          name: nameInput.trim()
         })
       });
 
@@ -347,75 +351,94 @@ export const PortalOtpLoginView: React.FC<PortalOtpLoginViewProps> = ({
       localStorage.setItem('campusnet_token', data.token);
       sessionStorage.setItem('campusnet_session_entered', 'true');
 
-      // Update appropriate AppContext portal session
+      // Update appropriate AppContext portal session with real user identity
       const user = data.user;
-      localStorage.setItem('campusnet_user', JSON.stringify(user));
+      const userName = (user.name && user.name !== 'CampusNet Innovator' ? user.name : nameInput.trim()) || user.name || (user.email ? user.email.split('@')[0] : 'Innovator');
+      
+      const formattedUser: UserType = {
+        ...INITIAL_CURRENT_USER,
+        ...user,
+        id: user.id || `usr-${Date.now()}`,
+        name: userName,
+        email: user.email,
+        mobile: user.mobile || '+91 98765 43210',
+        institution: user.institution || 'Indian Institute of Technology (CampusNet)',
+        department: user.department || 'Computer Science & Engineering',
+        role: portal === 'mentor' ? 'mentor' : portal === 'researcher' ? 'researcher' : portal === 'organization' ? 'organizer' : 'student',
+        activeAppRole: portal === 'mentor' ? 'MENTOR' : portal === 'researcher' ? 'PHD_RESEARCHER' : portal === 'organization' ? 'ORGANIZATION_OWNER' : 'STUDENT',
+        roles: user.roles || [portal.toUpperCase()],
+        verifiedStudent: portal === 'student',
+        status: 'active'
+      };
+
+      localStorage.setItem('campusnet_user', JSON.stringify(formattedUser));
 
       if (portal === 'student') {
-        setCurrentUser(user);
         switchRole('student');
+        setCurrentUser(formattedUser);
       } else if (portal === 'mentor') {
-        setCurrentUser(user);
         switchRole('mentor');
+        setCurrentUser(formattedUser);
       } else if (portal === 'researcher') {
-        setCurrentUser(user);
         switchRole('researcher');
+        setCurrentUser(formattedUser);
       } else if (portal === 'organization' || portal === 'event_manager') {
+        switchRole('organizer');
         const orgSession = {
-          id: user.id || 'org-001',
+          id: formattedUser.id || 'org-001',
           institutionId: 'inst-001',
-          institutionName: user.institution || 'National Engineering Institute',
-          officialEmail: user.email,
-          coordinatorName: user.name,
+          institutionName: formattedUser.institution || 'National Engineering Institute',
+          officialEmail: formattedUser.email,
+          coordinatorName: formattedUser.name,
           designation: portal === 'event_manager' ? 'Event Coordinator' : 'Institutional Lead',
-          mobile: user.mobile || '+91 98765 43213',
-          department: user.department || 'Campus Conclaves',
+          mobile: formattedUser.mobile || '+91 98765 43213',
+          department: formattedUser.department || 'Campus Conclaves',
           state: 'Karnataka',
           district: 'Dakshina Kannada',
           city: 'Surathkal',
           role: 'institution_admin' as const,
           verificationStatus: 'verified' as const,
-          avatar: user.avatar || '',
+          avatar: formattedUser.avatar || '',
           lastLoginAt: new Date().toISOString(),
           eventsCreatedCount: 3
         };
         setCurrentOrganizer(orgSession);
         localStorage.setItem('campusnet_organizer_session', JSON.stringify(orgSession));
-        setCurrentUser(user);
+        setCurrentUser(formattedUser);
       } else if (portal === 'reviewer') {
         const reviewerSession = {
-          id: user.id || 'rev-aicte-001',
-          username: user.email.split('@')[0],
-          email: user.email,
-          name: user.name,
+          id: formattedUser.id || 'rev-aicte-001',
+          username: formattedUser.email.split('@')[0],
+          email: formattedUser.email,
+          name: formattedUser.name,
           role: 'moderator' as const,
-          avatar: user.avatar || '',
+          avatar: formattedUser.avatar || '',
           mfaEnabled: true,
           lastLoginAt: new Date().toISOString()
         };
         setCurrentSuperAdmin(reviewerSession);
         localStorage.setItem('campusnet_admin_session', JSON.stringify(reviewerSession));
-        setCurrentUser(user);
+        setCurrentUser(formattedUser);
       } else if (portal === 'super_admin') {
         const adminSession = {
-          id: user.id || 'adm-001',
-          username: user.email.split('@')[0],
-          email: user.email,
-          name: user.name,
+          id: formattedUser.id || 'adm-001',
+          username: formattedUser.email.split('@')[0],
+          email: formattedUser.email,
+          name: formattedUser.name,
           role: 'super_admin' as const,
-          avatar: user.avatar || '',
+          avatar: formattedUser.avatar || '',
           mfaEnabled: true,
           lastLoginAt: new Date().toISOString()
         };
         setCurrentSuperAdmin(adminSession);
         localStorage.setItem('campusnet_admin_session', JSON.stringify(adminSession));
-        setCurrentUser(user);
+        setCurrentUser(formattedUser);
       }
 
       addToast({
         type: 'success',
         title: 'Authentication Verified 🎉',
-        message: `Welcome, ${user.name}! Identity verified via ${channel === 'EMAIL' ? 'Email' : 'SMS'} OTP.`
+        message: `Welcome, ${formattedUser.name}! Identity verified via ${channel === 'EMAIL' ? 'Email' : 'SMS'} OTP.`
       });
 
       // Navigate to destination
@@ -436,6 +459,7 @@ export const PortalOtpLoginView: React.FC<PortalOtpLoginViewProps> = ({
   // Helper to fill demo persona
   const handleSelectPersona = (persona: DemoPersona) => {
     setErrorMsg('');
+    setNameInput(persona.name);
     if (channel === 'EMAIL') {
       setEmailInput(persona.email);
     } else {
@@ -651,6 +675,26 @@ export const PortalOtpLoginView: React.FC<PortalOtpLoginViewProps> = ({
                       </p>
                     </div>
                   )}
+
+                  {/* Full Name Input for Personalized Account Identity */}
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold text-slate-700">
+                      Your Full Name <span className="text-slate-400 font-normal">(Optional for first-time login)</span>
+                    </label>
+                    <div className="relative">
+                      <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                      <input
+                        type="text"
+                        value={nameInput}
+                        onChange={(e) => setNameInput(e.target.value)}
+                        placeholder="e.g. Moglieswar Achary"
+                        className={`w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 font-medium placeholder:text-slate-400 transition-all outline-hidden ${styles.ringFocus}`}
+                      />
+                    </div>
+                    <p className="text-[11px] text-slate-400">
+                      Appears on your portal badge, dashboard greeting, and verified project records.
+                    </p>
+                  </div>
 
                   {/* Send OTP Button */}
                   <button

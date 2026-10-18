@@ -963,8 +963,8 @@ const server = http.createServer(async (req, res) => {
         return;
       }
 
-      // POST /api/auth/otp/request or /api/auth/otp/send (Passwordless OTP Challenge Dispatch)
-      if ((pathname === '/api/auth/otp/request' || pathname === '/api/auth/otp/send') && req.method === 'POST') {
+      // POST /api/auth/otp/request (Passwordless OTP Challenge Dispatch)
+      if (pathname === '/api/auth/otp/request' && req.method === 'POST') {
         const body = await parseJsonBody(req);
         const { channel, identifier, portal = 'student' } = body;
         const channelLower = (channel || '').toString().toLowerCase().trim();
@@ -1057,7 +1057,12 @@ const server = http.createServer(async (req, res) => {
         }
 
         if (!dispatchResult.success) {
-          console.warn(`[OtpDelivery] ${validChannel} dispatch notice (${dispatchResult.error}): Falling back to on-screen test mode.`);
+          if (dispatchResult.error === 'EMAIL_PROVIDER_UNCONFIGURED' || dispatchResult.error === 'SMS_PROVIDER_UNCONFIGURED') {
+            sendJson(res, 503, { error: 'Authentication delivery service is temporarily unconfigured. Please contact platform support.' });
+            return;
+          }
+          sendJson(res, 500, { error: 'Failed to deliver verification code. Please try again later.' });
+          return;
         }
 
         let existingUser = null;
@@ -1098,7 +1103,7 @@ const server = http.createServer(async (req, res) => {
           cooldownSeconds: Math.round(OTP_COOLDOWN_MS / 1000)
         };
 
-        if (!dispatchResult?.success || process.env.NODE_ENV !== 'production' || process.env.ENABLE_TEST_OTP_PROVIDER === 'true' || !process.env.RESEND_API_KEY) {
+        if (process.env.NODE_ENV !== 'production' || process.env.ENABLE_TEST_OTP_PROVIDER === 'true' || !process.env.RESEND_API_KEY) {
           responseData.mockOtp = generatedOtp;
         }
 
@@ -1106,10 +1111,10 @@ const server = http.createServer(async (req, res) => {
         return;
       }
 
-      // POST /api/auth/otp/verify or /api/auth/otp/confirm (Verification, Atomic Consumption, & Server-Side RBAC Enforcement)
-      if ((pathname === '/api/auth/otp/verify' || pathname === '/api/auth/otp/confirm') && req.method === 'POST') {
+      // POST /api/auth/otp/verify (Verification, Atomic Consumption, & Server-Side RBAC Enforcement)
+      if (pathname === '/api/auth/otp/verify' && req.method === 'POST') {
         const body = await parseJsonBody(req);
-        const { channel, identifier, otp, code, portal = 'student' } = body;
+        const { channel, identifier, otp, code, portal = 'student', name } = body;
         const otpValue = (otp || code || '').toString().trim();
         const channelLower = (channel || '').toString().toLowerCase().trim();
         let validChannel = (channelLower === 'sms' || channelLower === 'phone') ? 'sms' : 'email';
@@ -1249,10 +1254,15 @@ const server = http.createServer(async (req, res) => {
           };
           const assignedRole = portalRoleMap[rawPortal] || 'STUDENT';
           const newUserId = `usr-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 6)}`;
+          const providedName = (name || '').trim();
           const contactName = normalizedContact.includes('@') 
             ? normalizedContact.split('@')[0].replace(/[._-]/g, ' ') 
             : `User ${normalizedContact.slice(-4)}`;
-          const formattedName = contactName.charAt(0).toUpperCase() + contactName.slice(1);
+          const formattedName = providedName || contactName
+            .split(' ')
+            .filter(Boolean)
+            .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+            .join(' ') || 'CampusNet Innovator';
 
           user = {
             id: newUserId,

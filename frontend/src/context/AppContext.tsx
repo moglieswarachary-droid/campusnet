@@ -844,49 +844,76 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const switchRole = (role: RoleType) => {
     setActiveRole(role);
-    if (role === 'student') {
-      setCurrentUser({
-        ...MOCK_STUDENTS[0],
-        roles: ['STUDENT'],
-        activeAppRole: 'STUDENT'
-      });
-    } else if (role === 'mentor') {
-      setCurrentUser({
-        ...MOCK_STUDENTS[0],
-        id: MOCK_MENTORS[0].id,
-        name: MOCK_MENTORS[0].name,
-        email: MOCK_MENTORS[0].email,
-        institution: MOCK_MENTORS[0].institution,
-        role: 'mentor',
-        roles: ['MENTOR'],
-        activeAppRole: 'MENTOR',
-        avatar: MOCK_MENTORS[0].avatar
-      });
-    } else if (role === 'researcher') {
-      setCurrentUser({
-        ...MOCK_STUDENTS[0],
-        id: MOCK_RESEARCHERS[0].id,
-        name: MOCK_RESEARCHERS[0].name,
-        email: MOCK_RESEARCHERS[0].email,
-        institution: MOCK_RESEARCHERS[0].university,
-        role: 'researcher',
-        roles: ['PHD_RESEARCHER'],
-        activeAppRole: 'PHD_RESEARCHER',
-        avatar: MOCK_RESEARCHERS[0].avatar
-      });
-    } else if (role === 'organizer') {
-      setCurrentUser({
-        ...MOCK_STUDENTS[0],
-        id: 'KEC-DEMO-001',
-        name: 'Dr. Anand Kumar',
-        email: 'organizer.demo@campusnet-demo.in',
-        institution: 'Kuppam Engineering College',
-        role: 'organizer',
-        roles: ['ORGANIZATION_OWNER'],
-        activeAppRole: 'ORGANIZATION_OWNER',
-        organizationId: 'KEC-DEMO-001'
-      });
-    }
+    setCurrentUser(prev => {
+      // Check if user is logged in with their own account
+      let savedUser: User | null = null;
+      try {
+        const raw = localStorage.getItem('campusnet_user');
+        if (raw) savedUser = JSON.parse(raw);
+      } catch {
+        // ignore
+      }
+
+      const activeUser = savedUser || prev;
+      const isCustomUser = activeUser && activeUser.email && !activeUser.email.includes('aarav.sharma@nitk.edu.in');
+
+      if (isCustomUser) {
+        const roleUpper = role === 'student' ? 'STUDENT' : role === 'mentor' ? 'MENTOR' : role === 'researcher' ? 'PHD_RESEARCHER' : 'ORGANIZATION_OWNER';
+        const updatedUser: User = {
+          ...activeUser,
+          role,
+          activeAppRole: roleUpper as any,
+          roles: Array.from(new Set([...(activeUser.roles || []), roleUpper])) as any
+        };
+        localStorage.setItem('campusnet_user', JSON.stringify(updatedUser));
+        return updatedUser;
+      }
+
+      if (role === 'student') {
+        return {
+          ...MOCK_STUDENTS[0],
+          roles: ['STUDENT'],
+          activeAppRole: 'STUDENT'
+        };
+      } else if (role === 'mentor') {
+        return {
+          ...MOCK_STUDENTS[0],
+          id: MOCK_MENTORS[0].id,
+          name: MOCK_MENTORS[0].name,
+          email: MOCK_MENTORS[0].email,
+          institution: MOCK_MENTORS[0].institution,
+          role: 'mentor',
+          roles: ['MENTOR'],
+          activeAppRole: 'MENTOR',
+          avatar: MOCK_MENTORS[0].avatar
+        };
+      } else if (role === 'researcher') {
+        return {
+          ...MOCK_STUDENTS[0],
+          id: MOCK_RESEARCHERS[0].id,
+          name: MOCK_RESEARCHERS[0].name,
+          email: MOCK_RESEARCHERS[0].email,
+          institution: MOCK_RESEARCHERS[0].university,
+          role: 'researcher',
+          roles: ['PHD_RESEARCHER'],
+          activeAppRole: 'PHD_RESEARCHER',
+          avatar: MOCK_RESEARCHERS[0].avatar
+        };
+      } else if (role === 'organizer') {
+        return {
+          ...MOCK_STUDENTS[0],
+          id: 'KEC-DEMO-001',
+          name: 'Dr. Anand Kumar',
+          email: 'organizer.demo@campusnet-demo.in',
+          institution: 'Kuppam Engineering College',
+          role: 'organizer',
+          roles: ['ORGANIZATION_OWNER'],
+          activeAppRole: 'ORGANIZATION_OWNER',
+          organizationId: 'KEC-DEMO-001'
+        };
+      }
+      return prev;
+    });
   };
 
   // --- ORGANIZER AUTHENTICATION ---
