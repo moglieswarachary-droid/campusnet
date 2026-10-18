@@ -1233,8 +1233,71 @@ const server = http.createServer(async (req, res) => {
         }
 
         if (!user) {
-          sendJson(res, 404, { error: 'No account is registered with this verified contact. Please check your credentials or register.' });
-          return;
+          const rawPortal = (portal || '').toLowerCase().trim();
+          const isAuthorityPortal = ['reviewer', 'platform-reviewer', 'platform_reviewer', 'super-admin', 'super_admin', 'admin', 'aicte'].includes(rawPortal);
+          if (isAuthorityPortal) {
+            sendJson(res, 404, { error: 'No statutory authority account is registered with this contact identifier.' });
+            return;
+          }
+
+          // Auto-provision verified user for standard portals (student, mentor, faculty, researcher, organization)
+          const portalRoleMap = {
+            student: 'STUDENT',
+            mentor: 'MENTOR',
+            research: 'PHD_RESEARCHER',
+            researcher: 'PHD_RESEARCHER',
+            scholar: 'PHD_RESEARCHER',
+            organization: 'ORGANIZATION_OWNER',
+            organizer: 'ORGANIZATION_OWNER',
+            'event-manager': 'EVENT_MANAGER',
+            event_manager: 'EVENT_MANAGER'
+          };
+          const assignedRole = portalRoleMap[rawPortal] || 'STUDENT';
+          const newUserId = `usr-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 6)}`;
+          const contactName = normalizedContact.includes('@') 
+            ? normalizedContact.split('@')[0].replace(/[._-]/g, ' ') 
+            : `User ${normalizedContact.slice(-4)}`;
+          const formattedName = contactName.charAt(0).toUpperCase() + contactName.slice(1);
+
+          user = {
+            id: newUserId,
+            email: normalizedContact.includes('@') ? normalizedContact : undefined,
+            mobile: !normalizedContact.includes('@') ? normalizedContact : undefined,
+            name: formattedName,
+            roles: [assignedRole],
+            activeRole: assignedRole,
+            institution: 'Indian Institute of Technology (CampusNet)',
+            department: 'Computer Science & Engineering',
+            status: 'ACTIVE',
+            verified: true,
+            passwordHash: 'CampusNet@OtpVerified2026',
+            createdAt: new Date().toISOString()
+          };
+          USERS_DB.push(user);
+
+          if (isPrismaConnected) {
+            try {
+              await prisma.user.create({
+                data: {
+                  id: newUserId,
+                  email: user.email,
+                  mobile: user.mobile,
+                  passwordHash: user.passwordHash,
+                  name: user.name,
+                  roles: user.roles,
+                  activeRole: user.activeRole,
+                  institutionName: user.institution,
+                  department: user.department,
+                  status: 'ACTIVE',
+                  verifiedStudent: assignedRole === 'STUDENT',
+                  verifiedMentor: assignedRole === 'MENTOR',
+                  verifiedResearcher: assignedRole === 'PHD_RESEARCHER'
+                }
+              });
+            } catch (e) {
+              console.warn('[Prisma] Auto-provision user notice:', e.message);
+            }
+          }
         }
 
         // Enforce account status check
