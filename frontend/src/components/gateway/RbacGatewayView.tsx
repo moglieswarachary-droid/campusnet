@@ -155,33 +155,11 @@ export const RbacGatewayView: React.FC = () => {
                 <span className="text-xl font-black tracking-tight text-campus-deep-blue">
                   CampusNet<span className="text-campus-red">+</span>
                 </span>
-                <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-blue-50 text-campus-blue border border-blue-200 hidden sm:inline-block">
-                  RBAC Gateway
-                </span>
               </div>
               <p className="text-[11px] text-slate-500 font-medium hidden md:block">
                 National Academic Networking & Innovation Platform
               </p>
             </div>
-          </div>
-
-          {/* Action Links */}
-          <div className="flex items-center gap-2 sm:gap-3">
-            <button
-              onClick={() => setShowHelpModal(true)}
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-campus-blue px-3 py-1.5 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
-            >
-              <HelpCircle className="w-4 h-4 text-slate-400" />
-              <span className="hidden sm:inline">RBAC Architecture</span>
-            </button>
-
-            <button
-              onClick={() => navigate('/landing')}
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-campus-blue bg-blue-50 hover:bg-blue-100/80 border border-blue-200 px-3.5 py-1.5 rounded-lg transition-colors shadow-xs cursor-pointer"
-            >
-              <Globe className="w-4 h-4" />
-              <span>Explore as Guest</span>
-            </button>
           </div>
         </div>
       </header>
@@ -279,42 +257,15 @@ export const RbacGatewayView: React.FC = () => {
                 </div>
 
                 {/* Dual Action Buttons (Sign In & Register) Aligned to Bottom */}
-                <div className="space-y-2.5 pt-2 border-t border-slate-100">
-                  {/* Primary: Sign In with OTP */}
+                {/* Action Button: Sign In */}
+                <div className="pt-2 border-t border-slate-100">
                   <button
                     onClick={() => navigate(portal.loginRoute)}
                     className={`w-full py-2.5 px-4 rounded-xl font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition-all duration-200 cursor-pointer ${portal.btnBg}`}
                   >
-                    <Mail className="w-3.5 h-3.5" />
-                    <span>{portal.signInAction}</span>
+                    <span>Sign In</span>
                     <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
                   </button>
-
-                  {/* Secondary: Register or Role Badge */}
-                  {portal.registerRoute ? (
-                    <button
-                      onClick={() => navigate(portal.registerRoute)}
-                      className="w-full py-2 px-4 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 transition-all duration-200 shadow-2xs cursor-pointer"
-                    >
-                      <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                      <span>{portal.signUpAction}</span>
-                    </button>
-                  ) : (
-                    <div className="text-[11px] font-medium text-slate-400 text-center py-1.5 bg-slate-50 rounded-xl border border-dashed border-slate-200">
-                      <span>{portal.signUpAction}</span>
-                    </div>
-                  )}
-
-                  {portal.forgotRoute && (
-                    <div className="flex items-center justify-center text-[11px] text-slate-500 pt-1">
-                      <button
-                        onClick={() => navigate(portal.forgotRoute)}
-                        className="hover:text-slate-800 hover:underline cursor-pointer"
-                      >
-                        Forgot password?
-                      </button>
-                    </div>
-                  )}
                 </div>
               </div>
             );
