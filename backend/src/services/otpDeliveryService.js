@@ -116,7 +116,52 @@ export async function sendOtpEmail({ to, otp, purpose = 'LOGIN', portal = 'stude
     }
   }
 
-  // 2. Resend Transactional Email Provider
+  // 2. Brevo (Sendinblue) Provider - Free 300 emails/day, no custom domain required
+  if ((provider === 'brevo' || process.env.BREVO_API_KEY) && process.env.BREVO_API_KEY) {
+    try {
+      const senderEmail = process.env.EMAIL_FROM_ADDRESS || process.env.SMTP_USER || 'campusnetofficial.in@gmail.com';
+      const senderName = process.env.EMAIL_FROM_NAME || 'CampusNet+ Security';
+      const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+        method: 'POST',
+        signal: AbortSignal.timeout(5000),
+        headers: {
+          'api-key': process.env.BREVO_API_KEY,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+          sender: { name: senderName, email: senderEmail },
+          to: [{ email: normalizedEmail }],
+          subject: `Your CampusNet verification code: ${otp}`,
+          htmlContent: `
+            <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 520px; margin: auto; padding: 28px; border: 1px solid #e2e8f0; border-radius: 16px; background-color: #ffffff;">
+              <div style="margin-bottom: 20px;">
+                <span style="font-size: 20px; font-weight: 900; color: #1e3a8a;">CampusNet<span style="color: #ef4444;">+</span></span>
+              </div>
+              <h2 style="color: #0f172a; margin-top: 0; font-size: 18px;">Login Verification Code</h2>
+              <p style="color: #475569; font-size: 14px; line-height: 1.5;">You requested a one-time passcode to sign in to the <strong>${portal.toUpperCase()}</strong> portal.</p>
+              <div style="background: #f8fafc; padding: 20px; border-radius: 12px; text-align: center; margin: 24px 0; border: 1px solid #cbd5e1;">
+                <span style="font-size: 36px; font-weight: 800; letter-spacing: 8px; color: #0f172a; font-family: monospace;">${otp}</span>
+              </div>
+              <p style="color: #64748b; font-size: 12px; margin-bottom: 0;">This code is confidential and expires in 5 minutes. If you did not make this request, you can safely ignore this email.</p>
+            </div>
+          `
+        })
+      });
+
+      if (response.ok) {
+        console.log(`[OtpDelivery:Email] ✅ Brevo successfully delivered OTP to ${normalizedEmail}`);
+        return { success: true, provider: 'brevo' };
+      }
+
+      const errText = await response.text();
+      console.warn(`[OtpDelivery:Email] Brevo API notice (${response.status}):`, errText);
+    } catch (err) {
+      console.warn('[OtpDelivery:Email] Brevo delivery notice:', err.message);
+    }
+  }
+
+  // 3. Resend Transactional Email Provider
   if (provider === 'resend' && process.env.RESEND_API_KEY) {
     try {
       const fromAddress = process.env.EMAIL_FROM || 'CampusNet Auth <onboarding@resend.dev>';
