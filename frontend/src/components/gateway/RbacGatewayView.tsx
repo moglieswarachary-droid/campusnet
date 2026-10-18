@@ -19,124 +19,94 @@ export const RbacGatewayView: React.FC = () => {
     {
       id: 'student',
       title: 'Student / Innovator',
-      badge: 'Level 1: Undergrad & PG',
+      subtitle: 'Undergraduates & Innovators',
       icon: GraduationCap,
       color: 'blue',
       cardBg: 'from-blue-50/50 to-white hover:border-blue-300',
       iconBg: 'bg-blue-600 text-white shadow-blue-500/20',
-      badgeBg: 'bg-blue-100 text-blue-800 border-blue-200',
       btnBg: 'bg-campus-blue hover:bg-campus-deep-blue text-white shadow-blue-600/20',
-      description: 'Discover opportunities, build projects, join multidisciplinary teams, and build a verifiable portfolio.',
+      description: 'Join hackathon teams, build projects, connect with mentors, and earn verified credentials.',
       features: [
-        'Team project workspaces & hackathon registrations',
-        'Direct 1-on-1 mentorship requests & chat',
-        'Verifiable digital innovation transcripts & credentials',
-        'Peer collaboration across 500+ colleges nationwide'
+        'Team workspaces & hackathons',
+        '1-on-1 faculty mentor guidance',
+        'Verifiable digital credentials'
       ],
-      signInAction: 'Sign In with OTP',
-      signUpAction: 'Create Student Account',
-      loginRoute: '/student/login',
-      registerRoute: '/student/register',
-      forgotRoute: '/student/forgot-password'
+      loginRoute: '/student/login'
     },
     {
       id: 'mentor',
       title: 'Faculty / Mentor',
-      badge: 'Level 2: Professors & Guides',
+      subtitle: 'Professors & Guides',
       icon: ShieldCheck,
       color: 'amber',
       cardBg: 'from-amber-50/50 to-white hover:border-amber-300',
       iconBg: 'bg-amber-600 text-white shadow-amber-500/20',
-      badgeBg: 'bg-amber-100 text-amber-800 border-amber-200',
       btnBg: 'bg-amber-600 hover:bg-amber-700 text-white shadow-amber-600/20',
-      description: 'Guide student teams, review project milestones, evaluate hackathons, and support academic growth.',
+      description: 'Review student milestones, guide innovation teams, and endorse collegiate solutions.',
       features: [
-        'Inbox for project guidance & mentorship requests',
-        'Milestone evaluations & rubric grading',
-        'Issue tamper-proof mentorship certificates',
-        'Curate team recommendations for national hackathons'
+        'Mentorship requests & guidance',
+        'Milestone evaluations & grading',
+        'Tamper-proof certificate issuing'
       ],
-      signInAction: 'Sign In with OTP',
-      signUpAction: 'Join as Faculty Mentor',
-      loginRoute: '/mentor/login',
-      registerRoute: '/mentor/register',
-      forgotRoute: '/mentor/forgot-password'
+      loginRoute: '/mentor/login'
     },
     {
       id: 'researcher',
       title: 'PhD Scholar / Researcher',
-      badge: 'Level 3: Doctoral Scholars',
+      subtitle: 'Doctoral Scholars & Fellows',
       icon: BookOpen,
       color: 'purple',
       cardBg: 'from-purple-50/50 to-white hover:border-purple-300',
       iconBg: 'bg-purple-600 text-white shadow-purple-500/20',
-      badgeBg: 'bg-purple-100 text-purple-800 border-purple-200',
       btnBg: 'bg-purple-700 hover:bg-purple-800 text-white shadow-purple-700/20',
-      description: 'Publish research whitepapers, recruit student RAs, discover collaborators, and track scientific calls.',
+      description: 'Publish open preprints, recruit student RAs, and collaborate across university labs.',
       features: [
-        'Publish pre-prints & open research whitepapers',
-        'Recruit undergraduate Research Assistants (RAs)',
-        'Conference presentation tracking & peer discussions',
-        'ORCID iD & Vidwan verified scientific indexing'
+        'Publish preprints & datasets',
+        'Recruit undergraduate RAs',
+        'Cross-lab peer collaboration'
       ],
-      signInAction: 'Sign In with OTP',
-      signUpAction: 'Onboard as PhD Scholar',
-      loginRoute: '/research/login',
-      registerRoute: '/researcher/register',
-      forgotRoute: '/researcher/forgot-password'
+      loginRoute: '/research/login'
     },
     {
       id: 'organization',
       title: 'Institution / College',
-      badge: 'Level 3: Universities & Affiliated',
+      subtitle: 'Universities & Campuses',
       icon: Building2,
       color: 'emerald',
       cardBg: 'from-emerald-50/50 to-white hover:border-emerald-300',
       iconBg: 'bg-emerald-600 text-white shadow-emerald-500/20',
-      badgeBg: 'bg-emerald-100 text-emerald-800 border-emerald-200',
       btnBg: 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20',
-      description: 'Verify your institution with AISHE/UGC credentials, host academic events, and oversee campus chapters.',
+      description: 'Manage campus chapters, verify institutional status, and oversee regional hackathons.',
       features: [
-        'AISHE / UGC institution verification & audit status',
-        'End-to-end hackathon & symposium hosting workflow',
-        'Institutional coordinator management & club delegation',
-        'Automated verifiable participation certificates'
+        'AISHE / institutional verification',
+        'Host conclaves & hackathons',
+        'Club & coordinator governance'
       ],
-      signInAction: 'Sign In with OTP',
-      signUpAction: 'Register Your Institution',
-      loginRoute: '/organization/login',
-      registerRoute: '/organization/register',
-      forgotRoute: '/organization/forgot-password'
+      loginRoute: '/organization/login'
     },
     {
       id: 'event_manager',
       title: 'Event / Conclave Lead',
-      badge: 'Level 2: Hackathon Leads',
+      subtitle: 'Hackathon & Event Leads',
       icon: Calendar,
       color: 'cyan',
       cardBg: 'from-cyan-50/50 to-white hover:border-cyan-300',
       iconBg: 'bg-cyan-600 text-white shadow-cyan-500/20',
-      badgeBg: 'bg-cyan-100 text-cyan-800 border-cyan-200',
       btnBg: 'bg-cyan-700 hover:bg-cyan-800 text-white shadow-cyan-700/20',
-      description: 'Host state and national hackathons, manage registrations, track live QR attendance, and coordinate judging.',
+      description: 'Coordinate hackathon submissions, live QR attendance check-ins, and judging rubrics.',
       features: [
-        'State & National hackathon host consoles',
-        'Participant approvals & live QR attendance scanner',
-        'Judge rubric scoring & automated winner rankings',
-        'Verifiable blockchain-ready certificate dispatch'
+        'Host consoles & team rosters',
+        'Live QR attendance scanner',
+        'Judging rubrics & award rankings'
       ],
-      signInAction: 'Sign In with OTP',
-      signUpAction: 'Pre-Provisioned Role',
-      loginRoute: '/event-manager/login',
-      registerRoute: undefined,
-      forgotRoute: undefined
+      loginRoute: '/event-manager/login'
     }
   ];
 
   const filteredPortals = portals.filter(p => 
     p.title.toLowerCase().includes(searchFilter.toLowerCase()) ||
     p.description.toLowerCase().includes(searchFilter.toLowerCase()) ||
-    p.badge.toLowerCase().includes(searchFilter.toLowerCase())
+    p.subtitle.toLowerCase().includes(searchFilter.toLowerCase())
   );
 
   return (
@@ -179,7 +149,7 @@ export const RbacGatewayView: React.FC = () => {
           </h1>
 
           <p className="text-sm sm:text-base text-slate-600 max-w-2xl mx-auto leading-relaxed">
-            Choose your authorized institutional portal. Sign in seamlessly with passwordless <strong>Email OTP</strong> or <strong>SMS Mobile OTP</strong>. Access permissions are strictly server-enforced by your verified academic credentials.
+            Choose your authorized institutional portal. Sign in seamlessly with passwordless <strong>Email OTP</strong>. Access permissions are strictly server-enforced by your verified academic credentials.
           </p>
 
           {/* Quick Filter Bar */}
@@ -213,55 +183,51 @@ export const RbacGatewayView: React.FC = () => {
             return (
               <div
                 key={portal.id}
-                className={`bg-gradient-to-b ${portal.cardBg} rounded-2xl border border-slate-200 p-6 flex flex-col justify-between shadow-xs hover:shadow-xl transition-all duration-300 hover:-translate-y-1 relative group`}
+                className={`bg-gradient-to-b ${portal.cardBg} rounded-2xl border border-slate-200/90 p-5 sm:p-6 flex flex-col justify-between shadow-xs hover:shadow-xl transition-all duration-300 hover:-translate-y-1 relative group`}
               >
                 <div>
-                  {/* Top Header with Icon and Badge */}
-                  <div className="flex items-start justify-between gap-3 mb-4">
-                    <div className={`w-12 h-12 rounded-xl ${portal.iconBg} flex items-center justify-center shadow-md`}>
-                      <Icon className="w-6 h-6" />
+                  {/* Top Header with Portal Icon */}
+                  <div className="flex items-center justify-between mb-3.5">
+                    <div className={`w-11 h-11 sm:w-12 sm:h-12 rounded-xl ${portal.iconBg} flex items-center justify-center shadow-md`}>
+                      <Icon className="w-5 h-5 sm:w-6 sm:h-6" />
                     </div>
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${portal.badgeBg}`}>
-                      {portal.badge}
-                    </span>
                   </div>
 
-                  {/* Title & Description Container with Min-Height for Alignment */}
-                  <div className="min-h-[58px] mb-2">
-                    <h3 className="text-lg font-bold text-campus-deep-blue group-hover:text-campus-blue transition-colors leading-snug">
+                  {/* Title & Friendly Role Description */}
+                  <div className="mb-2">
+                    <h3 className="text-base sm:text-lg font-extrabold text-campus-deep-blue group-hover:text-campus-blue transition-colors leading-snug">
                       {portal.title}
                     </h3>
-                    <p className="text-xs text-slate-500 font-medium mt-0.5">
-                      {portal.loginRoute}
+                    <p className="text-xs text-slate-500 font-semibold mt-0.5">
+                      {portal.subtitle}
                     </p>
                   </div>
 
-                  <p className="text-xs text-slate-600 leading-relaxed mb-4 min-h-[48px]">
+                  <p className="text-xs text-slate-600 leading-relaxed mb-3.5">
                     {portal.description}
                   </p>
 
-                  {/* Feature Highlights with Min-Height for Consistent Baseline */}
-                  <div className="space-y-2 border-t border-slate-100 pt-3 mb-6 min-h-[148px]">
+                  {/* Short Workspace Capabilities */}
+                  <div className="space-y-1.5 border-t border-slate-100 pt-3 mb-4">
                     <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
                       Workspace Capabilities:
                     </p>
                     <ul className="space-y-1.5">
                       {portal.features.map((feat, i) => (
-                        <li key={i} className="flex items-start gap-2 text-[11px] text-slate-600">
-                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
-                          <span className="leading-snug">{feat}</span>
+                        <li key={i} className="flex items-center gap-2 text-[11px] sm:text-xs text-slate-700 font-medium">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                          <span className="leading-tight">{feat}</span>
                         </li>
                       ))}
                     </ul>
                   </div>
                 </div>
 
-                {/* Dual Action Buttons (Sign In & Register) Aligned to Bottom */}
-                {/* Action Button: Sign In */}
+                {/* Friendly & Compact Action Button for Mobile and Laptop */}
                 <div className="pt-2 border-t border-slate-100">
                   <button
                     onClick={() => navigate(portal.loginRoute)}
-                    className={`w-full py-2.5 px-4 rounded-xl font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition-all duration-200 cursor-pointer ${portal.btnBg}`}
+                    className={`w-full py-2 sm:py-2.5 px-4 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-xs hover:shadow-md transition-all duration-200 cursor-pointer active:scale-[0.99] ${portal.btnBg}`}
                   >
                     <span>Sign In</span>
                     <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
