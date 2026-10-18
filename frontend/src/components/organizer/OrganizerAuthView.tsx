@@ -7,122 +7,14 @@ import {
 } from 'lucide-react';
 
 import { OrganizationRegistrationWizard } from './OrganizationRegistrationWizard';
-import { PortalOtpLoginView, DemoPersona } from '../auth/PortalOtpLoginView';
+import { PortalOtpLoginView } from '../auth/PortalOtpLoginView';
 import { Calendar } from 'lucide-react';
-
-const ORG_DEMO_PERSONAS: DemoPersona[] = [
-  {
-    name: 'TechFest Conclave Lead',
-    roleDescription: 'National Conclaves & Hackathons (NITK)',
-    email: 'techfest@nitk.edu.in',
-    mobile: '+91 98765 43213',
-    badge: 'Institution Org'
-  },
-  {
-    name: 'Dr. Anand Kumar',
-    roleDescription: 'Dean of Innovation (Kuppam Engg)',
-    email: 'organizer.demo@campusnet-demo.in',
-    mobile: '+91 98765 43223',
-    badge: 'Dean / Coordinator'
-  }
-];
-
-const EVENT_MGR_DEMO_PERSONAS: DemoPersona[] = [
-  {
-    name: 'Neha Events',
-    roleDescription: 'National Hackathons & Symposia Lead (NITK)',
-    email: 'neha.events@nitk.edu.in',
-    mobile: '+91 98765 43214',
-    badge: 'Event Manager'
-  },
-  {
-    name: 'Aarav Sharma',
-    roleDescription: 'Student & Event Lead (Dual Role)',
-    email: 'aarav.sharma@nitk.edu.in',
-    mobile: '+91 98765 43210',
-    badge: 'Event Manager'
-  }
-];
 
 interface Props {
   initialMode?: 'login' | 'register';
 }
 
-interface DemoCollegeOption {
-  id: string;
-  institutionId: string;
-  name: string;
-  shortName: string;
-  state: string;
-  district: string;
-  email: string;
-  coordinator: string;
-  designation: string;
-  categoryTag: string;
-}
 
-const FIVE_DEMO_COLLEGES: DemoCollegeOption[] = [
-  {
-    id: 'KEC-DEMO-001',
-    institutionId: 'inst-kec-001',
-    name: 'Kuppam Engineering College',
-    shortName: 'KEC Kuppam',
-    state: 'Andhra Pradesh',
-    district: 'Chittoor',
-    email: 'organizer.demo@campusnet-demo.in',
-    coordinator: 'Dr. Anand Kumar',
-    designation: 'Dean of Innovation & Hackathons',
-    categoryTag: 'Autonomous Engineering'
-  },
-  {
-    id: 'IITB-ORG-002',
-    institutionId: 'inst-001',
-    name: 'IIT Bombay',
-    shortName: 'IIT Bombay',
-    state: 'Maharashtra',
-    district: 'Mumbai',
-    email: 'techfest.coord@iitb.ac.in',
-    coordinator: 'Rohan Varma',
-    designation: 'Convener - National Techfest',
-    categoryTag: 'Institute of National Importance'
-  },
-  {
-    id: 'CNU-DEMO-003',
-    institutionId: 'inst-cnu-002',
-    name: 'Indian Institute of Science (IISc)',
-    shortName: 'IISc Bengaluru',
-    state: 'Karnataka',
-    district: 'Bengaluru',
-    email: 'iisc.events@campusnet-demo.in',
-    coordinator: 'Prof. Sudhir Sen',
-    designation: 'Convener Academic Conclaves',
-    categoryTag: 'Premier Research Institute'
-  },
-  {
-    id: 'NITW-DEMO-004',
-    institutionId: 'inst-nitw-004',
-    name: 'NIT Warangal',
-    shortName: 'NIT Warangal',
-    state: 'Telangana',
-    district: 'Warangal',
-    email: 'nitw.techno@campusnet-demo.in',
-    coordinator: 'Dr. K. Rajeshwar',
-    designation: 'Dean of Student Affairs',
-    categoryTag: 'National Institute of Technology'
-  },
-  {
-    id: 'ANNA-DEMO-005',
-    institutionId: 'inst-anna-005',
-    name: 'Anna University (CEG Campus)',
-    shortName: 'Anna Univ Chennai',
-    state: 'Tamil Nadu',
-    district: 'Chennai',
-    email: 'annauniv.conclave@campusnet-demo.in',
-    coordinator: 'Dr. Priya Sundaram',
-    designation: 'Convener, National Conclave',
-    categoryTag: 'State Technical University'
-  }
-];
 
 export const OrganizerAuthView: React.FC<Props> = ({ initialMode }) => {
   const { organizerLogin } = useApp();
@@ -150,7 +42,6 @@ export const OrganizerAuthView: React.FC<Props> = ({ initialMode }) => {
     if (initialMode) setMode(initialMode);
   }, [initialMode]);
 
-  const [selectedDemoId, setSelectedDemoId] = useState<string>('KEC-DEMO-001');
   const [emailOrId, setEmailOrId] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -170,25 +61,9 @@ export const OrganizerAuthView: React.FC<Props> = ({ initialMode }) => {
     );
   }
 
-  const [loggingInCollegeId, setLoggingInCollegeId] = useState<string | null>(null);
-
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     organizerLogin(emailOrId, password);
-  };
-
-  const handleSelectDemoCollege = (college: DemoCollegeOption, autoLogin = true) => {
-    setSelectedDemoId(college.id);
-    setEmailOrId(college.email);
-    setPassword('');
-
-    if (autoLogin) {
-      setLoggingInCollegeId(college.id);
-      const success = organizerLogin(college.email);
-      if (!success) {
-        setLoggingInCollegeId(null);
-      }
-    }
   };
 
   const handleResetSubmit = (e: React.FormEvent) => {
@@ -211,7 +86,6 @@ export const OrganizerAuthView: React.FC<Props> = ({ initialMode }) => {
           portalIcon={Calendar}
           accentColor="cyan"
           onFallbackPassword={() => setShowPasswordLogin(true)}
-          demoPersonas={EVENT_MGR_DEMO_PERSONAS}
         />
       );
     }
@@ -227,7 +101,6 @@ export const OrganizerAuthView: React.FC<Props> = ({ initialMode }) => {
         registerUrl="/organization/register"
         registerLabel="Register Your Institution →"
         onFallbackPassword={() => setShowPasswordLogin(true)}
-        demoPersonas={ORG_DEMO_PERSONAS}
       />
     );
   }
@@ -345,125 +218,7 @@ export const OrganizerAuthView: React.FC<Props> = ({ initialMode }) => {
             </button>
           </div>
 
-          {/* 5 DEMO LOGINS SELECTOR CARD (Clean White / Frosted Blur) */}
-          <div className="bg-white/85 backdrop-blur-xl rounded-3xl p-4 sm:p-5 border border-amber-200 shadow-warm-md space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-xs font-bold text-amber-950">
-                <Sparkles className="w-4 h-4 text-amber-600" />
-                <span>5 Seeded Verified Colleges (1-Click Demo Login)</span>
-              </div>
-              <span className="text-[10px] font-mono font-bold bg-amber-100 text-amber-800 border border-amber-300 px-2 py-0.5 rounded-full">
-                5 COLLEGES AVAILABLE
-              </span>
-            </div>
 
-            <p className="text-[11px] text-slate-600">
-              Click any of the 5 institutions below to instantly prefill credentials or log in with that college:
-            </p>
-
-            {/* 5 Colleges Grid - 1-Click Login Enabled */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 pt-1">
-              {FIVE_DEMO_COLLEGES.map((college) => {
-                const isSelected = selectedDemoId === college.id;
-                const isLoggingIn = loggingInCollegeId === college.id;
-
-                return (
-                  <div
-                    key={college.id}
-                    onClick={() => handleSelectDemoCollege(college, true)}
-                    className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer relative group flex flex-col justify-between hover:shadow-warm-md hover:-translate-y-0.5 active:translate-y-0 ${
-                      isSelected
-                        ? 'border-amber-500 bg-amber-50/95 shadow-warm-xs ring-2 ring-amber-400/50'
-                        : 'border-slate-200 bg-white/80 hover:bg-white hover:border-amber-300'
-                    }`}
-                  >
-                    <div>
-                      {/* Top State & ID Badge */}
-                      <div className="flex items-center justify-between gap-1 mb-1.5">
-                        <span className="text-[10px] font-bold text-slate-700 bg-slate-100 border border-slate-200/80 px-2 py-0.5 rounded-md">
-                          {college.state}
-                        </span>
-                        <span className="text-[9px] font-mono font-bold text-amber-800 bg-amber-100/70 px-1.5 py-0.5 rounded border border-amber-200">
-                          {college.id}
-                        </span>
-                      </div>
-
-                      {/* Institution Name */}
-                      <div className="font-extrabold text-slate-900 text-sm leading-tight group-hover:text-amber-800 transition-colors" title={college.name}>
-                        {college.shortName}
-                      </div>
-
-                      {/* Coordinator & Designation */}
-                      <div className="text-[11px] font-semibold text-slate-700 truncate mt-1">
-                        {college.coordinator}
-                      </div>
-                      <div className="text-[10px] text-slate-500 truncate">
-                        {college.designation}
-                      </div>
-
-                      {/* Official Login Credentials Box */}
-                      <div className="mt-2.5 p-2 rounded-xl bg-slate-50/90 border border-slate-200/70 text-[10px] font-mono space-y-1 text-slate-600">
-                        <div className="truncate flex items-center gap-1.5">
-                          <span className="text-slate-400 font-sans text-[9px] uppercase font-bold tracking-wider">Email:</span>
-                          <span className="text-slate-800 font-semibold truncate">{college.email}</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-slate-400 font-sans text-[9px] uppercase font-bold tracking-wider">Access:</span>
-                          <span className="text-emerald-700 font-sans font-bold text-[9px] uppercase tracking-wider bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
-                            1-Click Verified Sign-In
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* 1-Click Action Buttons */}
-                    <div className="mt-3 pt-2.5 border-t border-slate-200/70 space-y-1.5">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleSelectDemoCollege(college, true);
-                        }}
-                        disabled={isLoggingIn}
-                        className="w-full py-1.5 px-3 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-extrabold text-xs flex items-center justify-center gap-1.5 shadow-sm transition-all group-hover:scale-[1.02] cursor-pointer"
-                      >
-                        {isLoggingIn ? (
-                          <>
-                            <div className="w-3.5 h-3.5 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
-                            <span>Logging In...</span>
-                          </>
-                        ) : (
-                          <>
-                            <Sparkles className="w-3.5 h-3.5 fill-slate-950 text-slate-950" />
-                            <span>1-Click Login Now</span>
-                            <ArrowRight className="w-3 h-3 text-slate-950" />
-                          </>
-                        )}
-                      </button>
-
-                      <div className="flex items-center justify-between text-[10px] text-slate-400 pt-0.5">
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleSelectDemoCollege(college, false);
-                          }}
-                          className="hover:text-slate-700 hover:underline transition-colors"
-                        >
-                          Prefill form only
-                        </button>
-                        {isSelected && (
-                          <span className="text-amber-700 font-bold flex items-center gap-0.5">
-                            <Check className="w-2.5 h-2.5" /> Active in form
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
 
           {/* MAIN LOGIN CARD (Frosted Glass Blur on Pure White Container) */}
           <div className="bg-white/90 backdrop-blur-xl rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-warm-xl space-y-5">

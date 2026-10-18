@@ -18,10 +18,20 @@ export const ResearcherSidebar: React.FC<ResearcherSidebarProps> = ({ onCloseMob
   const location = useLocation();
   const { currentUser, researchers, setIsAIModalOpen } = useApp();
 
-  const currentScholar = researchers.find(r =>
-    (currentUser?.email && r.email === currentUser.email) ||
-    (currentUser?.name && r.name.toLowerCase().includes(currentUser.name.toLowerCase().split(' ')[0] || ''))
-  ) || researchers[0];
+  const currentScholar: any = researchers.find(r =>
+    (currentUser?.email && r.email?.toLowerCase() === currentUser.email.toLowerCase()) ||
+    (currentUser?.id && r.id === currentUser.id)
+  ) || {
+    id: currentUser?.id || 'res-current',
+    name: currentUser?.name || 'Doctoral Researcher',
+    email: currentUser?.email || '',
+    department: currentUser?.department || 'Doctoral Studies',
+    university: currentUser?.institution || 'CampusNet Research Network',
+    institution: currentUser?.institution || 'CampusNet Research Network',
+    avatar: currentUser?.avatar || '',
+    publicationsCount: 0,
+    verifiedResearcher: true
+  };
 
   const navigationGroups = [
     {

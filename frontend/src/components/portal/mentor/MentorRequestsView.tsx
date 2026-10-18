@@ -13,7 +13,18 @@ export const MentorRequestsView: React.FC = () => {
     currentUser, mentors, addToast
   } = useApp();
 
-  const currentMentor = mentors.find(m => m.email === currentUser?.email) || mentors[0];
+  const currentMentor = mentors.find(m =>
+    (currentUser?.email && m.email?.toLowerCase() === currentUser.email.toLowerCase()) ||
+    (currentUser?.id && m.id === currentUser.id)
+  ) || {
+    id: currentUser?.id || 'mnt-current',
+    name: currentUser?.name || 'Faculty Mentor',
+    email: currentUser?.email || '',
+    designation: 'Faculty Mentor',
+    department: currentUser?.department || 'Engineering',
+    institution: currentUser?.institution || 'Academic Network',
+    avatar: currentUser?.avatar || ''
+  };
 
   const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'accepted' | 'info_requested' | 'declined'>('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -23,10 +34,11 @@ export const MentorRequestsView: React.FC = () => {
   const [modalAction, setModalAction] = useState<'accept' | 'decline' | 'info'>('accept');
   const [feedbackNote, setFeedbackNote] = useState('');
 
-  // Filter requests for this mentor
+  // Filter requests strictly for this mentor
   const myRequests = mentorshipRequests.filter(r =>
     r.mentorId === currentMentor.id ||
-    (currentUser?.name && r.mentorName.toLowerCase().includes(currentUser.name.toLowerCase().split(' ')[1] || ''))
+    (currentMentor.email && (r as any).mentorEmail?.toLowerCase() === currentMentor.email.toLowerCase()) ||
+    (Boolean(r.mentorName && currentMentor.name) && r.mentorName.toLowerCase() === currentMentor.name.toLowerCase())
   );
 
   const pendingCount = myRequests.filter(r => r.status === 'pending').length;

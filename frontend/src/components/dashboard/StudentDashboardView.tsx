@@ -6,7 +6,7 @@ import {
   FolderKanban, Sparkles, ChevronRight, Activity,
   Clock, Video, AlertCircle, CheckCircle2, ArrowRight,
   Search, BookOpen, Compass, QrCode, Edit3, MessageSquare,
-  TrendingUp, Bell, Check, Sparkle
+  TrendingUp, Bell, Check, Sparkle, Plus
 } from 'lucide-react';
 import { StudentProfileEditModal } from './StudentProfileEditModal';
 import { LetterAvatar } from '../common/LetterAvatar';
@@ -22,25 +22,21 @@ export const StudentDashboardView: React.FC = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [completedPriorities, setCompletedPriorities] = useState<string[]>([]);
 
-  const activeProject = projects[0] || {
-    id: 'proj-01',
-    title: 'AgriVision: Autonomous Micro-Drones',
-    domain: 'Agriculture & IoT',
-    progressPercent: 82,
-    techStack: ['PyTorch', 'ROS 2', 'FastAPI', 'Embedded C++']
-  };
+  const userTeams = teams.filter(t =>
+    (currentUser?.email && (t as any).leaderEmail?.toLowerCase() === currentUser.email.toLowerCase()) ||
+    (currentUser?.id && t.leaderId === currentUser.id) ||
+    (Boolean(currentUser?.name && t.leaderName) && t.leaderName.toLowerCase() === currentUser.name.toLowerCase()) ||
+    (t.members && t.members.some(m => m.userId === currentUser?.id || (currentUser?.email && m.email?.toLowerCase() === currentUser.email.toLowerCase()) || (Boolean(currentUser?.name && m.name) && m.name.toLowerCase() === currentUser.name.toLowerCase())))
+  );
+  const activeTeam = userTeams[0] || null;
 
-  const activeTeam = teams[0] || {
-    id: 'team-01',
-    name: 'Team AgriVision',
-    domain: 'Agriculture & Drone Robotics',
-    projectName: 'Autonomous Crop Spraying & Spectral Disease Detection',
-    members: [
-      { userId: 'u1', name: 'Aarav Sharma', role: 'Team Lead', avatar: '' },
-      { userId: 'u2', name: 'Sneha Patel', role: 'Computer Vision', avatar: '' },
-      { userId: 'u3', name: 'Karthik Raja', role: 'Embedded Firmware', avatar: '' }
-    ]
-  };
+  const userProjects = projects.filter(p =>
+    (currentUser?.email && (p as any).authorEmail?.toLowerCase() === currentUser.email.toLowerCase()) ||
+    (currentUser?.id && (p as any).authorId === currentUser.id) ||
+    (Boolean(activeTeam && p.teamId === activeTeam.id)) ||
+    ((p as any).collaborators && (p as any).collaborators.some((c: any) => c.email?.toLowerCase() === currentUser?.email?.toLowerCase() || c.id === currentUser?.id))
+  );
+  const activeProject = userProjects[0] || null;
 
   // Calculate actual profile completion percentage from user fields
   const calculateProfileCompletion = () => {
@@ -57,55 +53,66 @@ export const StudentDashboardView: React.FC = () => {
 
   const profileCompletion = calculateProfileCompletion();
 
-  // Unified "Today's Priorities" Action List
+  // Dynamic priorities based on real user state
   const priorityItems = [
-    {
-      id: 'prio-meeting',
-      title: 'Milestone #3 Review with Dr. Arvind Rao',
-      category: 'Meeting',
-      time: 'Today, 04:30 PM IST',
-      priority: 'Urgent',
-      priorityColor: 'bg-red-50 text-red-700 border-red-200',
-      description: 'Review TensorRT sub-millisecond latency benchmarks and motor cut-off watchdog before field trial.',
-      actionText: 'Enter Meeting Room',
-      actionType: 'meeting',
-      action: () => startVideoMeeting(activeTeam.id)
-    },
-    {
-      id: 'prio-assignment',
-      title: 'ResNet-50 Convolutional Backprop Assignment',
-      category: 'Academics',
-      time: 'Due April 22 (6 days left)',
+    ...(profileCompletion < 100 ? [{
+      id: 'prio-profile',
+      title: 'Complete Your Academic Profile & Verify Bonafide',
+      category: 'Profile',
+      time: 'Recommended',
       priority: 'High',
       priorityColor: 'bg-amber-50 text-amber-700 border-amber-200',
-      description: 'Implement custom CUDA backpropagation kernel for 2D convolution in CS401 Deep Learning.',
-      actionText: 'Open Assignment',
-      actionType: 'navigate',
-      action: () => navigate('/student/academics')
-    },
-    {
-      id: 'prio-milestone',
-      title: 'Autonomous Spray Flight Test Milestone',
-      category: 'Milestone',
-      time: 'Due in 8 days',
+      description: 'Fill in your department, student roll number, skills, and bio to enable mentor matching.',
+      actionText: 'Complete Profile',
+      actionType: 'profile',
+      action: () => setIsEditModalOpen(true)
+    }] : []),
+    ...(activeTeam ? [{
+      id: 'prio-sync',
+      title: `Team Sprint Sync: ${activeTeam.name}`,
+      category: 'Workspace',
+      time: 'Today, Schedule sync',
       priority: 'Medium',
       priorityColor: 'bg-blue-50 text-blue-700 border-blue-200',
-      description: 'Field trial over 5-acre agricultural test plot with variable-rate nozzle micro-dosing.',
-      actionText: 'Update Task Progress',
+      description: `Review sprint milestones and task assignments with your ${activeTeam.name} teammates.`,
+      actionText: 'Launch Sync',
+      actionType: 'meeting',
+      action: () => startVideoMeeting(activeTeam.id)
+    }] : [{
+      id: 'prio-team',
+      title: 'Form or Join an Innovation Squad',
+      category: 'Team',
+      time: 'Get Started',
+      priority: 'High',
+      priorityColor: 'bg-blue-50 text-blue-700 border-blue-200',
+      description: 'Find teammates across departments or start your own innovation project team.',
+      actionText: 'Find Teammates',
       actionType: 'navigate',
       action: () => navigate('/student/teams')
-    },
+    }]),
     {
-      id: 'prio-hackathon',
-      title: 'Smart India Hackathon 2026 Nodal Venue Check-In',
-      category: 'Hackathon',
-      time: 'April 18, 08:00 AM IST',
+      id: 'prio-events',
+      title: 'Explore Live Competitions & Hackathons',
+      category: 'Events',
+      time: 'Upcoming',
       priority: 'Normal',
       priorityColor: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-      description: 'Bangalore Nodal Center attendance check-in window opens. Confirm team travel logistics.',
-      actionText: 'Check Nodal Details',
+      description: 'Discover nationwide hackathons, register your team, and win verifiable certifications.',
+      actionText: 'Browse Events',
       actionType: 'navigate',
       action: () => navigate('/student/events')
+    },
+    {
+      id: 'prio-mentors',
+      title: 'Connect with Verified Industry & Faculty Mentors',
+      category: 'Mentorship',
+      time: 'Open Slots',
+      priority: 'Normal',
+      priorityColor: 'bg-purple-50 text-purple-700 border-purple-200',
+      description: 'Request 1-on-1 milestone reviews and guidance from expert researchers and professors.',
+      actionText: 'Find a Mentor',
+      actionType: 'navigate',
+      action: () => navigate('/student/mentorship')
     }
   ];
 
@@ -156,17 +163,17 @@ export const StudentDashboardView: React.FC = () => {
             </div>
 
             <p className="text-xs text-slate-500 font-medium">
-              {currentUser?.department || 'Computer Science & Engineering'} • {currentUser?.institution || 'CampusNet Academic Network'}
+              {currentUser?.department || 'Engineering & Technology'} • {currentUser?.institution || 'CampusNet Academic Network'}
             </p>
 
             <div className="flex items-center gap-2 pt-1 flex-wrap text-[11px] text-slate-400">
               <span className="font-mono font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md">
-                Roll No: {(currentUser as any)?.rollNumber || currentUser?.studentId || '22CS1048'}
+                {(currentUser as any)?.rollNumber || currentUser?.studentId ? `Roll No: ${(currentUser as any)?.rollNumber || currentUser?.studentId}` : `ID: ${currentUser?.email?.split('@')[0] || 'Verified'}`}
               </span>
               <span>•</span>
-              <span className="font-semibold text-slate-600">Year 3 (Sem 6)</span>
+              <span className="font-semibold text-slate-600">{currentUser?.year || 'Class of 2026/27'}</span>
               <span>•</span>
-              <span className="text-emerald-600 font-bold">Attendance: 88% (Healthy)</span>
+              <span className="text-emerald-600 font-bold">Status: Active</span>
             </div>
           </div>
         </div>
@@ -431,7 +438,9 @@ export const StudentDashboardView: React.FC = () => {
                 <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">
                   Sprint Workspace
                 </span>
-                <h3 className="text-base font-bold text-campus-deep-blue mt-0.5">{activeTeam.name}</h3>
+                <h3 className="text-base font-bold text-campus-deep-blue mt-0.5">
+                  {activeTeam ? activeTeam.name : 'Team Workspace'}
+                </h3>
               </div>
 
               <Link
@@ -443,54 +452,77 @@ export const StudentDashboardView: React.FC = () => {
               </Link>
             </div>
 
-            <div className="p-4 rounded-2xl bg-slate-50/70 border border-slate-200 space-y-3">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <h4 className="text-sm font-bold text-slate-800">{activeTeam.projectName}</h4>
-                  <p className="text-xs text-slate-500 mt-0.5">{activeTeam.domain}</p>
-                </div>
-                <span className="text-xs font-extrabold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
-                  Active 6/6
-                </span>
-              </div>
-
-              {/* Progress bar */}
-              <div className="space-y-1 pt-1">
-                <div className="flex justify-between text-xs font-bold">
-                  <span className="text-slate-600">Sprint Deliverables Completed</span>
-                  <span className="text-campus-blue">{activeProject.progressPercent}%</span>
-                </div>
-                <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
-                  <div className="h-full bg-campus-blue rounded-full" style={{ width: `${activeProject.progressPercent}%` }} />
-                </div>
-              </div>
-
-              {/* Roster & Quick Action */}
-              <div className="flex items-center justify-between pt-2 border-t border-slate-200/70 text-xs">
-                <div className="flex items-center gap-2">
-                  <span className="text-[11px] text-slate-500 font-medium">Core Leads:</span>
-                    <div className="flex -space-x-2">
-                    {activeTeam.members.map(m => (
-                      <LetterAvatar
-                        key={m.userId}
-                        name={m.name}
-                        size="xs"
-                        className="w-7 h-7 rounded-full ring-2 ring-white"
-                        title={`${m.name} (${m.role})`}
-                      />
-                    ))}
+            {activeTeam ? (
+              <div className="p-4 rounded-2xl bg-slate-50/70 border border-slate-200 space-y-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <h4 className="text-sm font-bold text-slate-800">{activeTeam.projectName}</h4>
+                    <p className="text-xs text-slate-500 mt-0.5">{activeTeam.domain}</p>
                   </div>
+                  <span className="text-xs font-extrabold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+                    Active
+                  </span>
                 </div>
 
-                <button
-                  onClick={() => startVideoMeeting(activeTeam.id)}
-                  className="campus-btn-primary text-xs py-1.5 px-3 rounded-xl flex items-center gap-1"
-                >
-                  <Video className="w-3.5 h-3.5" />
-                  <span>Launch Sync</span>
-                </button>
+                {/* Progress bar */}
+                {activeProject && (
+                  <div className="space-y-1 pt-1">
+                    <div className="flex justify-between text-xs font-bold">
+                      <span className="text-slate-600">Sprint Deliverables Completed</span>
+                      <span className="text-campus-blue">{activeProject.progressPercent || 0}%</span>
+                    </div>
+                    <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+                      <div className="h-full bg-campus-blue rounded-full" style={{ width: `${activeProject.progressPercent || 0}%` }} />
+                    </div>
+                  </div>
+                )}
+
+                {/* Roster & Quick Action */}
+                <div className="flex items-center justify-between pt-2 border-t border-slate-200/70 text-xs">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] text-slate-500 font-medium">Core Leads:</span>
+                    <div className="flex -space-x-2">
+                      {(activeTeam.members || []).map(m => (
+                        <LetterAvatar
+                          key={m.userId}
+                          name={m.name}
+                          size="xs"
+                          className="w-7 h-7 rounded-full ring-2 ring-white"
+                          title={`${m.name} (${m.role})`}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => startVideoMeeting(activeTeam.id)}
+                    className="campus-btn-primary text-xs py-1.5 px-3 rounded-xl flex items-center gap-1"
+                  >
+                    <Video className="w-3.5 h-3.5" />
+                    <span>Launch Sync</span>
+                  </button>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="p-6 rounded-2xl bg-slate-50 border border-dashed border-slate-200 text-center space-y-3">
+                <div className="w-10 h-10 rounded-2xl bg-blue-50 text-campus-blue flex items-center justify-center mx-auto">
+                  <Users className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-slate-800">No Active Team Workspace</h4>
+                  <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+                    Form a new project squad with college peers or request to join existing hackathon teams.
+                  </p>
+                </div>
+                <Link
+                  to="/student/teams"
+                  className="inline-flex items-center gap-1.5 text-xs font-bold bg-campus-blue text-white px-3.5 py-2 rounded-xl shadow-xs hover:bg-blue-700 transition-colors"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Create or Join Team</span>
+                </Link>
+              </div>
+            )}
           </div>
 
           {/* ACADEMICS TIMETABLE PREVIEW */}

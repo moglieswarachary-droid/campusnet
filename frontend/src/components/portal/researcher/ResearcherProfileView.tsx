@@ -14,10 +14,37 @@ interface ResearcherProfileViewProps {
 export const ResearcherProfileView: React.FC<ResearcherProfileViewProps> = ({ onOpenEdit }) => {
   const { currentUser, researchers, publications } = useApp();
 
-  const currentScholar = researchers.find(r =>
-    (currentUser?.email && r.email === currentUser.email) ||
-    (currentUser?.name && r.name.toLowerCase().includes(currentUser.name.toLowerCase().split(' ')[0] || ''))
-  ) || researchers[0];
+  const currentScholar: any = researchers.find(r =>
+    (currentUser?.email && r.email?.toLowerCase() === currentUser.email.toLowerCase()) ||
+    (currentUser?.id && r.id === currentUser.id)
+  ) || {
+    id: currentUser?.id || 'res-current',
+    name: currentUser?.name || 'Doctoral Researcher',
+    email: currentUser?.email || '',
+    designation: (currentUser as any)?.designation || 'Doctoral Fellow / PhD Scholar',
+    department: currentUser?.department || 'Doctoral Studies',
+    university: currentUser?.institution || 'CampusNet Research Network',
+    institution: currentUser?.institution || 'CampusNet Research Network',
+    domain: 'Computer Science & AI',
+    researchAreas: currentUser?.skills || ['Computer Science'],
+    interests: currentUser?.skills || ['Computer Science', 'AI & Machine Learning'],
+    guide: 'Department Research Advisory Committee',
+    avatar: currentUser?.avatar || '',
+    bio: currentUser?.bio || 'Doctoral researcher conducting advanced academic research.',
+    verified: true,
+    verifiedResearcher: true,
+    publicationsCount: 0,
+    citationsCount: 0,
+    hIndex: 0,
+    i10Index: 0,
+    linkedin: currentUser?.linkedin || '',
+    vidwan_profile_url: '',
+    badges: ['Verified PhD Scholar'],
+    socialLinks: {
+      linkedin: currentUser?.linkedin || '',
+      github: currentUser?.github || ''
+    }
+  };
 
   // Calculate profile completeness
   const calculateCompleteness = () => {
@@ -155,7 +182,7 @@ export const ResearcherProfileView: React.FC<ResearcherProfileViewProps> = ({ on
                 Research Focus & Domains
               </h3>
               <div className="flex flex-wrap gap-2 mt-2">
-                {(currentScholar.interests || ['Neuromorphic Graph Computing', 'Edge AI', 'Bio-inspired Computing', 'Federated Learning']).map(d => (
+                {((currentScholar.interests || ['Neuromorphic Graph Computing', 'Edge AI', 'Bio-inspired Computing', 'Federated Learning']) as string[]).map((d: string) => (
                   <span key={d} className="px-3 py-1 rounded-xl text-xs font-bold bg-purple-50 text-[#6954C8] border border-purple-200/70">
                     {d}
                   </span>

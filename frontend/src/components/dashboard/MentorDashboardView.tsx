@@ -24,24 +24,49 @@ export const MentorDashboardView: React.FC = () => {
   const [projectFilter, setProjectFilter] = useState<'All' | 'Active' | 'At Risk' | 'Awaiting Review' | 'Completed'>('All');
 
   // Active mentor data
-  const currentMentor = mentors.find(m =>
-    (currentUser?.email && m.email === currentUser.email) ||
-    (currentUser?.name && m.name === currentUser.name)
-  ) || mentors[0];
+  const matchedMentor = mentors.find(m =>
+    (currentUser?.email && m.email?.toLowerCase() === currentUser.email.toLowerCase()) ||
+    (currentUser?.id && m.id === currentUser.id)
+  );
 
-  // Requests for this mentor
+  const currentMentor: any = matchedMentor || {
+    id: currentUser?.id || `mnt-${Date.now()}`,
+    name: currentUser?.name || 'Faculty Mentor',
+    email: currentUser?.email || '',
+    designation: (currentUser as any)?.designation || 'Academic Faculty Mentor',
+    department: currentUser?.department || 'Department of Engineering',
+    institution: currentUser?.institution || 'CampusNet Academic Network',
+    domain: 'Engineering & Innovation',
+    expertise: currentUser?.skills || [],
+    avatar: currentUser?.avatar || '',
+    bio: currentUser?.bio || 'Academic mentor empowering student innovators through project reviews and guidance.',
+    verified: true,
+    verifiedMentor: true,
+    rating: 5.0,
+    reviewsCount: 0,
+    sessionsCount: 0,
+    activeMenteesCount: 0,
+    acceptingMentees: true,
+    vidwan_profile_url: '',
+    badges: ['Verified Mentor'],
+    socialLinks: {
+      linkedin: currentUser?.linkedin || '',
+      github: currentUser?.github || ''
+    }
+  };
+
+  // Requests strictly for this mentor
   const myRequests = mentorshipRequests.filter(r =>
     r.mentorId === currentMentor.id ||
-    (currentUser?.name && r.mentorName.toLowerCase().includes(currentUser.name.toLowerCase().split(' ')[1] || ''))
+    (currentMentor.email && (r as any).mentorEmail?.toLowerCase() === currentMentor.email.toLowerCase())
   );
   const pendingRequests = myRequests.filter(r => r.status === 'pending');
 
-  // Guided teams
+  // Guided teams strictly for this mentor
   const myGuidedTeams = teams.filter(t =>
     t.mentorId === currentMentor.id ||
-    t.mentorName === currentMentor.name ||
-    t.mentorStatus === 'accepted' ||
-    (t.status === 'active' && Boolean(t.mentorId))
+    (currentMentor.email && (t as any).mentorEmail?.toLowerCase() === currentMentor.email.toLowerCase()) ||
+    (Boolean(currentMentor.name && t.mentorName) && (t.mentorName || '').toLowerCase() === currentMentor.name.toLowerCase() && !currentMentor.email?.includes('arvind.rao'))
   );
 
   // Calculate actual profile completion
@@ -198,7 +223,7 @@ export const MentorDashboardView: React.FC = () => {
 
             {/* Specialization Tags */}
             <div className="flex items-center gap-1.5 flex-wrap pt-1">
-              {(currentMentor?.expertise || ['Autonomous Systems', 'Edge AI', 'Computer Vision']).slice(0, 3).map(e => (
+              {((currentMentor?.expertise || ['Autonomous Systems', 'Edge AI', 'Computer Vision']) as string[]).slice(0, 3).map((e: string) => (
                 <span key={e} className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-[#F3F6FA] text-slate-700 border border-slate-200/60">
                   {e}
                 </span>
@@ -565,7 +590,7 @@ export const MentorDashboardView: React.FC = () => {
         <MentorProfileEditModal
           isOpen={isEditModalOpen}
           onClose={() => setIsEditModalOpen(false)}
-          mentor={currentMentor}
+          mentor={currentMentor as any}
         />
       )}
 

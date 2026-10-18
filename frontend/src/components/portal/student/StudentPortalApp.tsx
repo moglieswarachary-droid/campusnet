@@ -480,7 +480,9 @@ export const StudentPortalApp: React.FC = () => {
   }
 
   // Guard: If not authenticated, redirect to login preserving intended target
-  const isAuthenticated = Boolean(currentUser && currentUser.id);
+  const hasToken = Boolean(sessionStorage.getItem('campusnet_token') || localStorage.getItem('campusnet_token'));
+  const hasGenuineUser = Boolean(currentUser && currentUser.email && !currentUser.email.includes('aarav.sharma@nitk.edu.in'));
+  const isAuthenticated = hasToken || hasGenuineUser;
   if (!isAuthenticated) {
     const redirectParam = location.pathname !== '/student/dashboard'
       ? `?redirect=${encodeURIComponent(location.pathname + location.search)}`

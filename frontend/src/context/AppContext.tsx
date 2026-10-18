@@ -282,7 +282,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Public User
   const [currentUser, setCurrentUser] = useState<User>(() => {
     const saved = localStorage.getItem('campusnet_user');
-    return saved ? JSON.parse(saved) : INITIAL_CURRENT_USER;
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed && parsed.email && !parsed.email.includes('aarav.sharma@nitk.edu.in')) {
+          return parsed;
+        }
+      } catch {}
+    }
+    return INITIAL_CURRENT_USER;
   });
   
   const [activeRole, setActiveRole] = useState<RoleType>('student');

@@ -24,7 +24,41 @@ export const PhDScholarDashboardView: React.FC = () => {
   const [searchStudentTopic, setSearchStudentTopic] = useState('');
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
-  const currentScholar = researchers.find(r => (currentUser?.email && r.email === currentUser.email) || (currentUser?.name && r.name.includes(currentUser.name.split(' ')[0] || ''))) || researchers[0];
+  const matchedScholar = researchers.find(r =>
+    (currentUser?.email && r.email?.toLowerCase() === currentUser.email.toLowerCase()) ||
+    (currentUser?.id && r.id === currentUser.id)
+  );
+
+  const currentScholar: any = matchedScholar || {
+    id: currentUser?.id || `res-${Date.now()}`,
+    name: currentUser?.name || 'Doctoral Researcher',
+    email: currentUser?.email || '',
+    designation: (currentUser as any)?.designation || 'Doctoral Fellow / PhD Scholar',
+    department: currentUser?.department || 'Department of Computer Science & Engineering',
+    university: currentUser?.institution || 'CampusNet Research Network',
+    domain: 'Computer Science & AI',
+    researchAreas: currentUser?.skills || ['Computer Science', 'Machine Learning'],
+    avatar: currentUser?.avatar || '',
+    bio: currentUser?.bio || 'Doctoral researcher conducting advanced academic research and mentoring student innovators.',
+    verified: true,
+    publicationsCount: 0,
+    citationsCount: 0,
+    hIndex: 0,
+    i10Index: 0,
+    vidwan_profile_url: '',
+    badges: ['Verified PhD Scholar'],
+    socialLinks: {
+      linkedin: currentUser?.linkedin || '',
+      github: currentUser?.github || ''
+    }
+  };
+
+  const myPublications = publications.filter(p =>
+    (currentScholar.email && (p as any).authorEmail?.toLowerCase() === currentScholar.email.toLowerCase()) ||
+    (p as any).scholarId === currentScholar.id ||
+    (p.authors && p.authors.some((a: string) => a.toLowerCase().includes(currentScholar.name.toLowerCase()) && !currentScholar.email?.includes('kavya.ramanathan')))
+  );
+
   const socialLinks = currentScholar.socialLinks;
   const vidwanUrl = currentScholar.vidwan_profile_url;
 
@@ -184,7 +218,7 @@ export const PhDScholarDashboardView: React.FC = () => {
       {/* Navigation Sub-Tabs */}
       <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 border-b border-campus-border">
         {[
-          { id: 'publications', label: `Published Papers & Datasets (${publications.length})` },
+          { id: 'publications', label: `Published Papers & Datasets (${myPublications.length})` },
           { id: 'conferences', label: `Conferences & Symposiums (${conferences.length})` },
           { id: 'student_discovery', label: `Student Discovery for Lab Collab (${relevantStudents.length})` },
         ].map(tab => (
@@ -218,51 +252,71 @@ export const PhDScholarDashboardView: React.FC = () => {
             </button>
           </div>
 
-          <div className="space-y-4">
-            {publications.map(pub => (
-              <div key={pub.id} className="bg-white rounded-3xl p-6 border border-campus-border shadow-warm-md space-y-3">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <span className="text-[10px] font-bold uppercase tracking-wider bg-campus-soft-blue text-campus-blue px-2.5 py-0.5 rounded">
-                      DOI: {pub.doi}
-                    </span>
-                    <h3 className="text-base font-bold text-campus-deep-blue mt-1">{pub.title}</h3>
-                    <p className="text-xs text-campus-muted-text">{pub.authors.join(', ')} • {pub.journal} ({pub.year})</p>
-                  </div>
-
-                  <span className="text-xs font-bold text-campus-blue bg-campus-soft-blue px-2.5 py-1 rounded-xl">
-                    {pub.citations} Citations
-                  </span>
-                </div>
-
-                <p className="text-xs text-campus-slate-text/80 leading-relaxed bg-campus-warm-white p-3.5 rounded-2xl border border-campus-border">
-                  {pub.abstract}
-                </p>
-
-                <div className="pt-2 flex items-center justify-between flex-wrap gap-2 text-xs">
-                  <div className="flex flex-wrap gap-1">
-                    {pub.tags.map(tag => (
-                      <span key={tag} className="text-[10px] font-semibold bg-slate-100 text-campus-slate-text px-2 py-0.5 rounded">
-                        #{tag}
+          {myPublications.length > 0 ? (
+            <div className="space-y-4">
+              {myPublications.map(pub => (
+                <div key={pub.id} className="bg-white rounded-3xl p-6 border border-campus-border shadow-warm-md space-y-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider bg-campus-soft-blue text-campus-blue px-2.5 py-0.5 rounded">
+                        DOI: {pub.doi}
                       </span>
-                    ))}
+                      <h3 className="text-base font-bold text-campus-deep-blue mt-1">{pub.title}</h3>
+                      <p className="text-xs text-campus-muted-text">{pub.authors.join(', ')} • {pub.journal} ({pub.year})</p>
+                    </div>
+
+                    <span className="text-xs font-bold text-campus-blue bg-campus-soft-blue px-2.5 py-1 rounded-xl">
+                      {pub.citations} Citations
+                    </span>
                   </div>
 
-                  {pub.datasetLink && (
-                    <a
-                      href={pub.datasetLink}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="font-bold text-campus-blue hover:underline flex items-center gap-1"
-                    >
-                      <BookOpen className="w-3.5 h-3.5" />
-                      Access Research Dataset
-                    </a>
-                  )}
+                  <p className="text-xs text-campus-slate-text/80 leading-relaxed bg-campus-warm-white p-3.5 rounded-2xl border border-campus-border">
+                    {pub.abstract}
+                  </p>
+
+                  <div className="pt-2 flex items-center justify-between flex-wrap gap-2 text-xs">
+                    <div className="flex flex-wrap gap-1">
+                      {pub.tags.map(tag => (
+                        <span key={tag} className="text-[10px] font-semibold bg-slate-100 text-campus-slate-text px-2 py-0.5 rounded">
+                          #{tag}
+                        </span>
+                      ))}
+                    </div>
+
+                    {pub.datasetLink && (
+                      <a
+                        href={pub.datasetLink}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="font-bold text-campus-blue hover:underline flex items-center gap-1"
+                      >
+                        <BookOpen className="w-3.5 h-3.5" />
+                        Access Research Dataset
+                      </a>
+                    )}
+                  </div>
                 </div>
+              ))}
+            </div>
+          ) : (
+            <div className="p-8 rounded-3xl bg-white border border-campus-border text-center space-y-3">
+              <div className="w-12 h-12 rounded-2xl bg-blue-50 text-campus-blue flex items-center justify-center mx-auto">
+                <BookOpen className="w-6 h-6" />
               </div>
-            ))}
-          </div>
+              <div>
+                <h4 className="text-sm font-bold text-campus-deep-blue">No Publications or Datasets Indexed Yet</h4>
+                <p className="text-xs text-campus-muted-text mt-1 max-w-md mx-auto">
+                  Index your published IEEE, ACM, Springer, or arXiv research papers and link open datasets for student innovation projects.
+                </p>
+              </div>
+              <button
+                onClick={() => addToast({ type: 'info', title: 'DOI Ingestion', message: 'Enter your arXiv / IEEE DOI to link paper.' })}
+                className="campus-btn-primary text-xs py-2 px-4 rounded-xl shadow-xs"
+              >
+                + Index First Paper via DOI
+              </button>
+            </div>
+          )}
         </div>
       )}
 

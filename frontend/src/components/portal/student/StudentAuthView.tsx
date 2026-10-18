@@ -7,31 +7,7 @@ import {
   KeyRound, User, BookOpen, AlertCircle, RefreshCw, Key
 } from 'lucide-react';
 
-import { PortalOtpLoginView, DemoPersona } from '../../auth/PortalOtpLoginView';
-
-const STUDENT_DEMO_PERSONAS: DemoPersona[] = [
-  {
-    name: 'Aarav Sharma',
-    roleDescription: 'Student Innovator & Event Manager (NITK)',
-    email: 'aarav.sharma@nitk.edu.in',
-    mobile: '+91 98765 43210',
-    badge: 'Dual Role'
-  },
-  {
-    name: 'Rohan Gupta',
-    roleDescription: 'B.Tech CS Undergrad (IITB)',
-    email: 'rohan.gupta@iitb.ac.in',
-    mobile: '+91 98765 43220',
-    badge: 'Student'
-  },
-  {
-    name: 'Suspended Account Test',
-    roleDescription: 'Disciplinary Suspension (Expected 403)',
-    email: 'suspended.student@nitk.edu.in',
-    mobile: '+91 98765 43299',
-    badge: 'Suspended'
-  }
-];
+import { PortalOtpLoginView } from '../../auth/PortalOtpLoginView';
 
 interface Props {
   mode?: 'login' | 'register' | 'forgot-password';
@@ -188,6 +164,9 @@ export const StudentAuthView: React.FC<Props> = ({ mode = 'login' }) => {
       badges: ['Early Innovator', 'Verified Scholar']
     };
 
+    localStorage.setItem('campusnet_user', JSON.stringify(newStudent));
+    localStorage.setItem('campusnet_token', `tok-std-${Date.now()}`);
+    sessionStorage.setItem('campusnet_token', `tok-std-${Date.now()}`);
     setCurrentUser(newStudent as any);
     switchRole('student');
     addToast({ type: 'success', message: 'Student account registered and verified successfully!' });
@@ -206,7 +185,6 @@ export const StudentAuthView: React.FC<Props> = ({ mode = 'login' }) => {
         registerUrl="/student/register"
         registerLabel="Create Student Account →"
         onFallbackPassword={() => setShowPasswordLogin(true)}
-        demoPersonas={STUDENT_DEMO_PERSONAS}
       />
     );
   }

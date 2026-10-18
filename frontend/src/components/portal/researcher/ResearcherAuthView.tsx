@@ -7,24 +7,7 @@ import {
   KeyRound, User, AlertCircle, RefreshCw, Compass, Key
 } from 'lucide-react';
 
-import { PortalOtpLoginView, DemoPersona } from '../../auth/PortalOtpLoginView';
-
-const RESEARCHER_DEMO_PERSONAS: DemoPersona[] = [
-  {
-    name: 'Dr. Vikram Research',
-    roleDescription: 'Doctoral Scholar (IISc Bengaluru)',
-    email: 'vikram.research@iisc.ac.in',
-    mobile: '+91 98765 43212',
-    badge: 'PhD Scholar'
-  },
-  {
-    name: 'Pooja Sundaram',
-    roleDescription: 'Neuromorphic Computing Lab (IISc)',
-    email: 'pooja.sundaram@iisc.ac.in',
-    mobile: '+91 98765 43222',
-    badge: 'PhD Scholar'
-  }
-];
+import { PortalOtpLoginView } from '../../auth/PortalOtpLoginView';
 
 interface Props {
   mode?: 'login' | 'register' | 'forgot-password';
@@ -123,16 +106,25 @@ export const ResearcherAuthView: React.FC<Props> = ({ mode = 'login' }) => {
 
     setIsLoading(true);
     setTimeout(() => {
-      const matched = researchers.find(r => r.email.toLowerCase() === emailOrOrcid.toLowerCase()) || researchers[0];
-      setCurrentUser({
-        ...matched,
+      const matched = researchers.find(r => r.email.toLowerCase() === emailOrOrcid.toLowerCase());
+      const loggedScholar = matched || {
+        id: `res-${Date.now()}`,
+        name: emailOrOrcid.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+        email: emailOrOrcid,
         role: 'researcher',
         roles: ['PHD_RESEARCHER'],
-        activeAppRole: 'PHD_RESEARCHER'
-      } as any);
+        activeAppRole: 'PHD_RESEARCHER',
+        institution: 'CampusNet Research Network',
+        department: 'Doctoral Studies',
+        avatar: ''
+      };
+      localStorage.setItem('campusnet_user', JSON.stringify(loggedScholar));
+      localStorage.setItem('campusnet_token', `tok-res-${Date.now()}`);
+      sessionStorage.setItem('campusnet_token', `tok-res-${Date.now()}`);
+      setCurrentUser(loggedScholar as any);
       switchRole('researcher');
       setIsLoading(false);
-      addToast({ type: 'success', message: `Welcome back, ${matched.name}!` });
+      addToast({ type: 'success', message: `Welcome back, ${loggedScholar.name}!` });
       navigate(redirectTarget);
     }, 500);
   };
@@ -180,6 +172,9 @@ export const ResearcherAuthView: React.FC<Props> = ({ mode = 'login' }) => {
       bio: 'Doctoral researcher passionate about deep learning and scientific computing.'
     };
 
+    localStorage.setItem('campusnet_user', JSON.stringify(newResearcher));
+    localStorage.setItem('campusnet_token', `tok-res-${Date.now()}`);
+    sessionStorage.setItem('campusnet_token', `tok-res-${Date.now()}`);
     setCurrentUser(newResearcher as any);
     switchRole('researcher');
     addToast({ type: 'success', message: 'PhD Scholar account onboarded and verified!' });
@@ -198,7 +193,6 @@ export const ResearcherAuthView: React.FC<Props> = ({ mode = 'login' }) => {
         registerUrl="/researcher/register"
         registerLabel="Onboard as PhD Scholar →"
         onFallbackPassword={() => setShowPasswordLogin(true)}
-        demoPersonas={RESEARCHER_DEMO_PERSONAS}
       />
     );
   }

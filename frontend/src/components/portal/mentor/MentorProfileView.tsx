@@ -15,10 +15,34 @@ interface MentorProfileViewProps {
 export const MentorProfileView: React.FC<MentorProfileViewProps> = ({ onOpenEdit }) => {
   const { currentUser, mentors, teams, mentorshipCertificates, mentorshipRequests } = useApp();
 
-  const currentMentor = mentors.find(m =>
-    (currentUser?.email && m.email === currentUser.email) ||
-    (currentUser?.name && m.name === currentUser.name)
-  ) || mentors[0];
+  const currentMentor: any = mentors.find(m =>
+    (currentUser?.email && m.email?.toLowerCase() === currentUser.email.toLowerCase()) ||
+    (currentUser?.id && m.id === currentUser.id)
+  ) || {
+    id: currentUser?.id || 'mnt-current',
+    name: currentUser?.name || 'Faculty Mentor',
+    email: currentUser?.email || '',
+    designation: (currentUser as any)?.designation || 'Academic Faculty Mentor',
+    department: currentUser?.department || 'Department of Engineering',
+    institution: currentUser?.institution || 'CampusNet Academic Network',
+    domain: 'Engineering & Innovation',
+    expertise: currentUser?.skills || [],
+    researchAreas: currentUser?.skills || [],
+    avatar: currentUser?.avatar || '',
+    bio: currentUser?.bio || 'Academic mentor empowering student innovators through project reviews and guidance.',
+    verified: true,
+    verifiedMentor: true,
+    rating: 5.0,
+    reviewsCount: 0,
+    sessionsCount: 0,
+    activeMenteesCount: 0,
+    acceptingMentees: true,
+    badges: ['Verified Mentor'],
+    socialLinks: {
+      linkedin: currentUser?.linkedin || '',
+      github: currentUser?.github || ''
+    }
+  };
 
   // Calculate actual profile completeness
   const calculateCompleteness = () => {
@@ -211,7 +235,7 @@ export const MentorProfileView: React.FC<MentorProfileViewProps> = ({ onOpenEdit
                 Research Areas & Technical Specializations
               </h3>
               <div className="flex flex-wrap gap-2 mt-2.5">
-                {(currentMentor.expertise || currentMentor.researchAreas || ['Edge AI & Robotics', 'Autonomous Systems', 'Embedded Computer Vision', 'ROS 2 Architectures']).map(exp => (
+                {((currentMentor.expertise || currentMentor.researchAreas || ['Edge AI & Robotics', 'Autonomous Systems', 'Embedded Computer Vision', 'ROS 2 Architectures']) as string[]).map((exp: string) => (
                   <span
                     key={exp}
                     className="px-3 py-1 rounded-xl text-xs font-bold bg-teal-50 text-[#0F9488] border border-teal-200/60"

@@ -18,6 +18,24 @@ export const StudentPortfolioView: React.FC = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isTranscriptModalOpen, setIsTranscriptModalOpen] = useState(false);
 
+  const userCertificates = certificates.filter(c =>
+    (currentUser?.email && (c as any).recipientEmail?.toLowerCase() === currentUser.email.toLowerCase()) ||
+    (currentUser?.id && (c as any).recipientId === currentUser.id) ||
+    (Boolean(currentUser?.name && c.recipientName) && c.recipientName.toLowerCase() === currentUser.name.toLowerCase() && !((c as any).recipientEmail || '').includes('aarav.sharma'))
+  );
+
+  const userProjects = projects.filter(p =>
+    (currentUser?.email && (p as any).authorEmail?.toLowerCase() === currentUser.email.toLowerCase()) ||
+    (currentUser?.id && (p as any).authorId === currentUser.id) ||
+    ((p as any).collaborators && (p as any).collaborators.some((c: any) => c.email?.toLowerCase() === currentUser?.email?.toLowerCase() || c.id === currentUser?.id))
+  );
+
+  const userPublications = publications.filter(pub =>
+    (currentUser?.email && (pub as any).authorEmail?.toLowerCase() === currentUser.email.toLowerCase()) ||
+    (currentUser?.id && (pub as any).scholarId === currentUser.id) ||
+    (Boolean(currentUser?.name && pub.authors) && pub.authors.some((a: string) => a.toLowerCase() === currentUser.name.toLowerCase()))
+  );
+
   const socialLinks = currentUser.socialLinks;
 
   return (
@@ -189,7 +207,7 @@ export const StudentPortfolioView: React.FC = () => {
           <div>
             <h2 className="text-lg font-bold text-campus-deep-blue flex items-center gap-2">
               <Award className="w-5 h-5 text-campus-red" />
-              Verified Digital Certificate Locker ({certificates.length})
+              Verified Digital Certificate Locker ({userCertificates.length})
             </h2>
             <p className="text-xs text-campus-muted-text">Publicly authenticable with unique QR codes</p>
           </div>
@@ -202,11 +220,31 @@ export const StudentPortfolioView: React.FC = () => {
           </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {certificates.map(cert => (
-            <CertificateCard key={cert.id} certificate={cert} />
-          ))}
-        </div>
+        {userCertificates.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {userCertificates.map(cert => (
+              <CertificateCard key={cert.id} certificate={cert} />
+            ))}
+          </div>
+        ) : (
+          <div className="p-8 rounded-3xl bg-white border border-campus-border text-center space-y-3">
+            <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mx-auto">
+              <Award className="w-6 h-6" />
+            </div>
+            <div>
+              <h4 className="text-sm font-bold text-campus-deep-blue">No Digital Certificates Issued Yet</h4>
+              <p className="text-xs text-campus-muted-text mt-1 max-w-md mx-auto">
+                Participate in hackathons, complete project milestones, and earn tamper-proof verifiable blockchain-grade certificates with QR verification.
+              </p>
+            </div>
+            <button
+              onClick={() => setActiveTab('events')}
+              className="campus-btn-primary text-xs py-2 px-4 rounded-xl shadow-xs"
+            >
+              Explore Hackathons & Events →
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Featured Projects & Publications */}
@@ -216,44 +254,68 @@ export const StudentPortfolioView: React.FC = () => {
         <div className="bg-white rounded-3xl p-6 border border-campus-border shadow-warm-sm space-y-4">
           <h3 className="font-bold text-base text-campus-deep-blue flex items-center gap-2">
             <FolderKanban className="w-4 h-4 text-campus-blue" />
-            Active Innovation Projects
+            Active Innovation Projects ({userProjects.length})
           </h3>
 
-          <div className="space-y-3">
-            {projects.slice(0, 2).map(p => (
-              <div key={p.id} className="p-4 rounded-2xl bg-campus-warm-white border border-campus-border space-y-2">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-bold text-campus-deep-blue">{p.title}</span>
-                  <span className="font-bold text-green-700 bg-green-100 px-2 py-0.5 rounded-full">{p.status}</span>
+          {userProjects.length > 0 ? (
+            <div className="space-y-3">
+              {userProjects.slice(0, 3).map(p => (
+                <div key={p.id} className="p-4 rounded-2xl bg-campus-warm-white border border-campus-border space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-bold text-campus-deep-blue">{p.title}</span>
+                    <span className="font-bold text-green-700 bg-green-100 px-2 py-0.5 rounded-full">{p.status}</span>
+                  </div>
+                  <p className="text-xs text-campus-muted-text line-clamp-2">{p.problemStatement}</p>
+                  <div className="text-[11px] text-campus-blue font-semibold">
+                    Mentor: {p.mentor || 'Self-guided'}
+                  </div>
                 </div>
-                <p className="text-xs text-campus-muted-text line-clamp-2">{p.problemStatement}</p>
-                <div className="text-[11px] text-campus-blue font-semibold">
-                  Mentor: {p.mentor}
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <div className="p-6 rounded-2xl bg-campus-warm-white border border-dashed border-campus-border text-center space-y-2">
+              <p className="text-xs text-campus-muted-text">No personal projects created yet.</p>
+              <button
+                onClick={() => setActiveTab('projects')}
+                className="text-xs font-bold text-campus-blue hover:underline"
+              >
+                + Launch New Project
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Research Papers */}
         <div className="bg-white rounded-3xl p-6 border border-campus-border shadow-warm-sm space-y-4">
           <h3 className="font-bold text-base text-campus-deep-blue flex items-center gap-2">
             <BookOpen className="w-4 h-4 text-campus-deep-blue" />
-            Research Preprints & Contributions
+            Research Preprints & Contributions ({userPublications.length})
           </h3>
 
-          <div className="space-y-3">
-            {publications.map(pub => (
-              <div key={pub.id} className="p-4 rounded-2xl bg-campus-warm-white border border-campus-border space-y-2">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-bold text-campus-red">{pub.journal}</span>
-                  <span className="font-bold text-green-700">{pub.citations} Citations</span>
+          {userPublications.length > 0 ? (
+            <div className="space-y-3">
+              {userPublications.map(pub => (
+                <div key={pub.id} className="p-4 rounded-2xl bg-campus-warm-white border border-campus-border space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-bold text-campus-red">{pub.journal}</span>
+                    <span className="font-bold text-green-700">{pub.citations} Citations</span>
+                  </div>
+                  <h4 className="text-xs font-bold text-campus-deep-blue leading-snug">{pub.title}</h4>
+                  <p className="text-[11px] text-campus-muted-text font-mono">DOI: {pub.doi}</p>
                 </div>
-                <h4 className="text-xs font-bold text-campus-deep-blue leading-snug">{pub.title}</h4>
-                <p className="text-[11px] text-campus-muted-text font-mono">DOI: {pub.doi}</p>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <div className="p-6 rounded-2xl bg-campus-warm-white border border-dashed border-campus-border text-center space-y-2">
+              <p className="text-xs text-campus-muted-text">No research papers or preprints indexed.</p>
+              <button
+                onClick={() => setActiveTab('research')}
+                className="text-xs font-bold text-campus-blue hover:underline"
+              >
+                Explore Research Hub →
+              </button>
+            </div>
+          )}
         </div>
 
       </div>

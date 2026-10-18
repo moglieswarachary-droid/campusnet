@@ -17,8 +17,22 @@ export const MentorSidebar: React.FC<MentorSidebarProps> = ({ onCloseMobile, cla
   const location = useLocation();
   const { currentUser, mentors, mentorshipRequests, setIsAIModalOpen } = useApp();
 
-  const currentMentor = mentors.find(m => m.email === currentUser?.email) || mentors[0];
-  const pendingRequestsCount = mentorshipRequests.filter(r => r.status === 'pending').length;
+  const currentMentor = mentors.find(m =>
+    (currentUser?.email && m.email?.toLowerCase() === currentUser.email.toLowerCase()) ||
+    (currentUser?.id && m.id === currentUser.id)
+  ) || {
+    id: currentUser?.id || 'mnt-current',
+    name: currentUser?.name || 'Faculty Mentor',
+    email: currentUser?.email || '',
+    designation: 'Faculty Mentor',
+    department: currentUser?.department || 'Engineering',
+    institution: currentUser?.institution || 'Academic Network',
+    avatar: currentUser?.avatar || '',
+    verifiedMentor: true
+  };
+  const pendingRequestsCount = mentorshipRequests.filter(r =>
+    r.status === 'pending' && (r.mentorId === currentMentor.id || (currentMentor.email && (r as any).mentorEmail?.toLowerCase() === currentMentor.email.toLowerCase()))
+  ).length;
 
   const navigationGroups = [
     {

@@ -5,27 +5,7 @@ import {
   ArrowRight, KeyRound, Sparkles, CheckCircle2,
   FileCheck
 } from 'lucide-react';
-import { PortalOtpLoginView, DemoPersona } from '../auth/PortalOtpLoginView';
-
-const REVIEWER_DEMO_PERSONAS: DemoPersona[] = [
-  {
-    name: 'Dr. Sunita Murthy',
-    roleDescription: 'AICTE Review Board Member',
-    email: 'sunita.reviewer@aicte.gov.in',
-    mobile: '+91 98765 43215',
-    badge: 'AICTE Reviewer'
-  }
-];
-
-const SUPER_ADMIN_DEMO_PERSONAS: DemoPersona[] = [
-  {
-    name: 'Rajesh SuperAdmin',
-    roleDescription: 'Level-5 Platform Governance & Security',
-    email: 'rajesh.superadmin@campusnet.gov.in',
-    mobile: '+91 98765 43216',
-    badge: 'Super Admin'
-  }
-];
+import { PortalOtpLoginView } from '../auth/PortalOtpLoginView';
 
 export const SuperAdminAuthView: React.FC = () => {
   const { superAdminLogin } = useApp();
@@ -48,7 +28,6 @@ export const SuperAdminAuthView: React.FC = () => {
           portalIcon={FileCheck}
           accentColor="rose"
           onFallbackPassword={() => setShowPasswordLogin(true)}
-          demoPersonas={REVIEWER_DEMO_PERSONAS}
         />
       );
     }
@@ -62,7 +41,6 @@ export const SuperAdminAuthView: React.FC = () => {
         portalIcon={ShieldAlert}
         accentColor="red"
         onFallbackPassword={() => setShowPasswordLogin(true)}
-        demoPersonas={SUPER_ADMIN_DEMO_PERSONAS}
       />
     );
   }

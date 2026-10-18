@@ -44,11 +44,21 @@ const MentorTopHeader: React.FC<{
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
 
   const currentMentor = mentors.find(m =>
-    (currentUser?.email && m.email === currentUser.email) ||
-    (currentUser?.name && m.name === currentUser.name)
-  ) || mentors[0];
+    (currentUser?.email && m.email?.toLowerCase() === currentUser.email.toLowerCase()) ||
+    (currentUser?.id && m.id === currentUser.id)
+  ) || {
+    id: currentUser?.id || 'mnt-current',
+    name: currentUser?.name || 'Faculty Mentor',
+    email: currentUser?.email || '',
+    designation: 'Faculty Mentor',
+    department: currentUser?.department || 'Engineering',
+    institution: currentUser?.institution || 'Academic Network',
+    avatar: currentUser?.avatar || ''
+  };
 
-  const pendingRequestsCount = mentorshipRequests.filter(r => r.status === 'pending').length;
+  const pendingRequestsCount = mentorshipRequests.filter(r =>
+    r.status === 'pending' && (r.mentorId === currentMentor.id || (currentMentor.email && (r as any).mentorEmail?.toLowerCase() === currentMentor.email.toLowerCase()))
+  ).length;
 
   // Breadcrumb mapping
   const getBreadcrumb = () => {
@@ -302,7 +312,9 @@ export const MentorPortalApp: React.FC = () => {
   }
 
   // Guard: If not authenticated, redirect to login preserving target
-  const isAuthenticated = Boolean(currentUser && currentUser.id);
+  const hasToken = Boolean(sessionStorage.getItem('campusnet_token') || localStorage.getItem('campusnet_token'));
+  const hasGenuineUser = Boolean(currentUser && currentUser.email && !currentUser.email.includes('aarav.sharma@nitk.edu.in'));
+  const isAuthenticated = hasToken || hasGenuineUser;
   if (!isAuthenticated) {
     const redirectParam = location.pathname !== '/mentor/dashboard'
       ? `?redirect=${encodeURIComponent(location.pathname + location.search)}`

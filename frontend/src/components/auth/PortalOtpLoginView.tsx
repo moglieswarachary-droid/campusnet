@@ -1,14 +1,19 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
-import { INITIAL_CURRENT_USER } from '../../data/mockData';
 import { User as UserType } from '../../types';
 import {
-  Mail, Phone, ArrowRight, ArrowLeft, ShieldCheck,
-  CheckCircle2, AlertCircle, RefreshCw, Sparkles,
-  Lock, KeyRound, Globe, Building2, User, ChevronDown,
-  Info, ShieldAlert, Sparkle, ExternalLink
+  Mail, ArrowRight, ArrowLeft, ShieldCheck,
+  CheckCircle2, AlertCircle, RefreshCw, KeyRound, Globe
 } from 'lucide-react';
+
+export interface DemoPersona {
+  name: string;
+  roleDescription: string;
+  email: string;
+  mobile?: string;
+  badge?: string;
+}
 
 export type PortalKey =
   | 'student'
@@ -18,14 +23,6 @@ export type PortalKey =
   | 'event_manager'
   | 'reviewer'
   | 'super_admin';
-
-export interface DemoPersona {
-  name: string;
-  roleDescription: string;
-  email: string;
-  mobile: string;
-  badge: string;
-}
 
 interface PortalOtpLoginViewProps {
   portal: PortalKey;
@@ -37,82 +34,56 @@ interface PortalOtpLoginViewProps {
   registerUrl?: string;
   registerLabel?: string;
   onFallbackPassword?: () => void;
-  demoPersonas?: DemoPersona[];
+  demoPersonas?: any[];
 }
-
-const COUNTRY_CODES = [
-  { code: '+91', country: 'India', flag: '🇮🇳', placeholder: '98765 43210' },
-  { code: '+1', country: 'USA / Canada', flag: '🇺🇸', placeholder: '202 555 0123' },
-  { code: '+44', country: 'UK', flag: '🇬🇧', placeholder: '7911 123456' },
-  { code: '+65', country: 'Singapore', flag: '🇸🇬', placeholder: '8123 4567' },
-  { code: '+971', country: 'UAE', flag: '🇦🇪', placeholder: '50 123 4567' },
-  { code: '+61', country: 'Australia', flag: '🇦🇺', placeholder: '412 345 678' },
-  { code: '+49', country: 'Germany', flag: '🇩🇪', placeholder: '151 12345678' }
-];
 
 const ACCENT_STYLES: Record<string, {
   headerBg: string;
   badgeBg: string;
-  iconBg: string;
   btnPrimary: string;
   ringFocus: string;
-  borderActive: string;
 }> = {
   blue: {
-    headerBg: 'from-blue-600 via-blue-700 to-indigo-900',
+    headerBg: 'from-blue-600 to-indigo-900',
     badgeBg: 'bg-blue-100 text-blue-800 border-blue-200',
-    iconBg: 'bg-blue-600 text-white shadow-blue-500/20',
-    btnPrimary: 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-600/25',
-    ringFocus: 'focus:ring-blue-500 focus:border-blue-500',
-    borderActive: 'border-blue-500 text-blue-600 bg-blue-50/60'
+    btnPrimary: 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-600/20',
+    ringFocus: 'focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
   },
   amber: {
-    headerBg: 'from-amber-600 via-orange-600 to-amber-900',
+    headerBg: 'from-amber-600 to-amber-900',
     badgeBg: 'bg-amber-100 text-amber-800 border-amber-200',
-    iconBg: 'bg-amber-600 text-white shadow-amber-500/20',
-    btnPrimary: 'bg-amber-600 hover:bg-amber-700 text-white shadow-amber-600/25',
-    ringFocus: 'focus:ring-amber-500 focus:border-amber-500',
-    borderActive: 'border-amber-500 text-amber-700 bg-amber-50/60'
+    btnPrimary: 'bg-amber-600 hover:bg-amber-700 text-white shadow-amber-600/20',
+    ringFocus: 'focus:ring-2 focus:ring-amber-500 focus:border-amber-500'
   },
   purple: {
-    headerBg: 'from-purple-600 via-purple-700 to-indigo-950',
+    headerBg: 'from-purple-600 to-indigo-950',
     badgeBg: 'bg-purple-100 text-purple-800 border-purple-200',
-    iconBg: 'bg-purple-600 text-white shadow-purple-500/20',
-    btnPrimary: 'bg-purple-700 hover:bg-purple-800 text-white shadow-purple-700/25',
-    ringFocus: 'focus:ring-purple-500 focus:border-purple-500',
-    borderActive: 'border-purple-500 text-purple-700 bg-purple-50/60'
+    btnPrimary: 'bg-purple-700 hover:bg-purple-800 text-white shadow-purple-700/20',
+    ringFocus: 'focus:ring-2 focus:ring-purple-500 focus:border-purple-500'
   },
   emerald: {
-    headerBg: 'from-emerald-600 via-teal-700 to-emerald-950',
+    headerBg: 'from-emerald-600 to-emerald-950',
     badgeBg: 'bg-emerald-100 text-emerald-800 border-emerald-200',
-    iconBg: 'bg-emerald-600 text-white shadow-emerald-500/20',
-    btnPrimary: 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/25',
-    ringFocus: 'focus:ring-emerald-500 focus:border-emerald-500',
-    borderActive: 'border-emerald-500 text-emerald-700 bg-emerald-50/60'
+    btnPrimary: 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20',
+    ringFocus: 'focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500'
   },
   cyan: {
-    headerBg: 'from-cyan-600 via-teal-700 to-cyan-950',
+    headerBg: 'from-cyan-600 to-cyan-950',
     badgeBg: 'bg-cyan-100 text-cyan-800 border-cyan-200',
-    iconBg: 'bg-cyan-600 text-white shadow-cyan-500/20',
-    btnPrimary: 'bg-cyan-700 hover:bg-cyan-800 text-white shadow-cyan-700/25',
-    ringFocus: 'focus:ring-cyan-500 focus:border-cyan-500',
-    borderActive: 'border-cyan-500 text-cyan-700 bg-cyan-50/60'
+    btnPrimary: 'bg-cyan-700 hover:bg-cyan-800 text-white shadow-cyan-700/20',
+    ringFocus: 'focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500'
   },
   rose: {
-    headerBg: 'from-rose-600 via-pink-700 to-rose-950',
+    headerBg: 'from-rose-600 to-rose-950',
     badgeBg: 'bg-rose-100 text-rose-800 border-rose-200',
-    iconBg: 'bg-rose-600 text-white shadow-rose-500/20',
-    btnPrimary: 'bg-rose-700 hover:bg-rose-800 text-white shadow-rose-700/25',
-    ringFocus: 'focus:ring-rose-500 focus:border-rose-500',
-    borderActive: 'border-rose-500 text-rose-700 bg-rose-50/60'
+    btnPrimary: 'bg-rose-700 hover:bg-rose-800 text-white shadow-rose-700/20',
+    ringFocus: 'focus:ring-2 focus:ring-rose-500 focus:border-rose-500'
   },
   red: {
-    headerBg: 'from-red-700 via-red-800 to-slate-950',
+    headerBg: 'from-red-700 to-slate-950',
     badgeBg: 'bg-red-100 text-red-800 border-red-200',
-    iconBg: 'bg-red-600 text-white shadow-red-500/20',
-    btnPrimary: 'bg-red-700 hover:bg-red-800 text-white shadow-red-700/25',
-    ringFocus: 'focus:ring-red-500 focus:border-red-500',
-    borderActive: 'border-red-500 text-red-700 bg-red-50/60'
+    btnPrimary: 'bg-red-700 hover:bg-red-800 text-white shadow-red-700/20',
+    ringFocus: 'focus:ring-2 focus:ring-red-500 focus:border-red-500'
   }
 };
 
@@ -124,9 +95,7 @@ export const PortalOtpLoginView: React.FC<PortalOtpLoginViewProps> = ({
   portalIcon: PortalIcon,
   accentColor,
   registerUrl,
-  registerLabel,
-  onFallbackPassword,
-  demoPersonas = []
+  registerLabel
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -134,28 +103,17 @@ export const PortalOtpLoginView: React.FC<PortalOtpLoginViewProps> = ({
 
   const styles = ACCENT_STYLES[accentColor] || ACCENT_STYLES.blue;
 
-  // Form step state: 'contact' | 'otp'
-  const [step, setStep] = useState<'contact' | 'otp'>('contact');
-
-  // Channel: EMAIL or SMS
-  const [channel, setChannel] = useState<'EMAIL' | 'SMS'>('EMAIL');
+  // Step: 'email' | 'otp'
+  const [step, setStep] = useState<'email' | 'otp'>('email');
   const [emailInput, setEmailInput] = useState('');
-  const [nameInput, setNameInput] = useState('');
-  const [selectedCountryCode, setSelectedCountryCode] = useState('+91');
-  const [phoneInput, setPhoneInput] = useState('');
-
-  // OTP inputs: 6 digits
   const [otpDigits, setOtpDigits] = useState<string[]>(['', '', '', '', '', '']);
   const digitInputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
-  // Submission & Cooldown
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
-  const [devMockOtp, setDevMockOtp] = useState<string | null>(null);
   const [cooldownSeconds, setCooldownSeconds] = useState(0);
   const [isVerified, setIsVerified] = useState(false);
 
-  // Read query params for redirect target
   const searchParams = new URLSearchParams(location.search);
   const requestedRedirect = searchParams.get('redirect');
 
@@ -168,32 +126,14 @@ export const PortalOtpLoginView: React.FC<PortalOtpLoginViewProps> = ({
     return () => clearInterval(timer);
   }, [cooldownSeconds]);
 
-  // Format phone number with country code
-  const getNormalizedContact = (): string => {
-    if (channel === 'EMAIL') {
-      return emailInput.trim().toLowerCase();
-    }
-    const cleanDigits = phoneInput.replace(/\D/g, '');
-    return `${selectedCountryCode}${cleanDigits}`;
-  };
-
-  // Step 1: Request OTP
-  const handleRequestOtp = async (overrideContact?: string, overrideChannel?: 'EMAIL' | 'SMS') => {
+  // Request OTP via Email
+  const handleRequestOtp = async () => {
     setErrorMsg('');
-    const targetChannel = overrideChannel || channel;
-    const contact = overrideContact || getNormalizedContact();
+    const email = emailInput.trim().toLowerCase();
 
-    if (targetChannel === 'EMAIL') {
-      if (!contact || !contact.includes('@') || !contact.includes('.')) {
-        setErrorMsg('Please enter a valid institutional or personal email address.');
-        return;
-      }
-    } else {
-      const cleanDigits = contact.replace(/\D/g, '');
-      if (cleanDigits.length < 10) {
-        setErrorMsg('Please enter a valid 10-digit mobile number.');
-        return;
-      }
+    if (!email || !email.includes('@') || !email.includes('.')) {
+      setErrorMsg('Please enter a valid email address.');
+      return;
     }
 
     setIsLoading(true);
@@ -203,8 +143,8 @@ export const PortalOtpLoginView: React.FC<PortalOtpLoginViewProps> = ({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          channel: targetChannel,
-          identifier: contact,
+          channel: 'email',
+          identifier: email,
           portal
         })
       });
@@ -213,30 +153,27 @@ export const PortalOtpLoginView: React.FC<PortalOtpLoginViewProps> = ({
       try {
         data = await response.json();
       } catch {
-        setErrorMsg('Authentication gateway returned an unexpected response format. Please verify backend connection.');
+        setErrorMsg('Authentication gateway returned an unexpected response. Please check server connection.');
         setIsLoading(false);
         return;
       }
 
       if (!response.ok) {
-        setErrorMsg(data.error || 'Failed to send one-time password. Please try again.');
+        setErrorMsg(data.error || 'Failed to dispatch verification code. Please try again.');
         setIsLoading(false);
         return;
       }
 
-      // Successful request
       setStep('otp');
       setCooldownSeconds(data.cooldownSeconds || 60);
-      setDevMockOtp(data.mockOtp || null);
       setOtpDigits(['', '', '', '', '', '']);
 
       addToast({
         type: 'info',
-        title: 'One-Time Code Dispatched',
-        message: data.message || `A 6-digit code was sent to ${contact}.`
+        title: 'Verification Code Dispatched',
+        message: `A 6-digit one-time code has been sent to ${email}.`
       });
 
-      // Auto-focus first digit on step switch
       setTimeout(() => {
         digitInputRefs.current[0]?.focus();
       }, 100);
@@ -247,68 +184,51 @@ export const PortalOtpLoginView: React.FC<PortalOtpLoginViewProps> = ({
     }
   };
 
-  // Step 2: Handle individual digit input
-  const handleDigitChange = (index: number, val: string) => {
-    const clean = val.replace(/\D/g, '');
-    if (!clean) {
-      const nextDigits = [...otpDigits];
-      nextDigits[index] = '';
-      setOtpDigits(nextDigits);
-      return;
-    }
+  // Handle single digit input
+  const handleDigitChange = (index: number, value: string) => {
+    setErrorMsg('');
+    const char = value.slice(-1).replace(/\D/g, '');
+    const newDigits = [...otpDigits];
+    newDigits[index] = char;
+    setOtpDigits(newDigits);
 
-    const lastChar = clean.slice(-1);
-    const nextDigits = [...otpDigits];
-    nextDigits[index] = lastChar;
-    setOtpDigits(nextDigits);
-
-    // Auto-advance
-    if (index < 5 && lastChar) {
+    if (char && index < 5) {
       digitInputRefs.current[index + 1]?.focus();
     }
   };
 
   const handleDigitKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Backspace') {
-      if (!otpDigits[index] && index > 0) {
-        digitInputRefs.current[index - 1]?.focus();
-      }
-    } else if (e.key === 'ArrowLeft' && index > 0) {
+    if (e.key === 'Backspace' && !otpDigits[index] && index > 0) {
       digitInputRefs.current[index - 1]?.focus();
-    } else if (e.key === 'ArrowRight' && index < 5) {
-      digitInputRefs.current[index + 1]?.focus();
     }
   };
 
-  // Paste support: filling all 6 digits
-  const handleOtpPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+  const handleOtpPaste = (e: React.ClipboardEvent) => {
     e.preventDefault();
-    const pasteData = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
-    if (!pasteData) return;
-
-    const nextDigits = [...otpDigits];
-    for (let i = 0; i < 6; i++) {
-      nextDigits[i] = pasteData[i] || '';
+    const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+    if (!pasted) return;
+    const newDigits = ['', '', '', '', '', ''];
+    for (let i = 0; i < pasted.length; i++) {
+      newDigits[i] = pasted[i];
     }
-    setOtpDigits(nextDigits);
-
-    const targetFocus = Math.min(pasteData.length, 5);
-    digitInputRefs.current[targetFocus]?.focus();
+    setOtpDigits(newDigits);
+    const nextIdx = Math.min(pasted.length, 5);
+    digitInputRefs.current[nextIdx]?.focus();
   };
 
-  // Step 2: Verify OTP
-  const handleVerifyOtp = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
+  // Verify OTP Code
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
     setErrorMsg('');
 
     const fullCode = otpDigits.join('');
     if (fullCode.length !== 6) {
-      setErrorMsg('Please enter all 6 digits of your one-time password.');
+      setErrorMsg('Please enter all 6 digits of your verification code.');
       return;
     }
 
     setIsLoading(true);
-    const contact = getNormalizedContact();
+    const email = emailInput.trim().toLowerCase();
     const apiBase = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
 
     try {
@@ -316,10 +236,9 @@ export const PortalOtpLoginView: React.FC<PortalOtpLoginViewProps> = ({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          identifier: contact,
+          identifier: email,
           code: fullCode,
-          portal,
-          name: nameInput.trim()
+          portal
         })
       });
 
@@ -327,14 +246,13 @@ export const PortalOtpLoginView: React.FC<PortalOtpLoginViewProps> = ({
       try {
         data = await response.json();
       } catch {
-        setErrorMsg('Authentication gateway returned an unexpected response format. Please verify backend connection.');
+        setErrorMsg('Authentication gateway returned an unexpected response format.');
         setIsLoading(false);
         return;
       }
 
       if (!response.ok) {
-        setErrorMsg(data.error || 'Invalid or expired one-time code. Please check and try again.');
-        // Clear digits for re-entry on failure
+        setErrorMsg(data.error || 'Invalid or expired verification code. Please check and try again.');
         if (response.status === 400 || response.status === 401) {
           setOtpDigits(['', '', '', '', '', '']);
           digitInputRefs.current[0]?.focus();
@@ -343,7 +261,6 @@ export const PortalOtpLoginView: React.FC<PortalOtpLoginViewProps> = ({
         return;
       }
 
-      // Verification success!
       setIsVerified(true);
 
       // Persist auth tokens
@@ -351,23 +268,50 @@ export const PortalOtpLoginView: React.FC<PortalOtpLoginViewProps> = ({
       localStorage.setItem('campusnet_token', data.token);
       sessionStorage.setItem('campusnet_session_entered', 'true');
 
-      // Update appropriate AppContext portal session with real user identity
+      // Update real user profile session
       const user = data.user;
-      const userName = (user.name && user.name !== 'CampusNet Innovator' ? user.name : nameInput.trim()) || user.name || (user.email ? user.email.split('@')[0] : 'Innovator');
-      
+      const formattedName = user.name || (email ? email.split('@')[0].replace(/[._-]/g, ' ') : 'Innovator');
+      const capitalizedName = formattedName
+        .split(' ')
+        .map((w: string) => w.charAt(0).toUpperCase() + w.slice(1))
+        .join(' ');
+
       const formattedUser: UserType = {
-        ...INITIAL_CURRENT_USER,
-        ...user,
         id: user.id || `usr-${Date.now()}`,
-        name: userName,
-        email: user.email,
-        mobile: user.mobile || '+91 98765 43210',
-        institution: user.institution || 'Indian Institute of Technology (CampusNet)',
-        department: user.department || 'Computer Science & Engineering',
+        name: capitalizedName,
+        email: user.email || email,
+        mobile: user.mobile || '',
+        studentId: user.studentId || user.rollNumber || '',
+        institution: user.institution || 'Verified Academic Network',
+        university: user.university || user.institution || 'Verified Academic Network',
+        department: user.department || 'Academic Department',
+        course: user.course || '',
+        year: user.year || '',
+        state: user.state || '',
+        city: user.city || '',
+        verifiedStudent: portal === 'student',
+        avatar: user.avatar || '',
+        innovationScore: user.innovationScore || 0,
+        skills: user.skills || [],
+        badges: user.badges || [],
+        bio: user.bio || '',
+        interests: user.interests || [],
+        github: user.github || '',
+        linkedin: user.linkedin || '',
+        twitter: user.twitter || '',
+        leetcode: user.leetcode || '',
+        instagram: user.instagram || '',
         role: portal === 'mentor' ? 'mentor' : portal === 'researcher' ? 'researcher' : portal === 'organization' ? 'organizer' : 'student',
         activeAppRole: portal === 'mentor' ? 'MENTOR' : portal === 'researcher' ? 'PHD_RESEARCHER' : portal === 'organization' ? 'ORGANIZATION_OWNER' : 'STUDENT',
         roles: user.roles || [portal.toUpperCase()],
-        verifiedStudent: portal === 'student',
+        connectionsCount: user.connectionsCount || 0,
+        connectedUserIds: user.connectedUserIds || [],
+        savedItemIds: user.savedItemIds || [],
+        privacy: {
+          emailPublic: true,
+          phonePublic: false,
+          showProjectsToPublic: true
+        },
         status: 'active'
       };
 
@@ -387,20 +331,20 @@ export const PortalOtpLoginView: React.FC<PortalOtpLoginViewProps> = ({
         const orgSession = {
           id: formattedUser.id || 'org-001',
           institutionId: 'inst-001',
-          institutionName: formattedUser.institution || 'National Engineering Institute',
+          institutionName: formattedUser.institution,
           officialEmail: formattedUser.email,
           coordinatorName: formattedUser.name,
           designation: portal === 'event_manager' ? 'Event Coordinator' : 'Institutional Lead',
-          mobile: formattedUser.mobile || '+91 98765 43213',
-          department: formattedUser.department || 'Campus Conclaves',
+          mobile: formattedUser.mobile,
+          department: formattedUser.department,
           state: 'Karnataka',
-          district: 'Dakshina Kannada',
+          district: 'Surathkal',
           city: 'Surathkal',
           role: 'institution_admin' as const,
           verificationStatus: 'verified' as const,
           avatar: formattedUser.avatar || '',
           lastLoginAt: new Date().toISOString(),
-          eventsCreatedCount: 3
+          eventsCreatedCount: 0
         };
         setCurrentOrganizer(orgSession);
         localStorage.setItem('campusnet_organizer_session', JSON.stringify(orgSession));
@@ -437,11 +381,10 @@ export const PortalOtpLoginView: React.FC<PortalOtpLoginViewProps> = ({
 
       addToast({
         type: 'success',
-        title: 'Authentication Verified 🎉',
-        message: `Welcome, ${formattedUser.name}! Identity verified via ${channel === 'EMAIL' ? 'Email' : 'SMS'} OTP.`
+        title: 'Authentication Successful 🎉',
+        message: `Welcome, ${formattedUser.name}! Signed into ${portalTitle}.`
       });
 
-      // Navigate to destination
       const destination = requestedRedirect && requestedRedirect.startsWith('/') && !requestedRedirect.startsWith('//')
         ? requestedRedirect
         : (data.redirectUrl || '/student/dashboard');
@@ -456,59 +399,23 @@ export const PortalOtpLoginView: React.FC<PortalOtpLoginViewProps> = ({
     }
   };
 
-  // Helper to fill demo persona
-  const handleSelectPersona = (persona: DemoPersona) => {
-    setErrorMsg('');
-    setNameInput(persona.name);
-    if (channel === 'EMAIL') {
-      setEmailInput(persona.email);
-    } else {
-      // Extract country code if present
-      if (persona.mobile.startsWith('+91')) {
-        setSelectedCountryCode('+91');
-        setPhoneInput(persona.mobile.replace('+91', '').trim());
-      } else {
-        setPhoneInput(persona.mobile);
-      }
-    }
-  };
-
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 flex flex-col font-sans selection:bg-campus-blue selection:text-white">
       {/* Top Header */}
-      <header className="bg-white border-b border-slate-200/90 sticky top-0 z-30 shadow-2xs">
+      <header className="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-2xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          
-          {/* Logo & Return to Gateway */}
           <div className="flex items-center gap-3">
             <button
               onClick={() => navigate('/')}
               className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-campus-blue px-2.5 py-1.5 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
-              title="Return to RBAC Gateway"
             >
               <ArrowLeft className="w-4 h-4 text-slate-400" />
               <span>Gateway</span>
             </button>
             <div className="h-4 w-px bg-slate-200" />
-            <div className="flex items-center gap-2">
-              <span className="text-lg font-black tracking-tight text-campus-deep-blue">
-                CampusNet<span className="text-campus-red">+</span>
-              </span>
-              <span className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full border ${styles.badgeBg}`}>
-                {portalBadge}
-              </span>
-            </div>
-          </div>
-
-          {/* Guest link */}
-          <div className="flex items-center gap-3">
-            <Link
-              to="/landing"
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-campus-blue px-3 py-1.5 rounded-lg hover:bg-slate-100 transition-colors"
-            >
-              <Globe className="w-3.5 h-3.5 text-slate-400" />
-              <span>Explore as Guest</span>
-            </Link>
+            <span className="text-lg font-black tracking-tight text-campus-deep-blue">
+              CampusNet<span className="text-campus-red">+</span>
+            </span>
           </div>
         </div>
       </header>
@@ -517,20 +424,17 @@ export const PortalOtpLoginView: React.FC<PortalOtpLoginViewProps> = ({
       <main className="flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-8">
         <div className="max-w-md w-full space-y-6">
           
-          {/* Card */}
           <div className="bg-white rounded-3xl border border-slate-200 shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
             
             {/* Visual Header Banner */}
             <div className={`p-6 bg-gradient-to-r ${styles.headerBg} text-white relative overflow-hidden`}>
-              <div className="absolute top-0 right-0 transform translate-x-4 -translate-y-4 w-32 h-32 bg-white/10 rounded-full blur-2xl pointer-events-none" />
-              
               <div className="flex items-start justify-between relative z-10">
                 <div className="w-12 h-12 rounded-2xl bg-white/15 backdrop-blur-md border border-white/20 flex items-center justify-center text-white shadow-inner">
                   <PortalIcon className="w-6 h-6" />
                 </div>
                 <div className="flex items-center gap-1.5 bg-black/25 backdrop-blur-md px-2.5 py-1 rounded-full text-[11px] font-semibold text-white/90 border border-white/15">
                   <ShieldCheck className="w-3.5 h-3.5 text-emerald-300" />
-                  <span>Passwordless OTP</span>
+                  <span>Secure Email OTP</span>
                 </div>
               </div>
 
@@ -545,7 +449,7 @@ export const PortalOtpLoginView: React.FC<PortalOtpLoginViewProps> = ({
             {/* Form Body */}
             <div className="p-6 sm:p-8 space-y-6">
               
-              {/* Error Message Alert */}
+              {/* Error Alert */}
               {errorMsg && (
                 <div className="p-3.5 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-start gap-2.5 animate-in slide-in-from-top-1">
                   <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-red-500" />
@@ -561,142 +465,33 @@ export const PortalOtpLoginView: React.FC<PortalOtpLoginViewProps> = ({
                 </div>
               )}
 
-              {/* STEP 1: CONTACT SELECTION (EMAIL vs SMS) */}
-              {step === 'contact' && (
+              {/* STEP 1: EMAIL ENTRY */}
+              {step === 'email' && (
                 <div className="space-y-5">
-                  
-                  {/* Channel Toggle */}
-                  <div className="space-y-1.5">
-                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                      Select Authentication Channel
-                    </label>
-                    <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 rounded-2xl border border-slate-200/80">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setChannel('EMAIL');
-                          setErrorMsg('');
-                        }}
-                        className={`flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                          channel === 'EMAIL'
-                            ? 'bg-white text-slate-900 shadow-sm border border-slate-200/60'
-                            : 'text-slate-500 hover:text-slate-800'
-                        }`}
-                      >
-                        <Mail className="w-3.5 h-3.5 text-blue-600" />
-                        <span>Email Address</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setChannel('SMS');
-                          setErrorMsg('');
-                        }}
-                        className={`flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                          channel === 'SMS'
-                            ? 'bg-white text-slate-900 shadow-sm border border-slate-200/60'
-                            : 'text-slate-500 hover:text-slate-800'
-                        }`}
-                      >
-                        <Phone className="w-3.5 h-3.5 text-emerald-600" />
-                        <span>Mobile (SMS)</span>
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Channel Input Fields */}
-                  {channel === 'EMAIL' ? (
-                    <div className="space-y-1.5">
-                      <label className="block text-xs font-bold text-slate-700">
-                        Registered Email Address
-                      </label>
-                      <div className="relative">
-                        <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                        <input
-                          type="email"
-                          value={emailInput}
-                          onChange={(e) => setEmailInput(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') handleRequestOtp();
-                          }}
-                          placeholder="e.g. name@university.edu.in"
-                          className={`w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 font-medium placeholder:text-slate-400 transition-all outline-hidden ${styles.ringFocus}`}
-                          autoFocus
-                        />
-                      </div>
-                      <p className="text-[11px] text-slate-400">
-                        Enter the email associated with your institutional profile.
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="space-y-1.5">
-                      <label className="block text-xs font-bold text-slate-700">
-                        Registered Mobile Number
-                      </label>
-                      <div className="flex gap-2">
-                        {/* Country code selector */}
-                        <div className="relative w-36 shrink-0">
-                          <select
-                            value={selectedCountryCode}
-                            onChange={(e) => setSelectedCountryCode(e.target.value)}
-                            className="w-full appearance-none pl-3 pr-7 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-hidden cursor-pointer"
-                          >
-                            {COUNTRY_CODES.map((item) => (
-                              <option key={item.code} value={item.code}>
-                                {item.flag} {item.code} ({item.country})
-                              </option>
-                            ))}
-                          </select>
-                          <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
-                        </div>
-
-                        {/* Phone number input */}
-                        <div className="relative flex-1">
-                          <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                          <input
-                            type="tel"
-                            inputMode="numeric"
-                            value={phoneInput}
-                            onChange={(e) => setPhoneInput(e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') handleRequestOtp();
-                            }}
-                            placeholder={
-                              COUNTRY_CODES.find(c => c.code === selectedCountryCode)?.placeholder || '98765 43210'
-                            }
-                            className={`w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 font-medium placeholder:text-slate-400 transition-all outline-hidden ${styles.ringFocus}`}
-                            autoFocus
-                          />
-                        </div>
-                      </div>
-                      <p className="text-[11px] text-slate-400">
-                        We will deliver a 6-digit one-time SMS verification token.
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Full Name Input for Personalized Account Identity */}
                   <div className="space-y-1.5">
                     <label className="block text-xs font-bold text-slate-700">
-                      Your Full Name <span className="text-slate-400 font-normal">(Optional for first-time login)</span>
+                      Email Address
                     </label>
                     <div className="relative">
-                      <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                      <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                       <input
-                        type="text"
-                        value={nameInput}
-                        onChange={(e) => setNameInput(e.target.value)}
-                        placeholder="e.g. Moglieswar Achary"
-                        className={`w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 font-medium placeholder:text-slate-400 transition-all outline-hidden ${styles.ringFocus}`}
+                        type="email"
+                        value={emailInput}
+                        onChange={(e) => setEmailInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') handleRequestOtp();
+                        }}
+                        placeholder="e.g. yourname@university.edu.in"
+                        className={`w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 font-medium placeholder:text-slate-400 transition-all outline-hidden ${styles.ringFocus}`}
+                        autoFocus
                       />
                     </div>
                     <p className="text-[11px] text-slate-400">
-                      Appears on your portal badge, dashboard greeting, and verified project records.
+                      We will send a 6-digit one-time passcode to your email inbox.
                     </p>
                   </div>
 
-                  {/* Send OTP Button */}
+                  {/* Send Code Button */}
                   <button
                     type="button"
                     onClick={() => handleRequestOtp()}
@@ -708,121 +503,45 @@ export const PortalOtpLoginView: React.FC<PortalOtpLoginViewProps> = ({
                     {isLoading ? (
                       <>
                         <RefreshCw className="w-4 h-4 animate-spin" />
-                        <span>Sending One-Time Password...</span>
+                        <span>Dispatching Verification Code...</span>
                       </>
                     ) : (
                       <>
-                        <span>Send 6-Digit One-Time Code</span>
+                        <span>Continue with Email</span>
                         <ArrowRight className="w-4 h-4" />
                       </>
                     )}
                   </button>
-
-                  {/* Demo Personas Quick Fill */}
-                  {demoPersonas.length > 0 && (
-                    <div className="pt-2 border-t border-slate-100 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[11px] font-black uppercase tracking-wider text-slate-400">
-                          Demo Personas (1-Click Fill)
-                        </span>
-                        <span className="text-[10px] font-medium text-slate-400">Testing & Evaluation</span>
-                      </div>
-                      <div className="space-y-1.5">
-                        {demoPersonas.map((p, idx) => (
-                          <button
-                            key={idx}
-                            type="button"
-                            onClick={() => handleSelectPersona(p)}
-                            className="w-full text-left p-2 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200/80 transition-colors flex items-center justify-between gap-2 text-xs group cursor-pointer"
-                          >
-                            <div className="truncate">
-                              <span className="font-bold text-slate-800">{p.name}</span>
-                              <span className="text-[10px] text-slate-400 block truncate">
-                                {channel === 'EMAIL' ? p.email : p.mobile} • {p.roleDescription}
-                              </span>
-                            </div>
-                            <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-md bg-white border border-slate-200 text-slate-600 shrink-0 group-hover:border-slate-300">
-                              Use Contact
-                            </span>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Password Fallback (if supported) */}
-                  {onFallbackPassword && (
-                    <div className="pt-2 text-center">
-                      <button
-                        type="button"
-                        onClick={onFallbackPassword}
-                        className="text-xs font-semibold text-slate-500 hover:text-campus-blue transition-colors cursor-pointer"
-                      >
-                        Prefer password authentication? Sign in with password →
-                      </button>
-                    </div>
-                  )}
                 </div>
               )}
 
               {/* STEP 2: 6-DIGIT OTP VERIFICATION */}
               {step === 'otp' && (
                 <form onSubmit={handleVerifyOtp} className="space-y-5">
-                  
-                  {/* Delivery notification info */}
-                  <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200 text-slate-700 text-xs flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-2 truncate">
-                      {channel === 'EMAIL' ? (
-                        <Mail className="w-4 h-4 text-blue-600 shrink-0" />
-                      ) : (
-                        <Phone className="w-4 h-4 text-emerald-600 shrink-0" />
-                      )}
+                  <div className="p-3.5 rounded-2xl bg-blue-50/70 border border-blue-100 text-blue-900 text-xs flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2.5 truncate">
+                      <Mail className="w-4 h-4 text-blue-600 shrink-0" />
                       <div className="truncate">
-                        <span className="text-[10px] uppercase font-bold text-slate-400 block">Sent to</span>
-                        <span className="font-bold text-slate-800 truncate">{getNormalizedContact()}</span>
+                        <span className="text-[10px] uppercase font-bold text-blue-500 block">Verification code sent to</span>
+                        <span className="font-bold text-blue-950 truncate">{emailInput.trim().toLowerCase()}</span>
                       </div>
                     </div>
                     <button
                       type="button"
                       onClick={() => {
-                        setStep('contact');
+                        setStep('email');
                         setErrorMsg('');
-                        setDevMockOtp(null);
                       }}
-                      className="text-[11px] font-bold text-campus-blue hover:underline shrink-0 cursor-pointer"
+                      className="text-[11px] font-bold text-blue-700 hover:underline shrink-0 cursor-pointer"
                     >
                       Change
                     </button>
                   </div>
 
-                  {/* Developer Mock OTP Helper Badge (shows in development / test mode) */}
-                  {devMockOtp && (
-                    <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex items-center justify-between gap-2 animate-in fade-in">
-                      <div className="flex items-center gap-1.5">
-                        <Sparkle className="w-3.5 h-3.5 text-amber-600" />
-                        <span className="font-semibold">Dev Test Code:</span>
-                        <span className="font-mono font-black text-amber-700 tracking-wider bg-white px-2 py-0.5 rounded border border-amber-300">
-                          {devMockOtp}
-                        </span>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const digits = devMockOtp.split('').slice(0, 6);
-                          setOtpDigits(digits);
-                          digitInputRefs.current[5]?.focus();
-                        }}
-                        className="text-[10px] font-bold text-amber-800 bg-amber-200/60 hover:bg-amber-200 px-2 py-1 rounded-md transition-colors cursor-pointer"
-                      >
-                        Auto-Fill
-                      </button>
-                    </div>
-                  )}
-
                   {/* 6 Digit Input Boxes */}
                   <div className="space-y-2">
                     <label className="block text-center text-xs font-bold text-slate-700 uppercase tracking-wider">
-                      Enter 6-Digit One-Time Password
+                      Enter 6-Digit Code
                     </label>
                     
                     <div className="flex justify-between gap-1.5 sm:gap-2" onPaste={handleOtpPaste}>
@@ -856,32 +575,32 @@ export const PortalOtpLoginView: React.FC<PortalOtpLoginViewProps> = ({
                     {isLoading ? (
                       <>
                         <RefreshCw className="w-4 h-4 animate-spin" />
-                        <span>Verifying Security Token...</span>
+                        <span>Verifying Security Code...</span>
                       </>
                     ) : (
                       <>
                         <ShieldCheck className="w-4 h-4" />
-                        <span>Verify & Enter {portalTitle}</span>
+                        <span>Sign In to {portalTitle}</span>
                       </>
                     )}
                   </button>
 
-                  {/* Resend OTP Cooldown */}
+                  {/* Resend Cooldown */}
                   <div className="flex items-center justify-between text-xs pt-1 border-t border-slate-100">
                     <button
                       type="button"
                       onClick={() => {
-                        setStep('contact');
+                        setStep('email');
                         setErrorMsg('');
                       }}
                       className="text-slate-500 hover:text-slate-800 font-medium cursor-pointer"
                     >
-                      ← Back to contact
+                      ← Back
                     </button>
 
                     {cooldownSeconds > 0 ? (
                       <span className="text-slate-400 font-mono text-[11px]">
-                        Resend in <strong className="text-slate-700">{cooldownSeconds}s</strong>
+                        Resend code in <strong className="text-slate-700">{cooldownSeconds}s</strong>
                       </span>
                     ) : (
                       <button
@@ -895,17 +614,9 @@ export const PortalOtpLoginView: React.FC<PortalOtpLoginViewProps> = ({
                   </div>
                 </form>
               )}
-
-              {/* Security Architecture Footnote */}
-              <div className="pt-2 border-t border-slate-100 flex items-start gap-2 text-[11px] text-slate-400 leading-relaxed">
-                <ShieldCheck className="w-3.5 h-3.5 text-slate-400 shrink-0 mt-0.5" />
-                <span>
-                  <strong>Server-Enforced RBAC:</strong> The OTP authenticates identity. Portal access is governed strictly by server-verified credentials and permissions.
-                </span>
-              </div>
             </div>
 
-            {/* Bottom Register Prompt (if applicable) */}
+            {/* Bottom Register Prompt */}
             {registerUrl && (
               <div className="px-6 py-4 bg-slate-50 border-t border-slate-200/90 text-center text-xs text-slate-600">
                 <span>New to CampusNet? </span>

@@ -8,24 +8,7 @@ import {
   School, GraduationCap, Key
 } from 'lucide-react';
 
-import { PortalOtpLoginView, DemoPersona } from '../../auth/PortalOtpLoginView';
-
-const MENTOR_DEMO_PERSONAS: DemoPersona[] = [
-  {
-    name: 'Dr. Priya Mentor',
-    roleDescription: 'Professor of AI & Robotics (NITK)',
-    email: 'priya.mentor@nitk.edu.in',
-    mobile: '+91 98765 43211',
-    badge: 'Faculty Mentor'
-  },
-  {
-    name: 'Dr. Arvind Rao',
-    roleDescription: 'Associate Professor & Head of Robotics (IITB)',
-    email: 'arvind.rao@iitb.ac.in',
-    mobile: '+91 98765 43221',
-    badge: 'Faculty Mentor'
-  }
-];
+import { PortalOtpLoginView } from '../../auth/PortalOtpLoginView';
 
 interface Props {
   mode?: 'login' | 'register' | 'forgot-password';
@@ -124,16 +107,25 @@ export const MentorAuthView: React.FC<Props> = ({ mode = 'login' }) => {
 
     setIsLoading(true);
     setTimeout(() => {
-      const matched = mentors.find(m => m.email.toLowerCase() === emailOrEmpId.toLowerCase()) || mentors[0];
-      setCurrentUser({
-        ...matched,
+      const matched = mentors.find(m => m.email.toLowerCase() === emailOrEmpId.toLowerCase());
+      const loggedUser = matched || {
+        id: `mnt-${Date.now()}`,
+        name: emailOrEmpId.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+        email: emailOrEmpId,
         role: 'mentor',
         roles: ['MENTOR'],
-        activeAppRole: 'MENTOR'
-      } as any);
+        activeAppRole: 'MENTOR',
+        institution: 'Academic Network',
+        designation: 'Faculty Mentor',
+        avatar: ''
+      };
+      localStorage.setItem('campusnet_user', JSON.stringify(loggedUser));
+      localStorage.setItem('campusnet_token', `tok-mnt-${Date.now()}`);
+      sessionStorage.setItem('campusnet_token', `tok-mnt-${Date.now()}`);
+      setCurrentUser(loggedUser as any);
       switchRole('mentor');
       setIsLoading(false);
-      addToast({ type: 'success', message: `Welcome back, ${matched.name}!` });
+      addToast({ type: 'success', message: `Welcome back, ${loggedUser.name}!` });
       navigate(redirectTarget);
     }, 500);
   };
@@ -181,6 +173,9 @@ export const MentorAuthView: React.FC<Props> = ({ mode = 'login' }) => {
       bio: 'Experienced academic researcher and hackathon mentor.'
     };
 
+    localStorage.setItem('campusnet_user', JSON.stringify(newMentor));
+    localStorage.setItem('campusnet_token', `tok-mnt-${Date.now()}`);
+    sessionStorage.setItem('campusnet_token', `tok-mnt-${Date.now()}`);
     setCurrentUser(newMentor as any);
     switchRole('mentor');
     addToast({ type: 'success', message: 'Faculty Mentor onboarding completed successfully!' });
@@ -199,7 +194,6 @@ export const MentorAuthView: React.FC<Props> = ({ mode = 'login' }) => {
         registerUrl="/mentor/register"
         registerLabel="Join as Faculty Mentor →"
         onFallbackPassword={() => setShowPasswordLogin(true)}
-        demoPersonas={MENTOR_DEMO_PERSONAS}
       />
     );
   }

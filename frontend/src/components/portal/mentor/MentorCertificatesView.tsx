@@ -14,20 +14,34 @@ export const MentorCertificatesView: React.FC = () => {
     currentUser, completeMentorshipAndIssueCertificate, addToast
   } = useApp();
 
-  const currentMentor = mentors.find(m => m.email === currentUser?.email) || mentors[0];
+  const currentMentor = mentors.find(m =>
+    (currentUser?.email && m.email?.toLowerCase() === currentUser.email.toLowerCase()) ||
+    (currentUser?.id && m.id === currentUser.id)
+  ) || {
+    id: currentUser?.id || 'mnt-current',
+    name: currentUser?.name || 'Faculty Mentor',
+    email: currentUser?.email || '',
+    designation: 'Faculty Mentor',
+    department: currentUser?.department || 'Engineering',
+    institution: currentUser?.institution || 'Academic Network',
+    avatar: currentUser?.avatar || ''
+  };
+
+  const myCertificates = mentorshipCertificates.filter(c =>
+    c.mentorId === currentMentor.id ||
+    (currentMentor.email && (c as any).mentorEmail?.toLowerCase() === currentMentor.email.toLowerCase()) ||
+    (Boolean(currentMentor.name && c.mentorName) && c.mentorName.toLowerCase() === currentMentor.name.toLowerCase() && !currentMentor.email?.includes('arvind.rao'))
+  );
+
   const [selectedCertId, setSelectedCertId] = useState<string | null>(null);
 
   // Issue Certificate Modal State
   const [isIssueModalOpen, setIsIssueModalOpen] = useState(false);
-  const [selectedTeamId, setSelectedTeamId] = useState(teams[0]?.id || '');
-  const [mentorContribution, setMentorContribution] = useState(
-    'Guided the team through embedded computer vision pipeline optimization, INT8 TensorRT quantization, and fail-safe motor telemetry.'
-  );
-  const [projectOutcome, setProjectOutcome] = useState(
-    'Field-proven prototype ready for Smart India Hackathon grand finale, demonstrating sub-15ms edge inference.'
-  );
+  const [selectedTeamId, setSelectedTeamId] = useState('');
+  const [mentorContribution, setMentorContribution] = useState('');
+  const [projectOutcome, setProjectOutcome] = useState('');
 
-  const selectedCert = mentorshipCertificates.find(c => c.id === selectedCertId) || mentorshipCertificates[0];
+  const selectedCert = myCertificates.find(c => c.id === selectedCertId) || myCertificates[0] || null;
 
   const handleIssueCertificate = (e: React.FormEvent) => {
     e.preventDefault();
@@ -96,49 +110,61 @@ export const MentorCertificatesView: React.FC = () => {
         <div className="lg:col-span-5 space-y-3">
           <div className="flex items-center justify-between">
             <h3 className="text-xs font-black uppercase tracking-wider text-slate-400">
-              Issued Credential Records ({mentorshipCertificates.length})
+              Issued Credential Records ({myCertificates.length})
             </h3>
             <span className="text-[11px] text-slate-400 font-medium">Immutable Registry</span>
           </div>
 
           <div className="space-y-2.5">
-            {mentorshipCertificates.map(cert => {
-              const isSelected = selectedCert?.id === cert.id;
+            {myCertificates.length > 0 ? (
+              myCertificates.map(cert => {
+                const isSelected = selectedCert?.id === cert.id;
 
-              return (
+                return (
+                  <button
+                    key={cert.id}
+                    onClick={() => setSelectedCertId(cert.id)}
+                    className={`w-full text-left p-4 rounded-2xl border transition-all space-y-2 ${
+                      isSelected
+                        ? 'bg-teal-50/80 border-[#0F9488] shadow-xs ring-1 ring-[#0F9488]'
+                        : 'bg-white border-slate-200/90 hover:bg-slate-50'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <span className="text-[10px] font-mono font-bold text-slate-400 uppercase">
+                        {cert.certificateNumber}
+                      </span>
+                      <span className="text-[10px] font-extrabold px-1.5 py-0.2 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        Verified
+                      </span>
+                    </div>
+
+                    <h4 className="text-xs font-bold text-[#12243A] leading-tight line-clamp-1">
+                      {cert.projectTitle}
+                    </h4>
+
+                    <div className="text-[11px] text-slate-500">
+                      Team: <strong>{cert.teamName}</strong> • {cert.studentNames?.length || 1} Mentees
+                    </div>
+
+                    <div className="flex items-center justify-between text-[10px] text-slate-400 pt-1.5 border-t border-slate-100">
+                      <span>Duration: {cert.durationWeeks || 24} Weeks</span>
+                      <span className="font-semibold text-[#0F9488]">Inspect Credential →</span>
+                    </div>
+                  </button>
+                );
+              })
+            ) : (
+              <div className="p-6 rounded-2xl bg-white border border-dashed border-slate-200 text-center space-y-2">
+                <p className="text-xs text-slate-500">No mentorship credentials issued yet.</p>
                 <button
-                  key={cert.id}
-                  onClick={() => setSelectedCertId(cert.id)}
-                  className={`w-full text-left p-4 rounded-2xl border transition-all space-y-2 ${
-                    isSelected
-                      ? 'bg-teal-50/80 border-[#0F9488] shadow-xs ring-1 ring-[#0F9488]'
-                      : 'bg-white border-slate-200/90 hover:bg-slate-50'
-                  }`}
+                  onClick={() => setIsIssueModalOpen(true)}
+                  className="text-xs font-bold text-[#0F9488] hover:underline"
                 >
-                  <div className="flex items-start justify-between gap-2">
-                    <span className="text-[10px] font-mono font-bold text-slate-400 uppercase">
-                      {cert.certificateNumber}
-                    </span>
-                    <span className="text-[10px] font-extrabold px-1.5 py-0.2 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200">
-                      Verified
-                    </span>
-                  </div>
-
-                  <h4 className="text-xs font-bold text-[#12243A] leading-tight line-clamp-1">
-                    {cert.projectTitle}
-                  </h4>
-
-                  <div className="text-[11px] text-slate-500">
-                    Team: <strong>{cert.teamName}</strong> • {cert.studentNames?.length || 1} Mentees
-                  </div>
-
-                  <div className="flex items-center justify-between text-[10px] text-slate-400 pt-1.5 border-t border-slate-100">
-                    <span>Duration: {cert.durationWeeks || 24} Weeks</span>
-                    <span className="font-semibold text-[#0F9488]">Inspect Credential →</span>
-                  </div>
+                  + Issue First Credential
                 </button>
-              );
-            })}
+              </div>
+            )}
           </div>
         </div>
 
