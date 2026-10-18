@@ -64,6 +64,7 @@ export async function sendOtpEmail({ to, otp, purpose = 'LOGIN', portal = 'stude
   // 1. Resend Transactional Email Provider
   if (provider === 'resend' && process.env.RESEND_API_KEY) {
     try {
+      const fromAddress = process.env.EMAIL_FROM || 'CampusNet Auth <onboarding@resend.dev>';
       const response = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: {
@@ -71,7 +72,7 @@ export async function sendOtpEmail({ to, otp, purpose = 'LOGIN', portal = 'stude
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          from: process.env.EMAIL_FROM || 'CampusNet Auth <auth@campusnet.in>',
+          from: fromAddress,
           to: [normalizedEmail],
           subject: `Your CampusNet verification code: ${otp}`,
           html: `
@@ -86,7 +87,15 @@ export async function sendOtpEmail({ to, otp, purpose = 'LOGIN', portal = 'stude
           `
         })
       });
-      return { success: response.ok, provider: 'resend' };
+
+      if (!response.ok) {
+        const errText = await response.text();
+        console.error(`[OtpDelivery:Email] Resend API error (${response.status}):`, errText);
+        return { success: false, error: 'DELIVERY_FAILED', details: errText };
+      }
+
+      console.log(`[OtpDelivery:Email] ✅ Resend successfully sent OTP to ${normalizedEmail}`);
+      return { success: true, provider: 'resend' };
     } catch (err) {
       console.error('[OtpDelivery:Email] Resend delivery error:', err.message);
       return { success: false, error: 'DELIVERY_FAILED' };
