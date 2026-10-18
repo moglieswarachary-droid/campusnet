@@ -194,8 +194,9 @@ export const PortalOtpLoginView: React.FC<PortalOtpLoginViewProps> = ({
     }
 
     setIsLoading(true);
+    const apiBase = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
     try {
-      const response = await fetch('/api/auth/otp/request', {
+      const response = await fetch(`${apiBase}/api/auth/otp/request`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -205,7 +206,14 @@ export const PortalOtpLoginView: React.FC<PortalOtpLoginViewProps> = ({
         })
       });
 
-      const data = await response.json();
+      let data: any = {};
+      try {
+        data = await response.json();
+      } catch {
+        setErrorMsg('Authentication gateway returned an unexpected response format. Please verify backend connection.');
+        setIsLoading(false);
+        return;
+      }
 
       if (!response.ok) {
         setErrorMsg(data.error || 'Failed to send one-time password. Please try again.');
@@ -298,9 +306,10 @@ export const PortalOtpLoginView: React.FC<PortalOtpLoginViewProps> = ({
 
     setIsLoading(true);
     const contact = getNormalizedContact();
+    const apiBase = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
 
     try {
-      const response = await fetch('/api/auth/otp/verify', {
+      const response = await fetch(`${apiBase}/api/auth/otp/verify`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -310,7 +319,14 @@ export const PortalOtpLoginView: React.FC<PortalOtpLoginViewProps> = ({
         })
       });
 
-      const data = await response.json();
+      let data: any = {};
+      try {
+        data = await response.json();
+      } catch {
+        setErrorMsg('Authentication gateway returned an unexpected response format. Please verify backend connection.');
+        setIsLoading(false);
+        return;
+      }
 
       if (!response.ok) {
         setErrorMsg(data.error || 'Invalid or expired one-time code. Please check and try again.');
