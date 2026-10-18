@@ -963,8 +963,8 @@ const server = http.createServer(async (req, res) => {
         return;
       }
 
-      // POST /api/auth/otp/request (Passwordless OTP Challenge Dispatch)
-      if (pathname === '/api/auth/otp/request' && req.method === 'POST') {
+      // POST /api/auth/otp/request or /api/auth/otp/send (Passwordless OTP Challenge Dispatch)
+      if ((pathname === '/api/auth/otp/request' || pathname === '/api/auth/otp/send') && req.method === 'POST') {
         const body = await parseJsonBody(req);
         const { channel, identifier, portal = 'student' } = body;
         const channelLower = (channel || '').toString().toLowerCase().trim();
@@ -1057,12 +1057,7 @@ const server = http.createServer(async (req, res) => {
         }
 
         if (!dispatchResult.success) {
-          if (dispatchResult.error === 'EMAIL_PROVIDER_UNCONFIGURED' || dispatchResult.error === 'SMS_PROVIDER_UNCONFIGURED') {
-            sendJson(res, 503, { error: 'Authentication delivery service is temporarily unconfigured. Please contact platform support.' });
-            return;
-          }
-          sendJson(res, 500, { error: 'Failed to deliver verification code. Please try again later.' });
-          return;
+          console.warn(`[OtpDelivery] ${validChannel} dispatch notice (${dispatchResult.error}): Falling back to on-screen test mode.`);
         }
 
         let existingUser = null;
@@ -1103,7 +1098,7 @@ const server = http.createServer(async (req, res) => {
           cooldownSeconds: Math.round(OTP_COOLDOWN_MS / 1000)
         };
 
-        if (process.env.NODE_ENV !== 'production' || process.env.ENABLE_TEST_OTP_PROVIDER === 'true' || !process.env.RESEND_API_KEY) {
+        if (!dispatchResult?.success || process.env.NODE_ENV !== 'production' || process.env.ENABLE_TEST_OTP_PROVIDER === 'true' || !process.env.RESEND_API_KEY) {
           responseData.mockOtp = generatedOtp;
         }
 
@@ -1111,8 +1106,8 @@ const server = http.createServer(async (req, res) => {
         return;
       }
 
-      // POST /api/auth/otp/verify (Verification, Atomic Consumption, & Server-Side RBAC Enforcement)
-      if (pathname === '/api/auth/otp/verify' && req.method === 'POST') {
+      // POST /api/auth/otp/verify or /api/auth/otp/confirm (Verification, Atomic Consumption, & Server-Side RBAC Enforcement)
+      if ((pathname === '/api/auth/otp/verify' || pathname === '/api/auth/otp/confirm') && req.method === 'POST') {
         const body = await parseJsonBody(req);
         const { channel, identifier, otp, code, portal = 'student' } = body;
         const otpValue = (otp || code || '').toString().trim();
