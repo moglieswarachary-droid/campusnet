@@ -12,7 +12,7 @@
     "dev": "npm run dev:frontend",
     "dev:frontend": "npm run dev --workspace=@campusnet/frontend",
     "dev:backend": "npm run dev --workspace=@campusnet/backend",
-    "build": "npm run build --workspace=@campusnet/frontend",
+    "build": "npm run prisma:generate --workspace=@campusnet/backend && npm run build --workspace=@campusnet/frontend",
     "build:backend": "npm run prisma:generate --workspace=@campusnet/backend",
     "start": "npm run start --workspace=@campusnet/backend",
     "test": "npm run test:frontend && npm run test:backend",
