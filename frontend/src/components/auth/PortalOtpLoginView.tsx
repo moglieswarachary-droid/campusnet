@@ -114,6 +114,8 @@ export const PortalOtpLoginView: React.FC<PortalOtpLoginViewProps> = ({
   const [cooldownSeconds, setCooldownSeconds] = useState(0);
   const [isVerified, setIsVerified] = useState(false);
 
+  const [sandboxCode, setSandboxCode] = useState<string | null>(null);
+
   const searchParams = new URLSearchParams(location.search);
   const requestedRedirect = searchParams.get('redirect');
 
@@ -167,11 +169,18 @@ export const PortalOtpLoginView: React.FC<PortalOtpLoginViewProps> = ({
       setStep('otp');
       setCooldownSeconds(data.cooldownSeconds || 60);
       setOtpDigits(['', '', '', '', '', '']);
+      if (data.mockOtp) {
+        setSandboxCode(data.mockOtp);
+      } else {
+        setSandboxCode(null);
+      }
 
       addToast({
         type: 'info',
         title: 'Verification Code Dispatched',
-        message: `A 6-digit one-time code has been sent to ${email}.`
+        message: data.mockOtp
+          ? `Verification code dispatched! (Code: ${data.mockOtp})`
+          : `A 6-digit one-time code has been sent to ${email}.`
       });
 
       setTimeout(() => {
@@ -385,9 +394,17 @@ export const PortalOtpLoginView: React.FC<PortalOtpLoginViewProps> = ({
         message: `Welcome, ${formattedUser.name}! Signed into ${portalTitle}.`
       });
 
+      const defaultPortalDestination =
+        portal === 'mentor' ? '/mentor/dashboard' :
+        portal === 'researcher' ? '/researcher/dashboard' :
+        portal === 'organization' ? '/organization/dashboard' :
+        portal === 'event_manager' ? '/organization/events' :
+        portal === 'reviewer' || portal === 'super_admin' ? '/admin' :
+        '/student/dashboard';
+
       const destination = requestedRedirect && requestedRedirect.startsWith('/') && !requestedRedirect.startsWith('//')
         ? requestedRedirect
-        : (data.redirectUrl || '/student/dashboard');
+        : (data.redirectUrl || defaultPortalDestination);
 
       setTimeout(() => {
         navigate(destination, { replace: true });
@@ -537,6 +554,31 @@ export const PortalOtpLoginView: React.FC<PortalOtpLoginViewProps> = ({
                       Change
                     </button>
                   </div>
+
+                  {sandboxCode && (
+                    <div className="p-3 rounded-2xl bg-amber-50/90 border border-amber-200 text-amber-950 text-xs flex items-center justify-between gap-3 shadow-2xs">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-200/80 text-amber-900">
+                          Sandbox Code
+                        </span>
+                        <span className="font-mono font-black text-sm tracking-widest">{sandboxCode}</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const digits = sandboxCode.split('').slice(0, 6);
+                          const newArr = ['', '', '', '', '', ''];
+                          digits.forEach((d, i) => { newArr[i] = d; });
+                          setOtpDigits(newArr);
+                          setErrorMsg('');
+                          digitInputRefs.current[5]?.focus();
+                        }}
+                        className="px-2.5 py-1 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-bold text-[11px] transition-colors cursor-pointer"
+                      >
+                        Autofill Code
+                      </button>
+                    </div>
+                  )}
 
                   {/* 6 Digit Input Boxes */}
                   <div className="space-y-2">

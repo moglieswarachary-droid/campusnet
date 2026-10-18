@@ -284,9 +284,11 @@ export const StudentDashboardView: React.FC = () => {
           </div>
           <div>
             <span className="text-xs font-bold text-campus-deep-blue line-clamp-1 group-hover:text-campus-blue transition-colors">
-              {activeProject.title}
+              {activeProject?.title || 'Start New Project'}
             </span>
-            <span className="text-[10px] text-emerald-600 font-bold block mt-0.5">{activeProject.progressPercent}% Completed</span>
+            <span className="text-[10px] text-emerald-600 font-bold block mt-0.5">
+              {activeProject ? `${activeProject.progressPercent || 0}% Completed` : 'No active projects yet'}
+            </span>
           </div>
         </Link>
 

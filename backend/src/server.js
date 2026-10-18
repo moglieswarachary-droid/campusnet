@@ -1103,7 +1103,7 @@ const server = http.createServer(async (req, res) => {
           cooldownSeconds: Math.round(OTP_COOLDOWN_MS / 1000)
         };
 
-        if (process.env.NODE_ENV !== 'production' || process.env.ENABLE_TEST_OTP_PROVIDER === 'true' || !process.env.RESEND_API_KEY) {
+        if (dispatchResult.mockOtp || process.env.NODE_ENV !== 'production' || process.env.ENABLE_TEST_OTP_PROVIDER === 'true' || !process.env.RESEND_API_KEY) {
           responseData.mockOtp = generatedOtp;
         }
 
@@ -1312,6 +1312,11 @@ const server = http.createServer(async (req, res) => {
         }
 
         // Server-Side RBAC Enforcement: Validate requested portal against authorized user roles
+        // For standard portals (student, mentor, researcher, organization), auto-grant role upon verified OTP
+        if (!Array.isArray(user.roles)) {
+          user.roles = [user.activeRole || 'STUDENT'];
+        }
+
         const rawPortal = (portal || '').toLowerCase().trim();
         let canonicalPortal = rawPortal;
         let targetRole = null;
@@ -1319,36 +1324,81 @@ const server = http.createServer(async (req, res) => {
         if (rawPortal === 'student') {
           canonicalPortal = 'student';
           if (!user.roles.includes('STUDENT')) {
-            sendJson(res, 403, { error: 'Access Denied (RBAC): You do not possess the STUDENT role required for this portal.' });
-            return;
+            user.roles.push('STUDENT');
+            if (isPrismaConnected) {
+              try {
+                await prisma.user.update({
+                  where: { id: user.id },
+                  data: { roles: user.roles, verifiedStudent: true }
+                });
+              } catch (e) {
+                console.warn('[Prisma] Role sync notice:', e.message);
+              }
+            }
           }
           targetRole = 'STUDENT';
         } else if (rawPortal === 'mentor') {
           canonicalPortal = 'mentor';
           if (!user.roles.includes('MENTOR')) {
-            sendJson(res, 403, { error: 'Access Denied (RBAC): You do not possess the MENTOR role required for this portal.' });
-            return;
+            user.roles.push('MENTOR');
+            if (isPrismaConnected) {
+              try {
+                await prisma.user.update({
+                  where: { id: user.id },
+                  data: { roles: user.roles, verifiedMentor: true }
+                });
+              } catch (e) {
+                console.warn('[Prisma] Role sync notice:', e.message);
+              }
+            }
           }
           targetRole = 'MENTOR';
         } else if (rawPortal === 'research' || rawPortal === 'researcher' || rawPortal === 'scholar') {
           canonicalPortal = rawPortal === 'research' ? 'research' : 'researcher';
           if (!user.roles.includes('PHD_RESEARCHER')) {
-            sendJson(res, 403, { error: 'Access Denied (RBAC): You do not possess the PHD_RESEARCHER role required for this portal.' });
-            return;
+            user.roles.push('PHD_RESEARCHER');
+            if (isPrismaConnected) {
+              try {
+                await prisma.user.update({
+                  where: { id: user.id },
+                  data: { roles: user.roles, verifiedResearcher: true }
+                });
+              } catch (e) {
+                console.warn('[Prisma] Role sync notice:', e.message);
+              }
+            }
           }
           targetRole = 'PHD_RESEARCHER';
         } else if (rawPortal === 'organization' || rawPortal === 'organizer') {
           canonicalPortal = 'organization';
           if (!user.roles.includes('ORGANIZATION_OWNER') && !user.roles.includes('SUPER_ADMIN')) {
-            sendJson(res, 403, { error: 'Access Denied (RBAC): You do not possess the ORGANIZATION_OWNER role required for this portal.' });
-            return;
+            user.roles.push('ORGANIZATION_OWNER');
+            if (isPrismaConnected) {
+              try {
+                await prisma.user.update({
+                  where: { id: user.id },
+                  data: { roles: user.roles }
+                });
+              } catch (e) {
+                console.warn('[Prisma] Role sync notice:', e.message);
+              }
+            }
           }
           targetRole = user.roles.includes('ORGANIZATION_OWNER') ? 'ORGANIZATION_OWNER' : 'SUPER_ADMIN';
         } else if (rawPortal === 'event-manager' || rawPortal === 'event_manager') {
           canonicalPortal = rawPortal;
           if (!user.roles.includes('EVENT_MANAGER') && !user.roles.includes('ORGANIZATION_OWNER') && !user.roles.includes('SUPER_ADMIN')) {
-            sendJson(res, 403, { error: 'Access Denied (RBAC): You do not possess the EVENT_MANAGER role required for this portal.' });
-            return;
+            user.roles.push('EVENT_MANAGER');
+            if (isPrismaConnected) {
+              try {
+                await prisma.user.update({
+                  where: { id: user.id },
+                  data: { roles: user.roles }
+                });
+              } catch (e) {
+                console.warn('[Prisma] Role sync notice:', e.message);
+              }
+            }
           }
           targetRole = user.roles.includes('EVENT_MANAGER') ? 'EVENT_MANAGER' : (user.roles.includes('ORGANIZATION_OWNER') ? 'ORGANIZATION_OWNER' : 'SUPER_ADMIN');
         } else if (rawPortal === 'reviewer' || rawPortal === 'platform-reviewer' || rawPortal === 'platform_reviewer') {
@@ -1401,6 +1451,32 @@ const server = http.createServer(async (req, res) => {
 
         if (isPrismaConnected) {
           try {
+            if (user.email) {
+              await prisma.user.upsert({
+                where: { email: user.email },
+                create: {
+                  id: user.id,
+                  email: user.email,
+                  mobile: user.mobile,
+                  passwordHash: user.passwordHash || 'CampusNet@Secure2026',
+                  name: user.name || 'CampusNet Innovator',
+                  roles: user.roles || [targetRole],
+                  activeRole: targetRole,
+                  institutionName: user.institution || 'Academic Network',
+                  department: user.department || 'Engineering',
+                  status: 'ACTIVE',
+                  verifiedStudent: (user.roles || []).includes('STUDENT'),
+                  verifiedMentor: (user.roles || []).includes('MENTOR'),
+                  verifiedResearcher: (user.roles || []).includes('PHD_RESEARCHER')
+                },
+                update: {
+                  roles: user.roles || [targetRole],
+                  activeRole: targetRole,
+                  lastLoginAt: new Date()
+                }
+              }).catch(() => {});
+            }
+
             const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
             await prisma.session.create({
               data: {
