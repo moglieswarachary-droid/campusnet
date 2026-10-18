@@ -64,21 +64,23 @@ export async function sendOtpEmail({ to, otp, purpose = 'LOGIN', portal = 'stude
   const provider = (process.env.EMAIL_PROVIDER || '').toLowerCase();
 
   // 1. SMTP Provider (Universal delivery to ANY Gmail address without domain verification)
-  if ((provider === 'smtp' || process.env.SMTP_USER) && process.env.SMTP_PASS) {
+  if ((provider === 'smtp' || process.env.SMTP_USER || process.env.SMTP_PASS) && process.env.SMTP_PASS) {
     try {
+      const smtpUser = process.env.SMTP_USER || 'campusnetofficial.in@gmail.com';
+      const smtpPass = (process.env.SMTP_PASS || '').replace(/\s+/g, '');
       const transporter = nodemailer.createTransport({
         host: process.env.SMTP_HOST || 'smtp.gmail.com',
         port: Number(process.env.SMTP_PORT) || 465,
         secure: Number(process.env.SMTP_PORT) === 465 || !process.env.SMTP_PORT,
         auth: {
-          user: process.env.SMTP_USER,
-          pass: process.env.SMTP_PASS
+          user: smtpUser,
+          pass: smtpPass
         },
         connectionTimeout: 5000,
         greetingTimeout: 5000
       });
 
-      const fromAddress = process.env.EMAIL_FROM || `"CampusNet Security" <${process.env.SMTP_USER}>`;
+      const fromAddress = process.env.EMAIL_FROM || `"CampusNet+" <${smtpUser}>`;
 
       await transporter.sendMail({
         from: fromAddress,
