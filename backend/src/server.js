@@ -963,6 +963,63 @@ const server = http.createServer(async (req, res) => {
         return;
       }
 
+      // GET /api/auth/email-diagnostic (Inspect live Brevo/SMTP configuration & test dispatch)
+      if (pathname === '/api/auth/email-diagnostic' && req.method === 'GET') {
+        const urlObj = new URL(req.url, `http://${req.headers.host}`);
+        const testTo = urlObj.searchParams.get('to') || 'saishashank9922@gmail.com';
+        const apiKey = (process.env.BREVO_API_KEY || '').trim();
+        const senderEmail = process.env.EMAIL_FROM_ADDRESS || 'campusnetofficial.in@gmail.com';
+        const senderName = process.env.EMAIL_FROM_NAME || 'CampusNet+ Security';
+
+        const diagnostic = {
+          brevoKeyConfigured: !!apiKey,
+          brevoKeyPrefix: apiKey ? `${apiKey.substring(0, 10)}...` : 'NONE',
+          emailProvider: process.env.EMAIL_PROVIDER || 'UNSET',
+          senderEmail,
+          senderName,
+          testRecipient: testTo
+        };
+
+        if (!apiKey) {
+          diagnostic.status = 'ERROR_NO_API_KEY';
+          diagnostic.message = 'BREVO_API_KEY environment variable is not set on the server.';
+          sendJson(res, 200, diagnostic);
+          return;
+        }
+
+        try {
+          const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+            method: 'POST',
+            signal: AbortSignal.timeout(8000),
+            headers: {
+              'api-key': apiKey,
+              'Content-Type': 'application/json',
+              'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+              sender: { name: senderName, email: senderEmail },
+              to: [{ email: testTo }],
+              subject: `CampusNet Diagnostic Verification: 123456`,
+              htmlContent: `<p>CampusNet Test OTP: <strong>123456</strong></p>`
+            })
+          });
+
+          diagnostic.httpStatus = response.status;
+          diagnostic.ok = response.ok;
+          const bodyText = await response.text();
+          try {
+            diagnostic.brevoResponseBody = JSON.parse(bodyText);
+          } catch {
+            diagnostic.brevoResponseBody = bodyText;
+          }
+        } catch (err) {
+          diagnostic.fetchError = err.message;
+        }
+
+        sendJson(res, 200, diagnostic);
+        return;
+      }
+
       // POST /api/auth/otp/request (Passwordless OTP Challenge Dispatch)
       if (pathname === '/api/auth/otp/request' && req.method === 'POST') {
         const body = await parseJsonBody(req);
@@ -1103,7 +1160,8 @@ const server = http.createServer(async (req, res) => {
           cooldownSeconds: Math.round(OTP_COOLDOWN_MS / 1000)
         };
 
-        if (dispatchResult.mockOtp || process.env.NODE_ENV !== 'production' || process.env.ENABLE_TEST_OTP_PROVIDER === 'true' || !process.env.RESEND_API_KEY) {
+        const hasRealProvider = !!(process.env.BREVO_API_KEY || process.env.SMTP_PASS || process.env.RESEND_API_KEY || process.env.SENDGRID_API_KEY);
+        if (dispatchResult.mockOtp || process.env.NODE_ENV !== 'production' || process.env.ENABLE_TEST_OTP_PROVIDER === 'true' || !hasRealProvider) {
           responseData.mockOtp = generatedOtp;
         }
 
