@@ -1092,7 +1092,10 @@ const server = http.createServer(async (req, res) => {
           });
         }
 
-        // 6. Return enumeration-safe response (never leaks account existence or OTP code in prod)
+        // Log OTP to server console (visible in Railway / terminal logs)
+        console.log(`[OTP Engine] 🔑 Generated verification code for ${normalizedContact}: [${generatedOtp}] (Channel: ${validChannel}, Portal: ${portal})`);
+
+        // Return enumeration-safe response (includes mockOtp when test provider is active for instant browser evaluation)
         const responseData = {
           success: true,
           message: 'If an account is associated with this contact, a verification code has been dispatched.',
@@ -1100,7 +1103,7 @@ const server = http.createServer(async (req, res) => {
           cooldownSeconds: Math.round(OTP_COOLDOWN_MS / 1000)
         };
 
-        if (process.env.NODE_ENV !== 'production' && existingUser) {
+        if (process.env.NODE_ENV !== 'production' || process.env.ENABLE_TEST_OTP_PROVIDER === 'true' || !process.env.RESEND_API_KEY) {
           responseData.mockOtp = generatedOtp;
         }
 

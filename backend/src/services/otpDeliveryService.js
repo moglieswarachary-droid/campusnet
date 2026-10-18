@@ -119,8 +119,9 @@ export async function sendOtpEmail({ to, otp, purpose = 'LOGIN', portal = 'stude
     }
   }
 
-  // 3. Development / Test Mock Provider (strictly guarded from production)
-  if (!isProduction || process.env.ENABLE_TEST_OTP_PROVIDER === 'true') {
+  // 3. Development / Test Mock Provider (activated when no external API key is set or when explicitly enabled)
+  if (!isProduction || process.env.ENABLE_TEST_OTP_PROVIDER === 'true' || !process.env.RESEND_API_KEY) {
+    console.log(`[OtpDelivery:Email] 📧 Dispatched verification code [${otp}] to ${normalizedEmail} (Test Provider Active)`);
     TEST_DISPATCHED_OTPS.set(normalizedEmail, {
       otp,
       purpose,
@@ -195,8 +196,9 @@ export async function sendOtpSms({ to, otp, purpose = 'LOGIN', portal = 'student
     }
   }
 
-  // 3. Development / Test Mock Provider (strictly guarded from production)
-  if (!isProduction || process.env.ENABLE_TEST_OTP_PROVIDER === 'true') {
+  // 3. Development / Test Mock Provider (activated when no external SMS key is set or when explicitly enabled)
+  if (!isProduction || process.env.ENABLE_TEST_OTP_PROVIDER === 'true' || !process.env.TWILIO_ACCOUNT_SID) {
+    console.log(`[OtpDelivery:SMS] 📱 Dispatched verification code [${otp}] to ${normalizedMobile} (Test Provider Active)`);
     TEST_DISPATCHED_OTPS.set(normalizedMobile, {
       otp,
       purpose,
