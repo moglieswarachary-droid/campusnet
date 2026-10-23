@@ -27,6 +27,9 @@ import {
   sendOtpSms,
   getTestDispatchedOtp
 } from './services/otpDeliveryService.js';
+import { handleCertificateRoutes } from './routes/certificateRoutes.js';
+import { handleUploadRoutes } from './routes/uploadRoutes.js';
+import { handleStudentRoutes } from './routes/studentRoutes.js';
 
 let isPrismaConnected = false;
 
@@ -962,6 +965,24 @@ const server = http.createServer(async (req, res) => {
         });
         return;
       }
+
+      // Modular Routes: 1. Certificate Verification Engine
+      const certHandled = await handleCertificateRoutes({
+        req, res, pathname, prisma, isPrismaConnected, certificatesDb: CERTIFICATES_DB
+      });
+      if (certHandled) return;
+
+      // Modular Routes: 2. Real Media & Document Upload Service
+      const uploadHandled = await handleUploadRoutes({
+        req, res, pathname, authenticateSession
+      });
+      if (uploadHandled) return;
+
+      // Modular Routes: 3. Student Profile & Onboarding Synchronization
+      const studentHandled = await handleStudentRoutes({
+        req, res, pathname, authenticateSession, isPrismaConnected, prisma, usersDb: USERS_DB, mentorshipRequestsDb: MENTORSHIP_REQUESTS_DB
+      });
+      if (studentHandled) return;
 
       // GET /api/auth/email-diagnostic (Inspect live Brevo/SMTP configuration & test dispatch)
       if (pathname === '/api/auth/email-diagnostic' && req.method === 'GET') {
@@ -4192,8 +4213,23 @@ const server = http.createServer(async (req, res) => {
   }
 
   // ==========================================
-  // STATIC ASSETS & SPA ROUTING
+  // STATIC ASSETS, MEDIA UPLOADS & SPA ROUTING
   // ==========================================
+  if (pathname.startsWith('/uploads/')) {
+    const uploadFilePath = path.join(__dirname, '../uploads', pathname.replace('/uploads/', ''));
+    if (fs.existsSync(uploadFilePath) && fs.statSync(uploadFilePath).isFile()) {
+      const ext = path.extname(uploadFilePath).toLowerCase();
+      const contentType = MIME_TYPES[ext] || 'application/octet-stream';
+      res.writeHead(200, {
+        'Content-Type': contentType,
+        'Access-Control-Allow-Origin': '*',
+        'Cache-Control': 'public, max-age=86400'
+      });
+      fs.createReadStream(uploadFilePath).pipe(res);
+      return;
+    }
+  }
+
   let filePath = path.join(DIST_DIR, pathname);
 
   // Direct file check

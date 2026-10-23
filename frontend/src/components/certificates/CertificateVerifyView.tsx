@@ -15,28 +15,70 @@ export const CertificateVerifyView: React.FC = () => {
   const [searchedEventCert, setSearchedEventCert] = useState<any>(null);
   const [searchedMentorCert, setSearchedMentorCert] = useState<any>(null);
   const [hasSearched, setHasSearched] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
 
-  const performLookup = (idToSearch: string) => {
+  const performLookup = async (idToSearch: string) => {
     if (!idToSearch.trim()) return;
     const trimmed = idToSearch.trim().toLowerCase();
+    setIsVerifying(true);
     
-    // Check Event Certs
+    // 1. Check local in-memory dataset
     const foundEvent = certificates.find(c => c.certificateNumber.toLowerCase() === trimmed);
-    // Check Mentor Certs
     const foundMentor = mentorshipCertificates.find(m => m.certificateNumber.toLowerCase() === trimmed);
 
     if (foundEvent) {
       setSearchedEventCert(foundEvent);
       setSearchedMentorCert(null);
-    } else if (foundMentor) {
+      setHasSearched(true);
+      setIsVerifying(false);
+      return;
+    } 
+    
+    if (foundMentor) {
       setSearchedMentorCert(foundMentor);
       setSearchedEventCert(null);
-    } else {
-      setSearchedEventCert(null);
-      setSearchedMentorCert(null);
+      setHasSearched(true);
+      setIsVerifying(false);
+      return;
     }
 
-    setHasSearched(true);
+    // 2. Query Live Backend API (PostgreSQL / Redis Registry)
+    try {
+      const apiBase = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
+      const res = await fetch(`${apiBase}/api/certificates/verify/${encodeURIComponent(idToSearch.trim())}`);
+      const data = await res.json();
+
+      if (res.ok && data.certificate) {
+        if (data.certType === 'mentorship' || data.certificate.type === 'mentorship') {
+          setSearchedMentorCert(data.certificate);
+          setSearchedEventCert(null);
+        } else {
+          setSearchedEventCert(data.certificate);
+          setSearchedMentorCert(null);
+        }
+      } else if (res.status === 422 && data.status === 'revoked') {
+        setSearchedEventCert({
+          certificateNumber: data.certificateNumber,
+          recipientName: data.recipientName || 'Candidate',
+          recipientRole: 'Participant',
+          eventTitle: data.eventTitle || 'Collegiate Event',
+          eventOrganizer: 'Accredited Institution',
+          status: 'revoked',
+          revocationReason: data.revocationReason || 'Revoked by authority'
+        });
+        setSearchedMentorCert(null);
+      } else {
+        setSearchedEventCert(null);
+        setSearchedMentorCert(null);
+      }
+    } catch (err) {
+      console.warn('API certificate verification lookup notice:', err);
+      setSearchedEventCert(null);
+      setSearchedMentorCert(null);
+    } finally {
+      setHasSearched(true);
+      setIsVerifying(false);
+    }
   };
 
   // Run on mount or when certId changes
@@ -48,7 +90,7 @@ export const CertificateVerifyView: React.FC = () => {
       // Default demo lookup
       performLookup('CN-2026-MNT-8F2A-3914');
     }
-  }, [certId, certificates, mentorshipCertificates]);
+  }, [certId]);
 
   const handleVerifyLookup = (e: React.FormEvent) => {
     e.preventDefault();
@@ -91,9 +133,10 @@ export const CertificateVerifyView: React.FC = () => {
 
           <button
             type="submit"
-            className="campus-btn-red text-xs sm:text-sm py-3 px-6 rounded-xl shadow-warm-md w-full sm:w-auto"
+            disabled={isVerifying}
+            className="campus-btn-red text-xs sm:text-sm py-3 px-6 rounded-xl shadow-warm-md w-full sm:w-auto disabled:opacity-60 cursor-pointer"
           >
-            Verify Credential
+            {isVerifying ? 'Verifying Registry...' : 'Verify Credential'}
           </button>
         </form>
 

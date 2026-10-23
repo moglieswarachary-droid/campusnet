@@ -86,6 +86,7 @@ export interface User {
   privacy?: UserPrivacySettings;
   isDemoData?: boolean;
   status?: 'active' | 'suspended' | 'pending_verification';
+  onboarded?: boolean;
 }
 
 export interface Mentor {

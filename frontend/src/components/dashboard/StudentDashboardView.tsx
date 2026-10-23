@@ -9,6 +9,7 @@ import {
   TrendingUp, Bell, Check, Sparkle, Plus
 } from 'lucide-react';
 import { StudentProfileEditModal } from './StudentProfileEditModal';
+import { StudentOnboardingModal } from './StudentOnboardingModal';
 import { LetterAvatar } from '../common/LetterAvatar';
 
 export const StudentDashboardView: React.FC = () => {
@@ -21,6 +22,17 @@ export const StudentDashboardView: React.FC = () => {
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [completedPriorities, setCompletedPriorities] = useState<string[]>([]);
+
+  // Check if student requires the progressive onboarding wizard
+  const needsOnboarding = Boolean(
+    currentUser &&
+    !currentUser.onboarded &&
+    (!currentUser.institution ||
+      currentUser.institution.includes('(CampusNet)') ||
+      !currentUser.department ||
+      currentUser.department === 'Engineering')
+  );
+  const [isOnboardingOpen, setIsOnboardingOpen] = useState(needsOnboarding);
 
   const userTeams = teams.filter(t =>
     (currentUser?.email && (t as any).leaderEmail?.toLowerCase() === currentUser.email.toLowerCase()) ||
@@ -129,6 +141,38 @@ export const StudentDashboardView: React.FC = () => {
   return (
     <div className="py-6 sm:py-8 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 sm:space-y-8 animate-in fade-in">
       
+      {/* ONBOARDING NOTIFICATION BANNER */}
+      {needsOnboarding && (
+        <div className="bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 rounded-3xl p-5 sm:p-6 text-white shadow-lg border border-blue-800/40 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 animate-in fade-in slide-in-from-top-4">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-blue-500/20 border border-blue-400/30 flex items-center justify-center shrink-0 text-blue-300">
+              <Sparkles className="w-6 h-6 animate-pulse" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-200 border border-blue-400/30">
+                  Onboarding Step Required
+                </span>
+                <span className="text-xs text-blue-200/80">State & College Master Record</span>
+              </div>
+              <h2 className="text-base sm:text-lg font-bold text-white mt-1">
+                Complete Your Official Student Identity Setup
+              </h2>
+              <p className="text-xs text-blue-100/70 max-w-2xl mt-0.5">
+                Set your verified College from India's 28 States & 8 UTs master dataset, department, roll number, and showcase skills to unlock team formation and live mentor matching.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => setIsOnboardingOpen(true)}
+            className="px-5 py-2.5 rounded-xl bg-blue-500 hover:bg-blue-400 text-white font-bold text-xs shadow-md transition-all shrink-0 flex items-center gap-2 cursor-pointer"
+          >
+            Launch Setup Wizard
+            <ArrowRight className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
       {/* 1. TOP COMMAND CENTER: Personalized Greeting & Academic Standing */}
       <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         
@@ -693,6 +737,14 @@ export const StudentDashboardView: React.FC = () => {
         <StudentProfileEditModal
           isOpen={isEditModalOpen}
           onClose={() => setIsEditModalOpen(false)}
+        />
+      )}
+
+      {/* Progressive Student Onboarding Wizard */}
+      {isOnboardingOpen && (
+        <StudentOnboardingModal
+          isOpen={isOnboardingOpen}
+          onClose={() => setIsOnboardingOpen(false)}
         />
       )}
 
